@@ -33,25 +33,13 @@ export default function RechargeModal() {
   const [notice, setNotice] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(600); // 10 phút đếm ngược hiển thị (600s)
 
-  // Khôi phục đơn hàng đang chờ khi mở modal
+  // Chỉ mở đơn hàng cụ thể khi người dùng bấm vào đơn chờ trong Lịch Sử
   useEffect(() => {
     if (isRechargeOpen) {
       if (pendingOrder) {
         setOrder(pendingOrder);
       } else {
-        try {
-          const saved = localStorage.getItem('hdn_pending_order');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            const ageMs = Date.now() - new Date(parsed.createdAt || Date.now()).getTime();
-            if (ageMs < 15 * 60 * 1000) {
-              setOrder(parsed);
-              setPendingOrder(parsed);
-            } else {
-              localStorage.removeItem('hdn_pending_order');
-            }
-          }
-        } catch (e) {}
+        setOrder(null);
       }
     } else {
       setIsSuccess(false);

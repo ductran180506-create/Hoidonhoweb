@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Search, Coins, User as UserIcon, LogOut, Sliders } from 'lucide-react';
 
 export default function Navbar() {
-  const { user, balance, setIsRechargeOpen, setIsAuthModalOpen, logout, setIsHistoryOpen, pendingOrder } = useAuth();
+  const { user, balance, setIsRechargeOpen, setIsAuthModalOpen, logout, setIsHistoryOpen, setPendingOrder } = useAuth();
   const [searchCode, setSearchCode] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
@@ -126,30 +126,14 @@ export default function Navbar() {
                     VIP
                   </span>
                 )}
-                {/* Chấm tròn báo động đơn đang chờ còn hiệu lực */}
-                {pendingOrder && (
-                  <>
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#0A0A0D] animate-ping" />
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#0A0A0D]" />
-                  </>
-                )}
               </button>
-
-              {/* Nút báo có đơn chờ thanh toán (nếu có) */}
-              {pendingOrder && (
-                <button
-                  type="button"
-                  onClick={() => setIsHistoryOpen(true)}
-                  className="hidden xs:flex items-center gap-1 px-2 py-1 bg-amber-950/60 hover:bg-amber-900/70 border border-amber-500/50 rounded-lg text-xs text-amber-300 font-semibold transition animate-pulse"
-                  title="Có 1 đơn chuyển khoản đang chờ thanh toán"
-                >
-                  <span className="text-[10px]">Đơn chờ ⏳</span>
-                </button>
-              )}
 
               {/* Số dư Điểm Tri Ân / Nút Mời Cà Phê */}
               <button 
-                onClick={() => setIsRechargeOpen(true)}
+                onClick={() => {
+                  setPendingOrder(null);
+                  setIsRechargeOpen(true);
+                }}
                 className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 bg-[#181824] hover:bg-[#222233] border border-[#2D2D3D] rounded-lg text-xs text-white transition font-medium active:scale-95"
                 title="Bấm để Mời Cà Phê / Ủng Hộ Tác Giả"
               >
