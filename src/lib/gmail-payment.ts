@@ -308,9 +308,6 @@ async function creditCompletedOrder(ord: {
     db.completeOrder(ord.orderCode);
   } else if (!localOrd) {
     db.addCoins(ord.userId, ord.coins);
-    if (ord.isVip && ord.vipDays > 0) {
-      db.activateVip(ord.userId, ord.vipDays);
-    }
   }
 
   // 3. Cộng Điểm vào bảng users trên Supabase
