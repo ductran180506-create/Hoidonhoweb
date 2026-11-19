@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #0B0F19;
+  --bg-card: #121826;
+  --border-color: #1F293D;
+  --text-main: #F3F4F6;
+  --text-muted: #9CA3AF;
+}
+
+body {
+  color: var(--text-main);
+  background-color: var(--bg-main);
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .font-headline {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Chống sao chép văn bản khi đọc */
+.protect-content {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+/* Scrollbar tối giản theo tông MangaVerse */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+/* Tối ưu trải nghiệm chạm trên điện thoại (Mobile Touch Experience) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, input, select {
+  touch-action: manipulation;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0F19;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1F293D;
+  border-radius: 9999px;
+}
+
+/* Ẩn thanh cuộn cho Slider lướt ngang */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ngăn trình duyệt đổi màu xanh nhạt khi autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 40px #0A0A0D inset !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8B5CF6;
+}
+
+/* Thanh trượt rõ ràng cho danh sách ảnh slide trang Admin */
+.admin-slider-scroll::-webkit-scrollbar {
+  height: 10px !important;
+  display: block !important;
+}
+.admin-slider-scroll::-webkit-scrollbar-track {
+  background: #12121A !important;
+  border-radius: 9999px !important;
+  border: 1px solid #272733 !important;
+  margin: 0 4px;
+}
+.admin-slider-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #7C5CFC, #9061F9) !important;
+  border-radius: 9999px !important;
+  border: 2px solid #12121A !important;
+}
+.admin-slider-scroll::-webkit-scrollbar-thumb:hover {
+  background: #A78BFA !important;
+}
+.admin-slider-scroll {
+  scrollbar-width: auto !important;
+  scrollbar-color: #7C5CFC #12121A !important;
+}
