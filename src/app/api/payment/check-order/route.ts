@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
+import { syncGmailSacombankPayments } from '@/lib/gmail-payment';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -47,6 +48,18 @@ export async function GET(req: NextRequest) {
 
   // Kiểm tra thời hạn hiệu lực thực tế: 15 phút (900.000 ms)
   const isExpired = Boolean(orderCreatedAt && !isCompleted && (Date.now() - new Date(orderCreatedAt).getTime() > 15 * 60 * 1000));
+
+  // Nếu đơn vẫn đang chờ và còn hạn (<= 15 phút), tự động quét thông báo Gmail từ Sacombank
+  if (!isCompleted && !isExpired) {
+    try {
+      const { matchedOrders } = await syncGmailSacombankPayments(orderCode);
+      if (matchedOrders.includes(orderCode)) {
+        isCompleted = true;
+      }
+    } catch (err) {
+      console.warn('Lỗi quét Gmail Sacombank trong check-order:', err);
+    }
+  }
 
   const effectiveUserId = userId || order?.userId || '';
   const wallet = db.getWallet(effectiveUserId);

@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { Story, Chapter } from '@/lib/types';
 import { supabaseAdmin } from '@/lib/supabase';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
+import { syncGmailSacombankPayments } from '@/lib/gmail-payment';
 
 export async function GET(req: NextRequest) {
   // KHÓA BẢO MẬT: Bắt buộc phải có phiên đăng nhập Admin hoặc Token bí mật
@@ -138,11 +139,22 @@ export async function GET(req: NextRequest) {
         };
       });
 
+      // Tự động quét Gmail Sacombank nếu đang có đơn pending trong 15 phút gần nhất
+      let newlyMatched: string[] = [];
+      if ((sbTx || []).some(t => t.status === 'pending' && (Date.now() - new Date(t.created_at).getTime() <= 15 * 60 * 1000))) {
+        try {
+          const syncRes = await syncGmailSacombankPayments();
+          newlyMatched = syncRes.matchedOrders;
+        } catch {}
+      }
+
       // 2. Gộp với giao dịch từ Supabase
       (sbTx || []).forEach(t => {
         const u = mergedUserMap[t.user_id];
         const existing = orderMap[t.payment_code];
-        const status = (t.status === 'completed' || existing?.status === 'completed') ? 'completed' : (t.status || existing?.status || 'pending');
+        const status = (t.status === 'completed' || existing?.status === 'completed' || newlyMatched.includes(t.payment_code))
+          ? 'completed'
+          : (t.status || existing?.status || 'pending');
         const isVip = t.payment_code?.startsWith('VIP');
         orderMap[t.payment_code] = {
           id: t.id || existing?.id,

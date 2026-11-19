@@ -933,14 +933,14 @@ export default function AdminPage() {
 
         <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
           <div className="text-[11px] font-medium text-[#71717A]">
-            Cổng thanh toán SePay
+            Tự động Gmail • Sacombank
           </div>
           <div className="text-xs font-semibold text-emerald-400 mt-2 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>Sẵn sàng 24/7</span>
+            <span>Đã liên kết (040121635056)</span>
           </div>
           <div className="text-[10px] text-[#71717A] mt-1">
-            Cộng Điểm sau 3 giây
+            congducc2k6@gmail.com • Tự động 24/7
           </div>
         </div>
       </div>
@@ -1923,9 +1923,9 @@ export default function AdminPage() {
         <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3">
             <div>
-              <h2 className="text-sm font-semibold text-white">Sổ Nhật Ký Chuyển Khoản VietQR</h2>
+              <h2 className="text-sm font-semibold text-white">Sổ Nhật Ký Chuyển Khoản VietQR • Sacombank</h2>
               <p className="text-[11px] text-[#71717A]">
-                Tiền nạp chuyển khoản vào tài khoản cá nhân qua SePay
+                Đối soát tự động qua thông báo Gmail ngân hàng Sacombank (040121635056 - TRAN CONG DUC)
               </p>
             </div>
 

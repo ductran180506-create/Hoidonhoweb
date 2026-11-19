@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateVietQrUrl } from '@/lib/sepay';
+import { syncGmailSacombankPayments } from '@/lib/gmail-payment';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -27,6 +28,15 @@ export async function GET(req: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(30);
 
+      // Nếu user có đơn đang pending trong 15 phút gần nhất, tự động quét Gmail Sacombank để đối soát ngay
+      let newlyMatched: string[] = [];
+      if (!error && sbTxs && sbTxs.some(tx => tx.status === 'pending' && (Date.now() - new Date(tx.created_at).getTime() <= 15 * 60 * 1000))) {
+        try {
+          const syncRes = await syncGmailSacombankPayments();
+          newlyMatched = syncRes.matchedOrders;
+        } catch {}
+      }
+
       if (!error && sbTxs && sbTxs.length > 0) {
         orders = sbTxs.map(tx => {
           const createdAt = tx.created_at;
@@ -38,7 +48,7 @@ export async function GET(req: NextRequest) {
           const isSystemExpired = ageMs > 15 * 60 * 1000;
           const remainingSec = Math.max(0, Math.floor((10 * 60 * 1000 - ageMs) / 1000));
 
-          let status = tx.status || 'pending';
+          let status = newlyMatched.includes(tx.payment_code) ? 'completed' : (tx.status || 'pending');
           if (status === 'pending' && isUserExpired) {
             status = 'expired';
           }
