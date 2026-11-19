@@ -65,6 +65,46 @@ export default function PaymentHistoryModal() {
     }
   }, [isHistoryOpen, user?.id]);
 
+  // Cập nhật đếm ngược mỗi giây
+  useEffect(() => {
+    if (!isHistoryOpen) return;
+
+    const timer = setInterval(() => {
+      setOrders(prev =>
+        prev.map(ord => {
+          if (ord.status === 'pending') {
+            const createdTime = new Date(ord.createdAt).getTime();
+            const ageMs = Date.now() - createdTime;
+            const remainingSec = Math.max(0, Math.floor((15 * 60 * 1000 - ageMs) / 1000));
+            const isExpired = remainingSec <= 0;
+            return {
+              ...ord,
+              remainingSec,
+              isExpired,
+              status: isExpired ? 'expired' : 'pending',
+            };
+          }
+          return ord;
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isHistoryOpen]);
+
+  // Tự động đồng bộ nếu có đơn đang chờ
+  useEffect(() => {
+    if (!isHistoryOpen || !user?.id) return;
+    const hasPending = orders.some(o => o.status === 'pending');
+    if (!hasPending) return;
+
+    const poll = setInterval(() => {
+      fetchOrders();
+    }, 4000);
+
+    return () => clearInterval(poll);
+  }, [isHistoryOpen, user?.id, orders.some(o => o.status === 'pending')]);
+
   if (!isHistoryOpen) return null;
 
   const formatCountdown = (secs: number) => {
