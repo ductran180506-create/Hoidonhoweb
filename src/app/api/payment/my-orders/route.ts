@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(30);
 
-      // Nếu user có đơn đang pending trong 15 phút gần nhất, tự động quét Gmail Sacombank để đối soát ngay
+      // Nếu user có đơn đang pending/processing trong 15 phút gần nhất, tự động quét Gmail Sacombank để đối soát ngay
       let newlyMatched: string[] = [];
-      if (!error && sbTxs && sbTxs.some(tx => tx.status === 'pending' && (Date.now() - new Date(tx.created_at).getTime() <= 15 * 60 * 1000))) {
+      if (!error && sbTxs && sbTxs.some(tx => (tx.status === 'pending' || tx.status === 'processing') && (Date.now() - new Date(tx.created_at).getTime() <= 15 * 60 * 1000))) {
         try {
           const syncRes = await syncGmailSacombankPayments();
           newlyMatched = syncRes.matchedOrders;
@@ -51,6 +51,8 @@ export async function GET(req: NextRequest) {
           let status = newlyMatched.includes(tx.payment_code) ? 'completed' : (tx.status || 'pending');
           if (status === 'pending' && isUserExpired) {
             status = 'expired';
+          } else if (status === 'processing' && isSystemExpired) {
+            status = 'expired';
           }
 
           const isVip = tx.payment_code?.startsWith('VIP') || tx.amount_vnd === 39000;
@@ -62,7 +64,7 @@ export async function GET(req: NextRequest) {
             ? '🥤 Gói 45 Điểm (20.000đ)'
             : '☕ Gói 20 Điểm (10.000đ)';
 
-          const qrUrl = (status === 'pending' && !isUserExpired)
+          const qrUrl = ((status === 'pending' && !isUserExpired) || (status === 'processing' && !isSystemExpired))
             ? generateVietQrUrl({
                 amount: tx.amount_vnd,
                 orderCode: tx.payment_code,
@@ -79,7 +81,7 @@ export async function GET(req: NextRequest) {
             status,
             createdAt,
             expiresAt: new Date(createdTime + 10 * 60 * 1000).toISOString(),
-            isExpired: isUserExpired,
+            isExpired: status === 'expired',
             isSystemExpired,
             remainingSec,
             qrUrl,
@@ -104,6 +106,8 @@ export async function GET(req: NextRequest) {
         let status = tx.status || 'pending';
         if (status === 'pending' && isUserExpired) {
           status = 'expired';
+        } else if (status === 'processing' && isSystemExpired) {
+          status = 'expired';
         }
 
         const isVip = tx.packageType === 'VIP_39K';
@@ -115,7 +119,7 @@ export async function GET(req: NextRequest) {
           ? '🥤 Gói 45 Điểm (20.000đ)'
           : '☕ Gói 20 Điểm (10.000đ)';
 
-        const qrUrl = (status === 'pending' && !isUserExpired)
+        const qrUrl = ((status === 'pending' && !isUserExpired) || (status === 'processing' && !isSystemExpired))
           ? generateVietQrUrl({
               amount: tx.amountVnd,
               orderCode: tx.orderCode,
@@ -132,7 +136,7 @@ export async function GET(req: NextRequest) {
           status,
           createdAt,
           expiresAt: new Date(createdTime + 10 * 60 * 1000).toISOString(),
-          isExpired: isUserExpired,
+          isExpired: status === 'expired',
           isSystemExpired,
           remainingSec,
           qrUrl,
@@ -140,8 +144,8 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Tìm đơn đang chờ thanh toán còn hiệu lực mới nhất (nếu có)
-    const activePendingOrder = orders.find(o => o.status === 'pending' && !o.isExpired) || null;
+    // Tìm đơn đang chờ thanh toán hoặc đang xử lý còn hiệu lực mới nhất (nếu có)
+    const activePendingOrder = orders.find(o => (o.status === 'pending' || o.status === 'processing') && !o.isExpired) || null;
 
     return NextResponse.json({
       success: true,

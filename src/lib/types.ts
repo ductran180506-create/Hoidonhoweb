@@ -55,7 +55,7 @@ export interface Order {
   amountVnd: number; // 10000, 20000, 50000, 39000
   coinsReceived: number; // 15, 35, 100, 0
   vipDaysReceived: number; // 0, 0, 0, 30
-  status: 'pending' | 'completed' | 'cancelled' | 'expired';
+  status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'expired';
   sepayTransactionId?: string;
   createdAt: string;
   completedAt?: string;

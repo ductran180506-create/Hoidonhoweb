@@ -139,9 +139,9 @@ export async function GET(req: NextRequest) {
         };
       });
 
-      // Tự động quét Gmail Sacombank nếu đang có đơn pending trong 15 phút gần nhất
+      // Tự động quét Gmail Sacombank nếu đang có đơn pending hoặc processing trong 15 phút gần nhất
       let newlyMatched: string[] = [];
-      if ((sbTx || []).some(t => t.status === 'pending' && (Date.now() - new Date(t.created_at).getTime() <= 15 * 60 * 1000))) {
+      if ((sbTx || []).some(t => (t.status === 'pending' || t.status === 'processing') && (Date.now() - new Date(t.created_at).getTime() <= 15 * 60 * 1000))) {
         try {
           const syncRes = await syncGmailSacombankPayments();
           newlyMatched = syncRes.matchedOrders;
@@ -154,6 +154,8 @@ export async function GET(req: NextRequest) {
         const existing = orderMap[t.payment_code];
         const status = (t.status === 'completed' || existing?.status === 'completed' || newlyMatched.includes(t.payment_code))
           ? 'completed'
+          : (t.status === 'processing' || existing?.status === 'processing')
+          ? 'processing'
           : (t.status || existing?.status || 'pending');
         const isVip = t.payment_code?.startsWith('VIP');
         orderMap[t.payment_code] = {
@@ -172,7 +174,7 @@ export async function GET(req: NextRequest) {
         };
       });
 
-      // Phân loại đơn: thành công, đang chờ (chưa quá 15p), và đã hết hạn (quá 15p)
+      // Phân loại đơn: thành công, đang xử lý / đang chờ (chưa quá 15p), và đã hết hạn (quá 15p)
       const orders = Object.values(orderMap).map(o => {
         if (o.status === 'completed') return o;
         const createdTime = new Date(o.createdAt || Date.now()).getTime();
@@ -180,7 +182,7 @@ export async function GET(req: NextRequest) {
         if (ageMs > 15 * 60 * 1000) {
           return { ...o, status: 'expired' };
         }
-        return { ...o, status: 'pending' };
+        return { ...o, status: o.status === 'processing' ? 'processing' : 'pending' };
       }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       const totalRevenue = orders

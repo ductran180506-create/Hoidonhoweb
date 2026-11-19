@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
 
   let order = db.getOrderByCode(orderCode);
   let isCompleted = order?.status === 'completed';
+  let isProcessing = order?.status === 'processing';
   let userId = order?.userId;
   let orderCreatedAt = order?.createdAt;
 
@@ -32,6 +33,9 @@ export async function GET(req: NextRequest) {
       if (sbTx) {
         if (!userId) userId = sbTx.user_id;
         if (!orderCreatedAt) orderCreatedAt = sbTx.created_at;
+        if (sbTx.status === 'processing') {
+          isProcessing = true;
+        }
         if (sbTx.status === 'completed') {
           isCompleted = true;
           if (order && order.status !== 'completed') {
@@ -77,7 +81,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    status: isCompleted ? 'completed' : isExpired ? 'expired' : 'pending',
+    status: isCompleted ? 'completed' : isExpired ? 'expired' : isProcessing ? 'processing' : 'pending',
     completed: isCompleted,
     isExpired,
     balance,

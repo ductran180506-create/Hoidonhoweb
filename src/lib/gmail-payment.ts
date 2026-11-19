@@ -165,15 +165,15 @@ export async function fetchRecentSacombankEmails(force = false): Promise<Sacomba
 }
 
 /**
- * Quét hòm thư Gmail Sacombank và tự động hoàn tất các đơn hàng đang chờ (pending)
+ * Quét hòm thư Gmail Sacombank và tự động hoàn tất các đơn hàng đang chờ (pending / processing)
  * nếu phát hiện email báo cộng tiền (+) khớp mã đơn (CR... hoặc VIP...) và số tiền.
  */
-export async function syncGmailSacombankPayments(targetOrderCode?: string): Promise<{
+export async function syncGmailSacombankPayments(targetOrderCode?: string, force = false): Promise<{
   matchedOrders: string[];
   recentEmails: SacombankEmailTx[];
 }> {
   const matchedOrders: string[] = [];
-  const emails = await fetchRecentSacombankEmails();
+  const emails = await fetchRecentSacombankEmails(force);
 
   // Chỉ lọc các email TIỀN VÀO (+) của tài khoản Sacombank 040121635056
   const incomingEmails = emails.filter(
@@ -184,7 +184,7 @@ export async function syncGmailSacombankPayments(targetOrderCode?: string): Prom
     return { matchedOrders, recentEmails: emails };
   }
 
-  // Lấy danh sách đơn đang pending từ Supabase
+  // Lấy danh sách đơn đang pending hoặc processing từ Supabase
   let pendingOrders: Array<{
     id: string;
     orderCode: string;
@@ -200,7 +200,7 @@ export async function syncGmailSacombankPayments(targetOrderCode?: string): Prom
     const { data: sbPending } = await supabaseAdmin
       .from('transactions')
       .select('*')
-      .eq('status', 'pending')
+      .in('status', ['pending', 'processing'])
       .order('created_at', { ascending: false })
       .limit(30);
 
@@ -223,9 +223,9 @@ export async function syncGmailSacombankPayments(targetOrderCode?: string): Prom
     console.warn('[Gmail-Sacombank] Lỗi đọc pending transactions từ Supabase:', e);
   }
 
-  // Gộp thêm đơn pending từ Local DB (nếu chưa có trong danh sách)
+  // Gộp thêm đơn pending/processing từ Local DB (nếu chưa có trong danh sách)
   for (const lo of db.getAllOrders()) {
-    if (lo.status === 'pending' && !pendingOrders.some((p) => p.orderCode === lo.orderCode)) {
+    if ((lo.status === 'pending' || lo.status === 'processing') && !pendingOrders.some((p) => p.orderCode === lo.orderCode)) {
       const isVip = lo.packageType === 'VIP_39K' || (lo.vipDaysReceived || 0) > 0;
       pendingOrders.push({
         id: lo.id,
@@ -290,7 +290,7 @@ async function creditCompletedOrder(ord: {
       .from('transactions')
       .update({ status: 'completed' })
       .eq('payment_code', ord.orderCode)
-      .eq('status', 'pending')
+      .in('status', ['pending', 'processing'])
       .select('id');
 
     // Nếu đơn đã được xử lý bởi tiến trình khác trước đó thì dừng lại

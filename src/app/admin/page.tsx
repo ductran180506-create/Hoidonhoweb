@@ -261,6 +261,35 @@ export default function AdminPage() {
     setLoading(false);
   };
 
+  // Tự động đồng bộ đơn hàng bên Admin khi có đơn đang chờ hoặc đang xử lý
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const hasActiveOrder = Array.isArray(orders) && orders.some((o) => o.status === 'pending' || o.status === 'processing');
+    if (!hasActiveOrder) return;
+
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch('/api/admin/stories', { headers: getAdminHeaders() });
+        const data = await res.json();
+        if (data.success) {
+          setStats(data.stats || { totalStories: 0, totalOrders: 0, completedOrders: 0, totalRevenue: 0, totalUsers: 0 });
+          setOrders(Array.isArray(data.orders) ? data.orders : []);
+          if (Array.isArray(data.users)) {
+            setUsers(
+              data.users.map((u: any) => ({
+                ...u,
+                coins: u.coins ?? u.balance ?? 0,
+                unlockedCount: u.unlockedCount ?? (u.unlockedChapters?.length || 0),
+              }))
+            );
+          }
+        }
+      } catch {}
+    }, 4000);
+
+    return () => clearInterval(poll);
+  }, [isAuthenticated, orders]);
+
   const handleUpdateFeedbackStatus = async (id: string, status: 'new' | 'reviewed') => {
     try {
       const res = await fetch('/api/feedback', {
@@ -752,7 +781,7 @@ export default function AdminPage() {
 
   const filteredOrders = safeOrders.filter((o) => {
     if (orderFilter === 'completed') return o.status === 'completed';
-    if (orderFilter === 'pending') return o.status === 'pending';
+    if (orderFilter === 'pending') return o.status === 'pending' || o.status === 'processing';
     if (orderFilter === 'expired') return o.status === 'expired';
     return true;
   });
@@ -1952,7 +1981,7 @@ export default function AdminPage() {
                   orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                Chờ quét ({safeOrders.filter(o => o.status === 'pending').length})
+                Chờ quét ({safeOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
               </button>
               <button
                 onClick={() => setOrderFilter('expired')}
@@ -2016,6 +2045,18 @@ export default function AdminPage() {
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
                             ✓ Thành công
                           </span>
+                        ) : ord.status === 'processing' ? (
+                          <div className="inline-flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/50 font-semibold animate-pulse">
+                              🔄 Đang xử lý (Khách báo đã CK)
+                            </span>
+                            <button
+                              onClick={() => handleApproveOrder(ord.orderCode)}
+                              className="px-2 py-0.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 rounded text-[10px] font-medium transition"
+                            >
+                              Duyệt ngay
+                            </button>
+                          </div>
                         ) : ord.status === 'pending' ? (
                           <div className="inline-flex items-center gap-2">
                             <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium">

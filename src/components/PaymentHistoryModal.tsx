@@ -20,7 +20,7 @@ interface TransactionItem {
   coinsReceived: number;
   packageType: string;
   packageName: string;
-  status: 'pending' | 'completed' | 'expired' | 'cancelled';
+  status: 'pending' | 'processing' | 'completed' | 'expired' | 'cancelled';
   createdAt: string;
   expiresAt: string;
   isExpired: boolean;
@@ -34,6 +34,7 @@ export default function PaymentHistoryModal() {
     setIsHistoryOpen, 
     user, 
     balance, 
+    refreshBalance,
     setIsRechargeOpen, 
     resumePayment,
     setPendingOrder
@@ -52,6 +53,7 @@ export default function PaymentHistoryModal() {
       const data = await res.json();
       if (data.success) {
         setOrders(data.orders || []);
+        await refreshBalance();
       }
     } catch (e) {
       console.warn('Lỗi lấy lịch sử giao dịch:', e);
@@ -94,18 +96,18 @@ export default function PaymentHistoryModal() {
     return () => clearInterval(timer);
   }, [isHistoryOpen]);
 
-  // Tự động đồng bộ nếu có đơn đang chờ
+  // Tự động đồng bộ nếu có đơn đang chờ hoặc đang xử lý
   useEffect(() => {
     if (!isHistoryOpen || !user?.id) return;
-    const hasPending = orders.some(o => o.status === 'pending');
-    if (!hasPending) return;
+    const hasActive = orders.some(o => o.status === 'pending' || o.status === 'processing');
+    if (!hasActive) return;
 
     const poll = setInterval(() => {
       fetchOrders();
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(poll);
-  }, [isHistoryOpen, user?.id, orders.some(o => o.status === 'pending')]);
+  }, [isHistoryOpen, user?.id, orders.some(o => o.status === 'pending' || o.status === 'processing')]);
 
   if (!isHistoryOpen) return null;
 
@@ -123,6 +125,7 @@ export default function PaymentHistoryModal() {
       coinsReceived: ord.coinsReceived,
       packageType: ord.packageType,
       packageName: ord.packageName,
+      status: ord.status,
       createdAt: ord.createdAt,
       qrUrl: ord.qrUrl,
     });
@@ -130,7 +133,7 @@ export default function PaymentHistoryModal() {
 
   const filteredOrders = orders.filter(o => {
     if (filter === 'completed') return o.status === 'completed';
-    if (filter === 'pending') return o.status === 'pending';
+    if (filter === 'pending') return o.status === 'pending' || o.status === 'processing';
     if (filter === 'expired') return o.status === 'expired';
     return true;
   });
@@ -225,7 +228,7 @@ export default function PaymentHistoryModal() {
                     : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                Đang chờ ({orders.filter(o => o.status === 'pending').length})
+                Đang chờ ({orders.filter(o => o.status === 'pending' || o.status === 'processing').length})
               </button>
               <button
                 onClick={() => setFilter('expired')}
@@ -249,7 +252,7 @@ export default function PaymentHistoryModal() {
             </button>
           </div>
 
-          {/* Danh sách các đơn (Đơn đang chờ hiện ngay tại đây, click vào mở lại QR) */}
+          {/* Danh sách các đơn (Đơn đang chờ / đang xử lý hiện ngay tại đây, click vào mở lại) */}
           <div className="space-y-2">
             {filteredOrders.length === 0 ? (
               <div className="py-8 text-center text-[#71717A] text-xs">
@@ -258,7 +261,9 @@ export default function PaymentHistoryModal() {
             ) : (
               filteredOrders.map(item => {
                 const isCompleted = item.status === 'completed';
+                const isProcessing = item.status === 'processing';
                 const isPending = item.status === 'pending';
+                const canResume = (isPending && !item.isExpired && item.remainingSec > 0) || isProcessing;
                 const dateStr = item.createdAt 
                   ? new Date(item.createdAt).toLocaleString('vi-VN', {
                       hour: '2-digit',
@@ -272,9 +277,11 @@ export default function PaymentHistoryModal() {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => isPending && !item.isExpired && item.remainingSec > 0 && handleResume(item)}
+                    onClick={() => canResume && handleResume(item)}
                     className={`p-3 rounded-xl flex items-center justify-between text-xs transition ${
-                      isPending && !item.isExpired && item.remainingSec > 0
+                      isProcessing
+                        ? 'bg-[#161528] border-2 border-[#7C5CFC]/70 hover:border-[#A78BFA] cursor-pointer shadow-md'
+                        : canResume
                         ? 'bg-[#181520] border-2 border-amber-500/60 hover:border-amber-400 hover:bg-[#201B2B] cursor-pointer shadow-md'
                         : 'bg-[#0E0E14] border border-[#1E1E28] hover:border-[#2C2C3C]'
                     }`}
@@ -283,7 +290,9 @@ export default function PaymentHistoryModal() {
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                         isCompleted
                           ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/40'
-                          : (isPending && !item.isExpired && item.remainingSec > 0)
+                          : isProcessing
+                          ? 'bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40'
+                          : canResume
                           ? 'bg-amber-950/60 text-amber-400 border border-amber-600/50'
                           : 'bg-[#1C1C26] text-[#71717A]'
                       }`}>
@@ -304,17 +313,22 @@ export default function PaymentHistoryModal() {
                           <span>•</span>
                           <span>{dateStr}</span>
                         </div>
-                        {isPending && !item.isExpired && item.remainingSec > 0 && (
+                        {isProcessing ? (
+                          <div className="text-[10px] text-[#A78BFA] font-semibold mt-1 flex items-center gap-1">
+                            <RefreshCw className="w-3 h-3 animate-spin text-[#A78BFA]" />
+                            <span>Đang đối chiếu Gmail Sacombank để cộng điểm ↗</span>
+                          </div>
+                        ) : canResume ? (
                           <div className="text-[10px] text-amber-300 font-semibold mt-1 flex items-center gap-1">
                             <QrCode className="w-3 h-3 text-amber-400" />
                             <span>Bấm vào đây để mở lại mã QR thanh toán ↗</span>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className={`font-mono font-bold ${(isPending && !item.isExpired && item.remainingSec > 0) ? 'text-amber-300 text-sm' : 'text-white'}`}>
+                      <div className={`font-mono font-bold ${canResume ? 'text-amber-300 text-sm' : 'text-white'}`}>
                         {item.amountVnd.toLocaleString('vi-VN')} đ
                       </div>
                       <div className="mt-1">
@@ -322,7 +336,12 @@ export default function PaymentHistoryModal() {
                           <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded">
                             Thành công ✅
                           </span>
-                        ) : (isPending && !item.isExpired && item.remainingSec > 0) ? (
+                        ) : isProcessing ? (
+                          <span className="text-[10px] font-bold text-[#A78BFA] bg-[#7C5CFC]/20 border border-[#7C5CFC]/40 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                            <RefreshCw className="w-2.5 h-2.5 animate-spin text-[#A78BFA]" />
+                            <span>Đang xử lý...</span>
+                          </span>
+                        ) : canResume ? (
                           <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm animate-pulse">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                             <span>Đang chờ ({formatCountdown(item.remainingSec)})</span>

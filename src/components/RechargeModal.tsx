@@ -13,6 +13,7 @@ interface OrderResponse {
   coinsReceived: number;
   vipDaysReceived: number;
   qrUrl: string;
+  status?: string;
   createdAt?: string;
   expiresAt?: string;
   displayExpiresAt?: string;
@@ -29,6 +30,8 @@ export default function RechargeModal() {
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(600); // 10 phút đếm ngược hiển thị (600s)
@@ -38,8 +41,10 @@ export default function RechargeModal() {
     if (isRechargeOpen) {
       if (pendingOrder) {
         setOrder(pendingOrder);
+        setIsProcessing(pendingOrder.status === 'processing');
       } else {
         setOrder(null);
+        setIsProcessing(false);
       }
     } else {
       setIsSuccess(false);
@@ -140,6 +145,7 @@ export default function RechargeModal() {
       const data = await res.json();
       if (data.success) {
         setOrder(data.order);
+        setIsProcessing(false);
         setPendingOrder(data.order);
         try {
           localStorage.setItem('hdn_pending_order', JSON.stringify(data.order));
@@ -149,6 +155,42 @@ export default function RechargeModal() {
       console.error(err);
     }
     setLoading(false);
+  };
+
+  const handleConfirmTransferred = async () => {
+    if (!order) return;
+    setConfirming(true);
+    try {
+      const res = await fetch('/api/payment/confirm-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderCode: order.orderCode,
+          userId: user?.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.completed) {
+        setIsSuccess(true);
+        setIsProcessing(false);
+        setPendingOrder(null);
+        try {
+          localStorage.removeItem('hdn_pending_order');
+        } catch (e) {}
+        await refreshBalance();
+      } else {
+        setIsProcessing(true);
+        const updated = { ...order, status: 'processing' };
+        setOrder(updated);
+        setPendingOrder(updated);
+        try {
+          localStorage.setItem('hdn_pending_order', JSON.stringify(updated));
+        } catch (e) {}
+      }
+    } catch (e) {
+      setIsProcessing(true);
+    }
+    setConfirming(false);
   };
 
   const copyToClipboard = (text: string, type: string, label: string) => {
@@ -350,8 +392,8 @@ export default function RechargeModal() {
               </div>
             </div>
 
-            {/* Khi hết 10 phút hiển thị: Ẩn mã QR và tài khoản ngân hàng, chỉ báo hết hạn & tạo mã mới */}
-            {timeLeft === 0 ? (
+            {/* Khi hết 10 phút hiển thị mà khách chưa bấm Đã chuyển khoản: Ẩn mã QR, chỉ báo hết hạn & tạo mã mới */}
+            {timeLeft === 0 && !isProcessing ? (
               <div className="p-4 bg-red-950/30 border border-red-800/40 rounded-xl text-center space-y-3 animate-fadeIn my-3">
                 <div className="w-10 h-10 rounded-full bg-red-900/40 border border-red-700/50 text-red-400 mx-auto flex items-center justify-center">
                   <AlertCircle className="w-5 h-5" />
@@ -371,6 +413,66 @@ export default function RechargeModal() {
                   <span>Tạo Mã Chuyển Khoản Mới</span>
                 </button>
               </div>
+            ) : isProcessing ? (
+              <div className="p-4 bg-[#141422] border-2 border-[#7C5CFC]/50 rounded-xl text-center space-y-3.5 animate-fadeIn my-2 shadow-lg">
+                <div className="w-12 h-12 rounded-full bg-[#7C5CFC]/20 border border-[#7C5CFC]/40 text-[#A78BFA] mx-auto flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[10px] font-bold uppercase tracking-wide">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                    <span>Đang xử lý giao dịch</span>
+                  </div>
+                  <h4 className="font-semibold text-white text-sm pt-1">
+                    Đang chờ thông báo từ Gmail Sacombank...
+                  </h4>
+                  <p className="text-[11px] text-[#A1A1AA] leading-relaxed">
+                    Hệ thống đang tự động đọc thư báo biến động số dư, đối chiếu <strong className="text-white">số tiền</strong> và <strong className="text-amber-300">mã nội dung</strong> để cộng điểm cho bạn.
+                  </p>
+                </div>
+
+                {/* Bảng thông tin đang đối soát */}
+                <div className="bg-[#0B0B10] border border-[#222230] rounded-lg p-2.5 text-left text-[11px] space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#71717A]">Trạng thái đơn:</span>
+                    <span className="text-amber-300 font-semibold flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Đang xử lý...
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#71717A]">Số tiền đối chiếu:</span>
+                    <span className="text-white font-mono font-bold">{order.amountVnd.toLocaleString('vi-VN')} đ</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#71717A]">Mã nội dung CK:</span>
+                    <span className="font-mono text-[#F59E0B] font-bold bg-[#1C1C26] px-1.5 py-0.5 rounded">{order.orderCode}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-1 border-t border-[#1C1C26]">
+                    <span className="text-[#71717A]">Điểm nhận tự động:</span>
+                    <span className="text-emerald-400 font-bold">+{order.coinsReceived} Điểm</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleConfirmTransferred}
+                    disabled={confirming}
+                    className="w-full py-2 px-3 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 shadow active:scale-98"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${confirming ? 'animate-spin' : ''}`} />
+                    <span>{confirming ? 'Đang kiểm tra hòm thư...' : 'Kiểm Tra Lại Ngay'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsProcessing(false)}
+                    className="text-[11px] text-[#A1A1AA] hover:text-white underline transition py-1"
+                  >
+                    ← Xem lại mã QR chuyển khoản
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 {/* Mã QR */}
@@ -385,7 +487,7 @@ export default function RechargeModal() {
                 {/* Trạng thái chờ */}
                 <div className="text-[11px] text-[#A1A1AA] flex items-center justify-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Chờ nhận tiền (Tự động cộng Điểm sau 3s)</span>
+                  <span>Quét mã xong hãy bấm nút &ldquo;Tôi Đã Chuyển Khoản&rdquo; bên dưới</span>
                 </div>
 
                 {/* Nút hỗ trợ Mobile: Tải QR về máy */}
@@ -469,6 +571,26 @@ export default function RechargeModal() {
                     </div>
                   </div>
                 </div>
+
+                {/* Nút nổi bật: NGƯỜI DÙNG BẤM XÁC NHẬN ĐÃ CHUYỂN KHOẢN */}
+                <button
+                  type="button"
+                  onClick={handleConfirmTransferred}
+                  disabled={confirming}
+                  className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 active:scale-98"
+                >
+                  {confirming ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Đang chuyển sang trạng thái xử lý...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                      <span>Tôi Đã Chuyển Khoản</span>
+                    </>
+                  )}
+                </button>
               </>
             )}
 
