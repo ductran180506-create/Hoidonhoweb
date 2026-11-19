@@ -160,7 +160,25 @@ export async function GET(req: NextRequest) {
         };
       });
 
-      const orders = Object.values(orderMap).sort(
+      // Dọn dẹp các đơn pending quá 15 phút trong Supabase để Admin luôn sạch sẽ
+      try {
+        const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+        await supabaseAdmin
+          .from('transactions')
+          .delete()
+          .eq('status', 'pending')
+          .lt('created_at', fifteenMinutesAgo);
+      } catch (cleanErr) {}
+
+      // Lọc: Giữ lại toàn bộ đơn thành công; đơn pending quá 15 phút bị xóa bỏ hoàn toàn khỏi Admin
+      const validOrders = Object.values(orderMap).filter(o => {
+        if (o.status === 'completed') return true;
+        const createdTime = new Date(o.createdAt || Date.now()).getTime();
+        const ageMs = Date.now() - createdTime;
+        return ageMs <= 15 * 60 * 1000;
+      });
+
+      const orders = validOrders.sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
@@ -188,7 +206,12 @@ export async function GET(req: NextRequest) {
   }
 
   const stories = db.getStories();
-  const orders = db.getAllOrders();
+  const rawOrders = db.getAllOrders();
+  const orders = rawOrders.filter(o => {
+    if (o.status === 'completed') return true;
+    const ageMs = Date.now() - new Date(o.createdAt).getTime();
+    return ageMs <= 15 * 60 * 1000;
+  });
   const users = db.getAllUsersWithWallets();
   
   const totalRevenue = orders

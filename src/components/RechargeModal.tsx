@@ -346,123 +346,127 @@ export default function RechargeModal() {
               </div>
             </div>
 
-            {/* Khi hết 10 phút hiển thị */}
-            {timeLeft === 0 && (
-              <div className="p-3 bg-amber-950/40 border border-amber-800/40 rounded-xl text-left space-y-2 animate-fadeIn">
-                <div className="flex items-center gap-1.5 text-amber-400 font-semibold text-xs">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>Đã hết thời gian hiển thị (10 phút)</span>
+            {/* Khi hết 10 phút hiển thị: Ẩn mã QR và tài khoản ngân hàng, chỉ báo hết hạn & tạo mã mới */}
+            {timeLeft === 0 ? (
+              <div className="p-4 bg-red-950/30 border border-red-800/40 rounded-xl text-center space-y-3 animate-fadeIn my-3">
+                <div className="w-10 h-10 rounded-full bg-red-900/40 border border-red-700/50 text-red-400 mx-auto flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5" />
                 </div>
-                <p className="text-[11px] text-[#D4D4D8] leading-relaxed">
-                  Nếu bạn vừa chuyển khoản, hệ thống vẫn đang xử lý tự động trong vòng 15 phút. Nếu chưa chuyển, hãy bấm nút bên dưới để tạo mã mới nhé.
-                </p>
+                <div>
+                  <h4 className="font-semibold text-white text-sm">Mã Chuyển Khoản Đã Hết Hạn</h4>
+                  <p className="text-[11px] text-[#A1A1AA] mt-1 leading-relaxed">
+                    Mã đã hết thời gian hiệu lực (10 phút). Đơn hàng đã được đóng lại để đảm bảo an toàn.
+                  </p>
+                </div>
                 <button
                   type="button"
                   onClick={() => handleCreateOrder(order.packageType as any)}
-                  className="w-full py-2 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-medium rounded-lg transition flex items-center justify-center gap-1.5 shadow"
+                  className="w-full py-2.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 shadow"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Tạo Mã Chuyển Khoản Mới</span>
                 </button>
               </div>
-            )}
-
-            {/* Mã QR */}
-            <div className="relative p-2.5 bg-white rounded-xl inline-block border border-gray-200">
-              <img
-                src={order.qrUrl}
-                alt="VietQR"
-                className="w-40 h-40 mx-auto object-contain"
-              />
-            </div>
-
-            {/* Trạng thái chờ */}
-            <div className="text-[11px] text-[#A1A1AA] flex items-center justify-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Chờ nhận tiền (Tự động cộng Điểm sau 3s)</span>
-            </div>
-
-            {/* Nút hỗ trợ Mobile: Tải QR về máy */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={handleDownloadQr}
-                className="py-1.5 px-2 bg-[#1A1A24] hover:bg-[#252533] border border-[#2B2B38] text-white text-[11px] font-medium rounded-lg flex items-center justify-center gap-1.5 transition"
-              >
-                <Download className="w-3.5 h-3.5 text-[#7C5CFC]" />
-                <span>Lưu QR về máy</span>
-              </button>
-              <button
-                onClick={() => copyToClipboard(order.orderCode, 'content', 'nội dung chuyển khoản')}
-                className="py-1.5 px-2 bg-[#1A1A24] hover:bg-[#252533] border border-[#2B2B38] text-white text-[11px] font-medium rounded-lg flex items-center justify-center gap-1.5 transition"
-              >
-                {copiedType === 'content' ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5 text-[#F59E0B]" />
-                )}
-                <span>Copy Nội dung CK</span>
-              </button>
-            </div>
-
-            {notice && (
-              <div className="text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 py-1 px-2 rounded-md animate-fadeIn">
-                {notice}
-              </div>
-            )}
-
-            {/* Khối Copy 1 chạm thông tin ngân hàng */}
-            <div className="bg-[#0A0A0D] border border-[#22222B] rounded-lg p-2.5 text-left text-xs space-y-2">
-              <div className="flex justify-between items-center text-[11px]">
-                <span className="text-[#71717A]">Ngân hàng:</span>
-                <span className="text-white font-medium">{bankName} ({accountHolder})</span>
-              </div>
-
-              <div className="flex justify-between items-center text-[11px]">
-                <span className="text-[#71717A]">Số tài khoản:</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-mono text-white font-semibold">{bankAccount}</span>
-                  <button
-                    onClick={() => copyToClipboard(bankAccount, 'stk', 'số tài khoản')}
-                    className="p-1 text-[#71717A] hover:text-white transition"
-                    title="Sao chép STK"
-                  >
-                    {copiedType === 'stk' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  </button>
+            ) : (
+              <>
+                {/* Mã QR */}
+                <div className="relative p-2.5 bg-white rounded-xl inline-block border border-gray-200">
+                  <img
+                    src={order.qrUrl}
+                    alt="VietQR"
+                    className="w-40 h-40 mx-auto object-contain"
+                  />
                 </div>
-              </div>
 
-              <div className="flex justify-between items-center text-[11px]">
-                <span className="text-[#71717A]">Số tiền:</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-white font-semibold">
-                    {order.amountVnd.toLocaleString('vi-VN')} đ
-                  </span>
-                  <button
-                    onClick={() => copyToClipboard(String(order.amountVnd), 'amount', 'số tiền')}
-                    className="p-1 text-[#71717A] hover:text-white transition"
-                    title="Sao chép số tiền"
-                  >
-                    {copiedType === 'amount' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  </button>
+                {/* Trạng thái chờ */}
+                <div className="text-[11px] text-[#A1A1AA] flex items-center justify-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Chờ nhận tiền (Tự động cộng Điểm sau 3s)</span>
                 </div>
-              </div>
 
-              <div className="flex justify-between items-center text-[11px] pt-1 border-t border-[#1C1C24]">
-                <span className="text-[#71717A]">Nội dung CK:</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-mono text-[#F59E0B] font-bold text-xs bg-[#1C1C24] px-1.5 py-0.5 rounded">
-                    {order.orderCode}
-                  </span>
+                {/* Nút hỗ trợ Mobile: Tải QR về máy */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleDownloadQr}
+                    className="py-1.5 px-2 bg-[#1A1A24] hover:bg-[#252533] border border-[#2B2B38] text-white text-[11px] font-medium rounded-lg flex items-center justify-center gap-1.5 transition"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#7C5CFC]" />
+                    <span>Lưu QR về máy</span>
+                  </button>
                   <button
                     onClick={() => copyToClipboard(order.orderCode, 'content', 'nội dung chuyển khoản')}
-                    className="p-1 text-[#71717A] hover:text-white transition"
-                    title="Sao chép nội dung"
+                    className="py-1.5 px-2 bg-[#1A1A24] hover:bg-[#252533] border border-[#2B2B38] text-white text-[11px] font-medium rounded-lg flex items-center justify-center gap-1.5 transition"
                   >
-                    {copiedType === 'content' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    {copiedType === 'content' ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5 text-[#F59E0B]" />
+                    )}
+                    <span>Copy Nội dung CK</span>
                   </button>
                 </div>
-              </div>
-            </div>
+
+                {notice && (
+                  <div className="text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 py-1 px-2 rounded-md animate-fadeIn">
+                    {notice}
+                  </div>
+                )}
+
+                {/* Khối Copy 1 chạm thông tin ngân hàng */}
+                <div className="bg-[#0A0A0D] border border-[#22222B] rounded-lg p-2.5 text-left text-xs space-y-2">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-[#71717A]">Ngân hàng:</span>
+                    <span className="text-white font-medium">{bankName} ({accountHolder})</span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-[#71717A]">Số tài khoản:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-white font-semibold">{bankAccount}</span>
+                      <button
+                        onClick={() => copyToClipboard(bankAccount, 'stk', 'số tài khoản')}
+                        className="p-1 text-[#71717A] hover:text-white transition"
+                        title="Sao chép STK"
+                      >
+                        {copiedType === 'stk' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="text-[#71717A]">Số tiền:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-white font-semibold">
+                        {order.amountVnd.toLocaleString('vi-VN')} đ
+                      </span>
+                      <button
+                        onClick={() => copyToClipboard(String(order.amountVnd), 'amount', 'số tiền')}
+                        className="p-1 text-[#71717A] hover:text-white transition"
+                        title="Sao chép số tiền"
+                      >
+                        {copiedType === 'amount' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center text-[11px] pt-1 border-t border-[#1C1C24]">
+                    <span className="text-[#71717A]">Nội dung CK:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[#F59E0B] font-bold text-xs bg-[#1C1C24] px-1.5 py-0.5 rounded">
+                        {order.orderCode}
+                      </span>
+                      <button
+                        onClick={() => copyToClipboard(order.orderCode, 'content', 'nội dung chuyển khoản')}
+                        className="p-1 text-[#71717A] hover:text-white transition"
+                        title="Sao chép nội dung"
+                      >
+                        {copiedType === 'content' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
 
             <div className="text-[10px] text-[#71717A] text-center px-1">
               🛡️ Hệ thống tự động lưu giữ hiệu lực giao dịch trong <span className="text-[#D4D4D8] font-medium">15 phút</span> phòng trường hợp mạng hoặc ngân hàng bị chậm.

@@ -32,12 +32,14 @@ export async function GET(req: NextRequest) {
           const createdAt = tx.created_at;
           const createdTime = new Date(createdAt).getTime();
           const ageMs = Date.now() - createdTime;
-          const isExpired = ageMs > 15 * 60 * 1000;
-          const remainingSec = Math.max(0, Math.floor((15 * 60 * 1000 - ageMs) / 1000));
-          const displayRemainingSec = Math.max(0, Math.floor((10 * 60 * 1000 - ageMs) / 1000));
+          // Hiển thị user: đúng 10 phút (600s)
+          const isUserExpired = ageMs > 10 * 60 * 1000;
+          // Hệ thống duy trì ngầm: 15 phút (900s)
+          const isSystemExpired = ageMs > 15 * 60 * 1000;
+          const remainingSec = Math.max(0, Math.floor((10 * 60 * 1000 - ageMs) / 1000));
 
           let status = tx.status || 'pending';
-          if (status === 'pending' && isExpired) {
+          if (status === 'pending' && isUserExpired) {
             status = 'expired';
           }
 
@@ -50,10 +52,12 @@ export async function GET(req: NextRequest) {
             ? '🥤 Gói 45 Điểm (20.000đ)'
             : '☕ Gói 20 Điểm (10.000đ)';
 
-          const qrUrl = generateVietQrUrl({
-            amount: tx.amount_vnd,
-            orderCode: tx.payment_code,
-          });
+          const qrUrl = (status === 'pending' && !isUserExpired)
+            ? generateVietQrUrl({
+                amount: tx.amount_vnd,
+                orderCode: tx.payment_code,
+              })
+            : '';
 
           return {
             id: tx.id,
@@ -64,11 +68,10 @@ export async function GET(req: NextRequest) {
             packageName,
             status,
             createdAt,
-            expiresAt: new Date(createdTime + 15 * 60 * 1000).toISOString(),
-            displayExpiresAt: new Date(createdTime + 10 * 60 * 1000).toISOString(),
-            isExpired,
+            expiresAt: new Date(createdTime + 10 * 60 * 1000).toISOString(),
+            isExpired: isUserExpired,
+            isSystemExpired,
             remainingSec,
-            displayRemainingSec,
             qrUrl,
           };
         });
@@ -84,12 +87,12 @@ export async function GET(req: NextRequest) {
         const createdAt = tx.createdAt;
         const createdTime = new Date(createdAt).getTime();
         const ageMs = Date.now() - createdTime;
-        const isExpired = ageMs > 15 * 60 * 1000;
-        const remainingSec = Math.max(0, Math.floor((15 * 60 * 1000 - ageMs) / 1000));
-        const displayRemainingSec = Math.max(0, Math.floor((10 * 60 * 1000 - ageMs) / 1000));
+        const isUserExpired = ageMs > 10 * 60 * 1000;
+        const isSystemExpired = ageMs > 15 * 60 * 1000;
+        const remainingSec = Math.max(0, Math.floor((10 * 60 * 1000 - ageMs) / 1000));
 
         let status = tx.status || 'pending';
-        if (status === 'pending' && isExpired) {
+        if (status === 'pending' && isUserExpired) {
           status = 'expired';
         }
 
@@ -102,10 +105,12 @@ export async function GET(req: NextRequest) {
           ? '🥤 Gói 45 Điểm (20.000đ)'
           : '☕ Gói 20 Điểm (10.000đ)';
 
-        const qrUrl = generateVietQrUrl({
-          amount: tx.amountVnd,
-          orderCode: tx.orderCode,
-        });
+        const qrUrl = (status === 'pending' && !isUserExpired)
+          ? generateVietQrUrl({
+              amount: tx.amountVnd,
+              orderCode: tx.orderCode,
+            })
+          : '';
 
         return {
           id: tx.id,
@@ -116,11 +121,10 @@ export async function GET(req: NextRequest) {
           packageName,
           status,
           createdAt,
-          expiresAt: new Date(createdTime + 15 * 60 * 1000).toISOString(),
-          displayExpiresAt: new Date(createdTime + 10 * 60 * 1000).toISOString(),
-          isExpired,
+          expiresAt: new Date(createdTime + 10 * 60 * 1000).toISOString(),
+          isExpired: isUserExpired,
+          isSystemExpired,
           remainingSec,
-          displayRemainingSec,
           qrUrl,
         };
       });

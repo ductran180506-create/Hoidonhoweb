@@ -65,7 +65,7 @@ export default function PaymentHistoryModal() {
     }
   }, [isHistoryOpen, user?.id]);
 
-  // Cập nhật đếm ngược mỗi giây
+  // Cập nhật đếm ngược mỗi giây: hiển thị chuẩn 10 phút cho người dùng
   useEffect(() => {
     if (!isHistoryOpen) return;
 
@@ -75,13 +75,15 @@ export default function PaymentHistoryModal() {
           if (ord.status === 'pending') {
             const createdTime = new Date(ord.createdAt).getTime();
             const ageMs = Date.now() - createdTime;
-            const remainingSec = Math.max(0, Math.floor((15 * 60 * 1000 - ageMs) / 1000));
+            // Đếm ngược hiển thị 10 phút (600s)
+            const remainingSec = Math.max(0, Math.floor((10 * 60 * 1000 - ageMs) / 1000));
             const isExpired = remainingSec <= 0;
             return {
               ...ord,
               remainingSec,
               isExpired,
               status: isExpired ? 'expired' : 'pending',
+              qrUrl: isExpired ? '' : ord.qrUrl,
             };
           }
           return ord;
@@ -259,9 +261,9 @@ export default function PaymentHistoryModal() {
                 return (
                   <div
                     key={item.id}
-                    onClick={() => isPending && handleResume(item)}
+                    onClick={() => isPending && !item.isExpired && item.remainingSec > 0 && handleResume(item)}
                     className={`p-3 rounded-xl flex items-center justify-between text-xs transition ${
-                      isPending
+                      isPending && !item.isExpired && item.remainingSec > 0
                         ? 'bg-[#181520] border-2 border-amber-500/60 hover:border-amber-400 hover:bg-[#201B2B] cursor-pointer shadow-md'
                         : 'bg-[#0E0E14] border border-[#1E1E28] hover:border-[#2C2C3C]'
                     }`}
@@ -270,7 +272,7 @@ export default function PaymentHistoryModal() {
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                         isCompleted
                           ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/40'
-                          : isPending
+                          : (isPending && !item.isExpired && item.remainingSec > 0)
                           ? 'bg-amber-950/60 text-amber-400 border border-amber-600/50'
                           : 'bg-[#1C1C26] text-[#71717A]'
                       }`}>
@@ -291,7 +293,7 @@ export default function PaymentHistoryModal() {
                           <span>•</span>
                           <span>{dateStr}</span>
                         </div>
-                        {isPending && (
+                        {isPending && !item.isExpired && item.remainingSec > 0 && (
                           <div className="text-[10px] text-amber-300 font-semibold mt-1 flex items-center gap-1">
                             <QrCode className="w-3 h-3 text-amber-400" />
                             <span>Bấm vào đây để mở lại mã QR thanh toán ↗</span>
@@ -301,7 +303,7 @@ export default function PaymentHistoryModal() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className={`font-mono font-bold ${isPending ? 'text-amber-300 text-sm' : 'text-white'}`}>
+                      <div className={`font-mono font-bold ${(isPending && !item.isExpired && item.remainingSec > 0) ? 'text-amber-300 text-sm' : 'text-white'}`}>
                         {item.amountVnd.toLocaleString('vi-VN')} đ
                       </div>
                       <div className="mt-1">
@@ -309,7 +311,7 @@ export default function PaymentHistoryModal() {
                           <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded">
                             Thành công ✅
                           </span>
-                        ) : isPending ? (
+                        ) : (isPending && !item.isExpired && item.remainingSec > 0) ? (
                           <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm animate-pulse">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                             <span>Đang chờ ({formatCountdown(item.remainingSec)})</span>
