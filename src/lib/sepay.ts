@@ -5,11 +5,11 @@ export interface VietQrConfig {
   template?: string; // compact, qr_only
 }
 
-// Cấu hình ngân hàng mặc định (Đọc từ biến môi trường hoặc cấu hình thực tế của bạn)
+// Cấu hình ngân hàng mặc định: Sacombank - 040121635056 - TRAN CONG DUC
 export const DEFAULT_BANK_CONFIG: VietQrConfig = {
-  bankId: process.env.NEXT_PUBLIC_BANK_ID || process.env.BANK_ID || "MBBank",
-  accountNo: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO || process.env.BANK_ACCOUNT_NO || "0356382978",
-  accountName: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || process.env.BANK_ACCOUNT_NAME || "TRAN CONG DUC",
+  bankId: "Sacombank",
+  accountNo: "040121635056",
+  accountName: "TRAN CONG DUC",
   template: "compact"
 };
 

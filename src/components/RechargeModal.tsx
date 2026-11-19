@@ -163,13 +163,14 @@ export default function RechargeModal() {
 
   const handleDownloadQr = async () => {
     if (!order) return;
+    const targetQr = `https://img.vietqr.io/image/Sacombank-040121635056-compact.png?amount=${order.amountVnd}&addInfo=${encodeURIComponent(order.orderCode)}&accountName=TRAN%20CONG%20DUC`;
     try {
-      const response = await fetch(order.qrUrl);
+      const response = await fetch(targetQr);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `VietQR-${order.orderCode}.png`;
+      a.download = `VietQR-Sacombank-${order.orderCode}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -177,7 +178,7 @@ export default function RechargeModal() {
       setNotice('Đã tải mã QR về máy! Hãy mở App Ngân Hàng chọn "Quét từ album".');
       setTimeout(() => setNotice(null), 4000);
     } catch (e) {
-      window.open(order.qrUrl, '_blank');
+      window.open(targetQr, '_blank');
     }
   };
 
@@ -208,9 +209,12 @@ export default function RechargeModal() {
     },
   ];
 
-  const bankAccount = order?.bankInfo?.accountNo || '0356382978';
-  const bankName = order?.bankInfo?.bankId || 'MBBank';
-  const accountHolder = order?.bankInfo?.accountName || 'TRAN CONG DUC';
+  const bankAccount = '040121635056';
+  const bankName = 'Sacombank';
+  const accountHolder = 'TRAN CONG DUC';
+  const qrImageUrl = order
+    ? `https://img.vietqr.io/image/Sacombank-040121635056-compact.png?amount=${order.amountVnd}&addInfo=${encodeURIComponent(order.orderCode)}&accountName=TRAN%20CONG%20DUC`
+    : '';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/80 backdrop-blur-sm animate-fadeIn">
@@ -372,8 +376,8 @@ export default function RechargeModal() {
                 {/* Mã QR */}
                 <div className="relative p-2.5 bg-white rounded-xl inline-block border border-gray-200">
                   <img
-                    src={order.qrUrl}
-                    alt="VietQR"
+                    src={qrImageUrl}
+                    alt="VietQR Sacombank"
                     className="w-40 h-40 mx-auto object-contain"
                   />
                 </div>
