@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
 import RechargeModal from '@/components/RechargeModal';
 import FeedbackModal from '@/components/FeedbackModal';
+import PaymentHistoryModal from '@/components/PaymentHistoryModal';
 
 export const metadata: Metadata = {
   title: 'Hồi Đó Nhỏ - Truyện Tranh AI (@carrot.tia)',
@@ -43,6 +44,7 @@ export default function RootLayout({
           <Footer />
           <AuthModal />
           <RechargeModal />
+          <PaymentHistoryModal />
           <FeedbackModal />
         </AuthProvider>
       </body>

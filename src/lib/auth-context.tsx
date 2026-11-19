@@ -28,6 +28,11 @@ interface AuthContextType {
   setSelectedPackage: (pkg: string | null) => void;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
+  isHistoryOpen: boolean;
+  setIsHistoryOpen: (open: boolean) => void;
+  pendingOrder: any | null;
+  setPendingOrder: (order: any | null) => void;
+  resumePayment: (order: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,6 +44,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isRechargeOpen, setIsRechargeOpen] = useState<boolean>(false);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+  const [pendingOrder, setPendingOrder] = useState<any | null>(null);
+
+  // Khôi phục đơn hàng đang chờ từ localStorage khi khởi động
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hdn_pending_order');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const ageMs = Date.now() - new Date(parsed.createdAt || Date.now()).getTime();
+        if (ageMs < 15 * 60 * 1000) {
+          setPendingOrder(parsed);
+        } else {
+          localStorage.removeItem('hdn_pending_order');
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  const resumePayment = (orderToResume: any) => {
+    setPendingOrder(orderToResume);
+    try {
+      localStorage.setItem('hdn_pending_order', JSON.stringify(orderToResume));
+    } catch (e) {}
+    setIsHistoryOpen(false);
+    setIsRechargeOpen(true);
+  };
 
   const formatUser = (u: any): AuthUser => {
     const email = u.email || '';
@@ -242,6 +274,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSelectedPackage,
         isAuthModalOpen,
         setIsAuthModalOpen,
+        isHistoryOpen,
+        setIsHistoryOpen,
+        pendingOrder,
+        setPendingOrder,
+        resumePayment,
       }}
     >
       {children}

@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Search, Coins, User as UserIcon, LogOut, Sliders } from 'lucide-react';
 
 export default function Navbar() {
-  const { user, balance, setIsRechargeOpen, setIsAuthModalOpen, logout } = useAuth();
+  const { user, balance, setIsRechargeOpen, setIsAuthModalOpen, logout, setIsHistoryOpen, pendingOrder } = useAuth();
   const [searchCode, setSearchCode] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
@@ -106,8 +106,13 @@ export default function Navbar() {
         <div className="flex items-center gap-1.5 sm:gap-2">
           {user ? (
             <div className="flex items-center gap-1 sm:gap-1.5">
-              {/* Huy hiệu Tên Độc Giả */}
-              <div className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 bg-[#14141B] border border-[#22222B] rounded-lg text-xs text-[#E4E4E7]">
+              {/* Huy hiệu Tên Độc Giả: Bấm để mở Lịch Sử Nạp & Đơn Chờ */}
+              <button
+                type="button"
+                onClick={() => setIsHistoryOpen(true)}
+                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] hover:border-[#333344] rounded-lg text-xs text-[#E4E4E7] transition active:scale-95 cursor-pointer relative"
+                title="Bấm để xem lịch sử nạp & đơn chờ thanh toán"
+              >
                 {user.avatar ? (
                   <img src={user.avatar} alt={user.name || 'User'} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
                 ) : (
@@ -121,7 +126,26 @@ export default function Navbar() {
                     VIP
                   </span>
                 )}
-              </div>
+                {/* Chấm tròn báo động đơn đang chờ còn hiệu lực */}
+                {pendingOrder && (
+                  <>
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#0A0A0D] animate-ping" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#0A0A0D]" />
+                  </>
+                )}
+              </button>
+
+              {/* Nút báo có đơn chờ thanh toán (nếu có) */}
+              {pendingOrder && (
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryOpen(true)}
+                  className="hidden xs:flex items-center gap-1 px-2 py-1 bg-amber-950/60 hover:bg-amber-900/70 border border-amber-500/50 rounded-lg text-xs text-amber-300 font-semibold transition animate-pulse"
+                  title="Có 1 đơn chuyển khoản đang chờ thanh toán"
+                >
+                  <span className="text-[10px]">Đơn chờ ⏳</span>
+                </button>
+              )}
 
               {/* Số dư Điểm Tri Ân / Nút Mời Cà Phê */}
               <button 

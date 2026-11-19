@@ -24,7 +24,7 @@ interface OrderResponse {
 }
 
 export default function RechargeModal() {
-  const { isRechargeOpen, setIsRechargeOpen, user, setIsAuthModalOpen, refreshBalance, loginWithGoogle } = useAuth();
+  const { isRechargeOpen, setIsRechargeOpen, user, setIsAuthModalOpen, refreshBalance, loginWithGoogle, pendingOrder, setPendingOrder } = useAuth();
   const [selectedPkg, setSelectedPkg] = useState<'COIN_10K' | 'COIN_20K' | 'COIN_50K' | 'VIP_39K'>('COIN_10K');
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<OrderResponse | null>(null);
@@ -33,28 +33,46 @@ export default function RechargeModal() {
   const [notice, setNotice] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(600); // 10 phút đếm ngược hiển thị (600s)
 
+  // Khôi phục đơn hàng đang chờ khi mở modal
   useEffect(() => {
-    if (!isRechargeOpen) {
-      setOrder(null);
+    if (isRechargeOpen) {
+      if (pendingOrder) {
+        setOrder(pendingOrder);
+      } else {
+        try {
+          const saved = localStorage.getItem('hdn_pending_order');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            const ageMs = Date.now() - new Date(parsed.createdAt || Date.now()).getTime();
+            if (ageMs < 15 * 60 * 1000) {
+              setOrder(parsed);
+              setPendingOrder(parsed);
+            } else {
+              localStorage.removeItem('hdn_pending_order');
+            }
+          }
+        } catch (e) {}
+      }
+    } else {
       setIsSuccess(false);
       setNotice(null);
-      setTimeLeft(600);
     }
-  }, [isRechargeOpen]);
+  }, [isRechargeOpen, pendingOrder]);
 
-  // Đồng hồ đếm ngược hiển thị 10 phút
+  // Đồng hồ đếm ngược hiển thị 10 phút (tính chính xác theo mốc tạo đơn)
   useEffect(() => {
     if (!order) {
       setTimeLeft(600);
       return;
     }
 
-    // Đếm ngược 10 phút (600 giây)
-    const targetTime = Date.now() + 10 * 60 * 1000;
-    setTimeLeft(600);
+    const createdTime = order.createdAt ? new Date(order.createdAt).getTime() : Date.now();
+    const displayTarget = createdTime + 10 * 60 * 1000;
+    const initialSec = Math.max(0, Math.ceil((displayTarget - Date.now()) / 1000));
+    setTimeLeft(initialSec);
 
     const timer = setInterval(() => {
-      const remainingSec = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
+      const remainingSec = Math.max(0, Math.ceil((displayTarget - Date.now()) / 1000));
       setTimeLeft(remainingSec);
       if (remainingSec <= 0) {
         clearInterval(timer);
@@ -62,7 +80,7 @@ export default function RechargeModal() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [order?.orderCode]);
+  }, [order?.orderCode, order?.createdAt]);
 
   // Polling kiểm tra trạng thái chuyển khoản trong 15 phút thực tế
   useEffect(() => {
@@ -83,6 +101,10 @@ export default function RechargeModal() {
 
         if (data.success && data.completed) {
           setIsSuccess(true);
+          setPendingOrder(null);
+          try {
+            localStorage.removeItem('hdn_pending_order');
+          } catch (e) {}
           await refreshBalance();
           clearInterval(interval);
         }
@@ -98,6 +120,14 @@ export default function RechargeModal() {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleCancelOrder = () => {
+    setOrder(null);
+    setPendingOrder(null);
+    try {
+      localStorage.removeItem('hdn_pending_order');
+    } catch (e) {}
   };
 
   if (!isRechargeOpen) return null;
@@ -122,6 +152,10 @@ export default function RechargeModal() {
       const data = await res.json();
       if (data.success) {
         setOrder(data.order);
+        setPendingOrder(data.order);
+        try {
+          localStorage.setItem('hdn_pending_order', JSON.stringify(data.order));
+        } catch (e) {}
       }
     } catch (err) {
       console.error(err);
@@ -448,10 +482,10 @@ export default function RechargeModal() {
 
             <div className="pt-1">
               <button
-                onClick={() => setOrder(null)}
+                onClick={handleCancelOrder}
                 className="w-full py-2.5 text-xs text-[#A1A1AA] hover:text-white bg-[#14141B] hover:bg-[#1E1E28] border border-[#22222B] rounded-lg transition font-medium flex items-center justify-center gap-1.5"
               >
-                <span>← Chọn Gói Nạp Khác</span>
+                <span>← Chọn Gói Nạp Khác (Hủy Đơn Này)</span>
               </button>
             </div>
           </div>
