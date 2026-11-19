@@ -41,7 +41,7 @@ export default function PaymentHistoryModal() {
 
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState<TransactionItem[]>([]);
-  const [filter, setFilter] = useState<'all' | 'completed' | 'pending'>('all');
+  const [filter, setFilter] = useState<'all' | 'completed' | 'pending' | 'expired'>('all');
 
   // Tải danh sách đơn hàng của người dùng
   const fetchOrders = async () => {
@@ -131,6 +131,7 @@ export default function PaymentHistoryModal() {
   const filteredOrders = orders.filter(o => {
     if (filter === 'completed') return o.status === 'completed';
     if (filter === 'pending') return o.status === 'pending';
+    if (filter === 'expired') return o.status === 'expired';
     return true;
   });
 
@@ -225,6 +226,16 @@ export default function PaymentHistoryModal() {
                 }`}
               >
                 Đang chờ ({orders.filter(o => o.status === 'pending').length})
+              </button>
+              <button
+                onClick={() => setFilter('expired')}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
+                  filter === 'expired'
+                    ? 'bg-zinc-800/80 text-zinc-300 border border-zinc-700/80'
+                    : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                Đã hết hạn ({orders.filter(o => o.status === 'expired').length})
               </button>
             </div>
 

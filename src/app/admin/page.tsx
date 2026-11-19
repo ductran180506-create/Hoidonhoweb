@@ -63,7 +63,7 @@ export default function AdminPage() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerFilter, setCustomerFilter] = useState<'all' | 'vip' | 'has_coins'>('all');
   const [storySearch, setStorySearch] = useState('');
-  const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending'>('all');
+  const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired'>('all');
   const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<'all' | 'bug' | 'content' | 'payment' | 'other'>('all');
   const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<'all' | 'new' | 'reviewed'>('all');
 
@@ -752,7 +752,8 @@ export default function AdminPage() {
 
   const filteredOrders = safeOrders.filter((o) => {
     if (orderFilter === 'completed') return o.status === 'completed';
-    if (orderFilter === 'pending') return o.status !== 'completed';
+    if (orderFilter === 'pending') return o.status === 'pending';
+    if (orderFilter === 'expired') return o.status === 'expired';
     return true;
   });
 
@@ -1932,26 +1933,34 @@ export default function AdminPage() {
               <button
                 onClick={() => setOrderFilter('all')}
                 className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                  orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A]'
+                  orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                Tất cả ({orders.length})
+                Tất cả ({safeOrders.length})
               </button>
               <button
                 onClick={() => setOrderFilter('completed')}
                 className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                  orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A]'
+                  orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                Thành công ({stats.completedOrders})
+                Thành công ({safeOrders.filter(o => o.status === 'completed').length})
               </button>
               <button
                 onClick={() => setOrderFilter('pending')}
                 className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                  orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A]'
+                  orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                Chờ quét ({stats.totalOrders - stats.completedOrders})
+                Chờ quét ({safeOrders.filter(o => o.status === 'pending').length})
+              </button>
+              <button
+                onClick={() => setOrderFilter('expired')}
+                className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
+                  orderFilter === 'expired' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                Đã hết hạn ({safeOrders.filter(o => o.status === 'expired').length})
               </button>
               <button
                 onClick={handleCleanupTestData}
@@ -2007,7 +2016,7 @@ export default function AdminPage() {
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
                             ✓ Thành công
                           </span>
-                        ) : (
+                        ) : ord.status === 'pending' ? (
                           <div className="inline-flex items-center gap-2">
                             <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium">
                               Chờ quét QR
@@ -2019,6 +2028,10 @@ export default function AdminPage() {
                               Duyệt ngay
                             </button>
                           </div>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-[#181822] text-[#71717A] border border-[#272733] font-medium">
+                            ✕ Đã hết hạn
+                          </span>
                         )}
                       </td>
                       <td className="py-3 text-right text-[#71717A] text-[11px]">
