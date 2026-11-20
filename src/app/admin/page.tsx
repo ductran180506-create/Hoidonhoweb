@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { 
   Plus, DollarSign, BookOpen, 
@@ -919,10 +919,49 @@ export default function AdminPage() {
   const periodUsers = safeUsers.filter((u) => checkDateMatch(u.createdAt));
   const allMachines = Array.isArray(analytics?.machineList) ? analytics.machineList : [];
   const periodMachines = allMachines.filter((m: any) => checkDateMatch(m.lastActive));
+  const periodFeedback = feedbackList.filter((f) => checkDateMatch(f.createdAt));
 
-  const filteredUsers = safeUsers.filter((u) => {
-    if (dateFilterType !== 'all' && !checkDateMatch(u.createdAt)) return false;
+  // Bộ dữ liệu cơ sở đồng bộ toàn bộ giao diện theo mốc thời gian đang chọn:
+  const baseUsers = dateFilterType === 'all' ? safeUsers : periodUsers;
+  const baseOrders = dateFilterType === 'all' ? safeOrders : periodOrders;
+  const baseMachines = dateFilterType === 'all' ? allMachines : periodMachines;
+  const baseFeedback = dateFilterType === 'all' ? feedbackList : periodFeedback;
 
+  // Thống kê động cho Traffic / Analytics theo mốc thời gian đang chọn:
+  const displaySources = useMemo(() => {
+    if (dateFilterType === 'all' && analytics?.sources) return analytics.sources;
+    const srcMap: Record<string, number> = {};
+    periodMachines.forEach((m: any) => {
+      const s = m.referrer || 'Truy cập trực tiếp';
+      srcMap[s] = (srcMap[s] || 0) + 1;
+    });
+    return srcMap;
+  }, [dateFilterType, analytics?.sources, periodMachines]);
+
+  const displayDevices = useMemo(() => {
+    if (dateFilterType === 'all' && analytics?.devices) return analytics.devices;
+    const devMap: Record<string, number> = {};
+    periodMachines.forEach((m: any) => {
+      const d = m.device || 'Khác';
+      devMap[d] = (devMap[d] || 0) + 1;
+    });
+    return devMap;
+  }, [dateFilterType, analytics?.devices, periodMachines]);
+
+  const displayTopStories = useMemo(() => {
+    if (dateFilterType === 'all' && analytics?.topStories) return analytics.topStories;
+    const stMap: Record<string, { title: string; count: number }> = {};
+    periodMachines.forEach((m: any) => {
+      if (m.storyTitle && m.storyTitle !== 'Trang chủ kho truyện' && m.storyTitle !== '/') {
+        const title = m.storyTitle;
+        if (!stMap[title]) stMap[title] = { title, count: 0 };
+        stMap[title].count += 1;
+      }
+    });
+    return Object.values(stMap).sort((a, b) => b.count - a.count).slice(0, 5);
+  }, [dateFilterType, analytics?.topStories, periodMachines]);
+
+  const filteredUsers = baseUsers.filter((u) => {
     const q = customerSearch.trim().toLowerCase();
     const matchSearch = !q || 
       (u.name || '').toLowerCase().includes(q) ||
@@ -944,12 +983,10 @@ export default function AdminPage() {
     return (s.code || '').toLowerCase().includes(q) || (s.title || '').toLowerCase().includes(q);
   });
 
-  const filteredOrders = safeOrders.filter((o) => {
+  const filteredOrders = baseOrders.filter((o) => {
     if (orderFilter === 'completed' && o.status !== 'completed') return false;
     if (orderFilter === 'pending' && o.status !== 'pending' && o.status !== 'processing') return false;
     if (orderFilter === 'expired' && o.status !== 'expired') return false;
-
-    if (dateFilterType !== 'all' && !checkDateMatch(o.createdAt)) return false;
 
     if (orderSearch.trim()) {
       const q = orderSearch.toLowerCase().trim();
@@ -1362,7 +1399,7 @@ export default function AdminPage() {
                 : 'text-[#71717A] hover:text-white'
             }`}
           >
-            Độc Giả & Khách Hàng ({users.length})
+            Độc Giả & Khách Hàng ({baseUsers.length})
           </button>
 
           <button
@@ -1373,7 +1410,7 @@ export default function AdminPage() {
                 : 'text-[#71717A] hover:text-white'
             }`}
           >
-            Dòng Tiền & Doanh Thu
+            Dòng Tiền & Doanh Thu ({baseOrders.length})
           </button>
 
           <button
@@ -1384,7 +1421,7 @@ export default function AdminPage() {
                 : 'text-[#71717A] hover:text-white'
             }`}
           >
-            📊 Thống Kê & Traffic ({analytics?.totalViews || 0})
+            📊 Thống Kê & Traffic ({baseMachines.length})
           </button>
 
           <button
@@ -1395,10 +1432,10 @@ export default function AdminPage() {
                 : 'text-[#71717A] hover:text-white'
             }`}
           >
-            <span>📬 Hòm Thư Góp Ý</span>
-            {feedbackList.filter(f => f.status === 'new').length > 0 && (
+            <span>📬 Hòm Thư Góp Ý ({baseFeedback.length})</span>
+            {baseFeedback.filter(f => f.status === 'new').length > 0 && (
               <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#7C5CFC] text-white font-bold animate-pulse">
-                {feedbackList.filter(f => f.status === 'new').length}
+                {baseFeedback.filter(f => f.status === 'new').length}
               </span>
             )}
           </button>
@@ -2295,7 +2332,12 @@ export default function AdminPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3">
             <div>
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>Danh Sách Độc Giả</span>
+                <span>Danh Sách Độc Giả ({filteredUsers.length} người)</span>
+                {dateFilterType !== 'all' && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                    {getDateFilterLabel()}
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold font-mono">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Real-time</span>
@@ -2326,7 +2368,7 @@ export default function AdminPage() {
                       customerFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    Tất cả ({safeUsers.length})
+                    Tất cả ({baseUsers.length})
                   </button>
                   <button
                     onClick={() => setCustomerFilter('recharged')}
@@ -2334,7 +2376,7 @@ export default function AdminPage() {
                       customerFilter === 'recharged' ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    Đã nạp tiền ({totalRechargedUsers})
+                    Đã nạp tiền ({baseUsers.filter(u => u.hasRecharged || (u.totalRechargedVnd || 0) > 0).length})
                   </button>
                   <button
                     onClick={() => setCustomerFilter('google')}
@@ -2342,7 +2384,7 @@ export default function AdminPage() {
                       customerFilter === 'google' ? 'bg-sky-950/70 text-sky-300 border border-sky-500/30' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    Google ({totalGoogleUsers})
+                    Google ({baseUsers.filter(u => u.isGoogle).length})
                   </button>
                   <button
                     onClick={() => setCustomerFilter('vip')}
@@ -2350,7 +2392,7 @@ export default function AdminPage() {
                       customerFilter === 'vip' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    VIP ({totalVipUsers})
+                    VIP ({baseUsers.filter(u => u.isVip).length})
                   </button>
                 </div>
               </div>
@@ -2517,7 +2559,12 @@ export default function AdminPage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5">
             <div>
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>Sổ Nhật Ký Chuyển Khoản VietQR • Sacombank</span>
+                <span>Sổ Nhật Ký Chuyển Khoản ({filteredOrders.length} đơn)</span>
+                {dateFilterType !== 'all' && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                    {getDateFilterLabel()}
+                  </span>
+                )}
                 {orderSearch && (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-medium">
                     Tìm thấy: {filteredOrders.length} đơn
@@ -2561,7 +2608,7 @@ export default function AdminPage() {
                       orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    Tất cả ({safeOrders.length})
+                    Tất cả ({baseOrders.length})
                   </button>
                   <button
                     onClick={() => setOrderFilter('completed')}
@@ -2569,7 +2616,7 @@ export default function AdminPage() {
                       orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    Thành công ({safeOrders.filter(o => o.status === 'completed').length})
+                    Thành công ({baseOrders.filter(o => o.status === 'completed').length})
                   </button>
                   <button
                     onClick={() => setOrderFilter('pending')}
@@ -2577,7 +2624,7 @@ export default function AdminPage() {
                       orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    Chờ quét ({safeOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
+                    Chờ quét ({baseOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
                   </button>
                   <button
                     onClick={() => setOrderFilter('expired')}
@@ -2585,7 +2632,7 @@ export default function AdminPage() {
                       orderFilter === 'expired' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    Đã hết hạn ({safeOrders.filter(o => o.status === 'expired').length})
+                    Đã hết hạn ({baseOrders.filter(o => o.status === 'expired').length})
                   </button>
                   <button
                     onClick={handleCleanupTestData}
@@ -2710,12 +2757,14 @@ export default function AdminPage() {
           {/* Hàng thẻ thống kê */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
-              <div className="text-[11px] font-medium text-[#71717A]">Tổng Số Máy Đã Vào (Khách Thực Tế)</div>
+              <div className="text-[11px] font-medium text-[#71717A]">
+                {dateFilterType === 'all' ? 'Tổng Số Máy Đã Vào (Khách Thực Tế)' : `Khách Vào (${getDateFilterLabel()})`}
+              </div>
               <div className="text-2xl font-bold text-white mt-1">
-                {(analytics?.totalMachines || analytics?.totalViews || 0).toLocaleString('vi-VN')}
+                {baseMachines.length.toLocaleString('vi-VN')}
               </div>
               <div className="text-[10px] text-emerald-400 mt-1">
-                Chuẩn: 1 máy = tính 1 lần duy nhất
+                {dateFilterType === 'all' ? 'Chuẩn: 1 máy = tính 1 lần duy nhất' : `Số máy truy cập trong ${getDateFilterLabel()}`}
               </div>
             </div>
 
@@ -2730,15 +2779,17 @@ export default function AdminPage() {
             <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
               <div className="text-[11px] font-medium text-[#71717A]">Từ TikTok Bio</div>
               <div className="text-2xl font-bold text-[#F43F5E] mt-1">
-                {(analytics?.sources?.['TikTok Bio'] || 0).toLocaleString('vi-VN')}
+                {(displaySources?.['TikTok Bio'] || 0).toLocaleString('vi-VN')}
               </div>
-              <div className="text-[10px] text-[#A1A1AA] mt-1">Khách bấm từ link bio TikTok</div>
+              <div className="text-[10px] text-[#A1A1AA] mt-1">
+                {dateFilterType === 'all' ? 'Khách bấm từ link bio TikTok' : `Trong ${getDateFilterLabel()}`}
+              </div>
             </div>
 
             <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
               <div className="text-[11px] font-medium text-[#71717A]">Thiết Bị Di Động</div>
               <div className="text-2xl font-bold text-[#7C5CFC] mt-1">
-                {((analytics?.devices?.['iPhone (iOS)'] || 0) + (analytics?.devices?.['Android Phone'] || 0)).toLocaleString('vi-VN')}
+                {((displayDevices?.['iPhone (iOS)'] || 0) + (displayDevices?.['Android Phone'] || 0)).toLocaleString('vi-VN')}
               </div>
               <div className="text-[10px] text-[#A1A1AA] mt-1">iPhone & Android chiếm ưu thế</div>
             </div>
@@ -2750,12 +2801,12 @@ export default function AdminPage() {
               {/* Nguồn truy cập */}
               <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 space-y-3">
                 <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
-                  Nguồn Truy Cập (Referrer)
+                  Nguồn Truy Cập (Referrer) {dateFilterType !== 'all' ? `• ${getDateFilterLabel()}` : ''}
                 </h3>
                 <div className="space-y-2">
-                  {analytics?.sources && Object.keys(analytics.sources).length > 0 ? (
-                    Object.entries(analytics.sources).map(([src, count]: [string, any]) => {
-                      const total = analytics.totalMachines || analytics.totalViews || 1;
+                  {displaySources && Object.keys(displaySources).length > 0 ? (
+                    Object.entries(displaySources).map(([src, count]: [string, any]) => {
+                      const total = baseMachines.length || 1;
                       const pct = Math.round((count / total) * 100);
                       return (
                         <div key={src} className="space-y-1">
@@ -2783,12 +2834,12 @@ export default function AdminPage() {
               {/* Phân loại thiết bị */}
               <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 space-y-3">
                 <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
-                  Thiết Bị Độc Giả Sử Dụng
+                  Thiết Bị Độc Giả Sử Dụng {dateFilterType !== 'all' ? `• ${getDateFilterLabel()}` : ''}
                 </h3>
                 <div className="space-y-2">
-                  {analytics?.devices && Object.keys(analytics.devices).length > 0 ? (
-                    Object.entries(analytics.devices).map(([dev, count]: [string, any]) => {
-                      const total = analytics.totalMachines || analytics.totalViews || 1;
+                  {displayDevices && Object.keys(displayDevices).length > 0 ? (
+                    Object.entries(displayDevices).map(([dev, count]: [string, any]) => {
+                      const total = baseMachines.length || 1;
                       const pct = Math.round((count / total) * 100);
                       return (
                         <div key={dev} className="flex justify-between items-center text-xs p-2 bg-[#0A0A0D] rounded-lg border border-[#1C1C24]">
@@ -2804,13 +2855,13 @@ export default function AdminPage() {
               </div>
 
               {/* Top truyện xem nhiều */}
-              {analytics?.topStories && analytics.topStories.length > 0 && (
+              {displayTopStories && displayTopStories.length > 0 && (
                 <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 space-y-3">
                   <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
-                    Top Bộ Truyện Xem Nhiều
+                    Top Bộ Truyện Xem Nhiều {dateFilterType !== 'all' ? `• ${getDateFilterLabel()}` : ''}
                   </h3>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto admin-table-scroll pr-1">
-                    {analytics.topStories.map((st: any, idx: number) => (
+                    {displayTopStories.map((st: any, idx: number) => (
                       <div key={idx} className="flex justify-between items-center text-xs p-2 bg-[#0A0A0D] rounded-lg border border-[#1C1C24]">
                         <span className="text-white font-medium truncate max-w-[200px]">{st.title}</span>
                         <span className="font-mono text-emerald-400 font-semibold">{st.count} lượt đọc</span>
@@ -3036,10 +3087,15 @@ export default function AdminPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111116] border border-[#1E1E26] rounded-xl p-5">
             <div>
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>📬 Hòm Thư Ý Kiến Độc Giả</span>
-                {feedbackList.filter(f => f.status === 'new').length > 0 && (
+                <span>📬 Hòm Thư Ý Kiến Độc Giả ({baseFeedback.length} thư)</span>
+                {dateFilterType !== 'all' && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                    {getDateFilterLabel()}
+                  </span>
+                )}
+                {baseFeedback.filter(f => f.status === 'new').length > 0 && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold">
-                    {feedbackList.filter(f => f.status === 'new').length} tin mới
+                    {baseFeedback.filter(f => f.status === 'new').length} tin mới
                   </span>
                 )}
               </h2>
@@ -3072,7 +3128,7 @@ export default function AdminPage() {
                       : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
                   }`}
                 >
-                  Tất cả ({feedbackList.length})
+                  Tất cả ({baseFeedback.length})
                 </button>
 
                 <button
@@ -3085,7 +3141,7 @@ export default function AdminPage() {
                 >
                   <span>🐛 Báo lỗi</span>
                   <span className="text-[10px] opacity-80">
-                    ({feedbackList.filter(f => f.type === 'bug').length})
+                    ({baseFeedback.filter(f => f.type === 'bug').length})
                   </span>
                 </button>
 
@@ -3099,7 +3155,7 @@ export default function AdminPage() {
                 >
                   <span>💡 Góp ý truyện</span>
                   <span className="text-[10px] opacity-80">
-                    ({feedbackList.filter(f => f.type === 'content').length})
+                    ({baseFeedback.filter(f => f.type === 'content').length})
                   </span>
                 </button>
 
@@ -3113,7 +3169,7 @@ export default function AdminPage() {
                 >
                   <span>💳 Mở khóa / Điểm</span>
                   <span className="text-[10px] opacity-80">
-                    ({feedbackList.filter(f => f.type === 'payment').length})
+                    ({baseFeedback.filter(f => f.type === 'payment').length})
                   </span>
                 </button>
 
@@ -3127,7 +3183,7 @@ export default function AdminPage() {
                 >
                   <span>💬 Ý kiến khác</span>
                   <span className="text-[10px] opacity-80">
-                    ({feedbackList.filter(f => f.type === 'other').length})
+                    ({baseFeedback.filter(f => f.type === 'other').length})
                   </span>
                 </button>
               </div>
@@ -3153,7 +3209,7 @@ export default function AdminPage() {
                   }`}
                 >
                   <span>Chưa xem</span>
-                  {feedbackList.filter(f => f.status === 'new').length > 0 && (
+                  {baseFeedback.filter(f => f.status === 'new').length > 0 && (
                     <span className="w-1.5 h-1.5 rounded-full bg-[#7C5CFC] animate-pulse" />
                   )}
                 </button>
@@ -3172,7 +3228,7 @@ export default function AdminPage() {
 
             {/* Danh sách sau lọc */}
             {(() => {
-              const displayList = feedbackList.filter(item => {
+              const displayList = baseFeedback.filter(item => {
                 if (feedbackTypeFilter !== 'all' && item.type !== feedbackTypeFilter) return false;
                 if (feedbackStatusFilter === 'new' && item.status !== 'new') return false;
                 if (feedbackStatusFilter === 'reviewed' && item.status !== 'reviewed') return false;
