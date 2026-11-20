@@ -212,7 +212,7 @@ export async function syncGmailSacombankPayments(targetOrderCode?: string, force
           orderCode: t.payment_code,
           userId: t.user_id,
           amountVnd: Number(t.amount_vnd) || 10000,
-          coins: Number(t.coins) || (isVip ? 50 : 20),
+          coins: Number(t.coins) || (isVip ? 50 : 15),
           isVip,
           vipDays: isVip ? 30 : 0,
           createdAt: t.created_at,

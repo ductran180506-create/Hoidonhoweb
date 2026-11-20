@@ -229,7 +229,7 @@ export default function RechargeModal() {
       type: 'COIN_10K', 
       name: '10.000đ', 
       coins: '☕ 1 Ly Cà Phê (10k)', 
-      note: 'Nhận 20 Điểm đọc truyện', 
+      note: 'Nhận 15 Điểm đọc truyện', 
     },
     { 
       type: 'COIN_20K', 
