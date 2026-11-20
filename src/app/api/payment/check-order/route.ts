@@ -50,15 +50,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ success: false, message: 'Không tìm thấy đơn hàng' }, { status: 404 });
   }
 
-  // Kiểm tra thời hạn hiệu lực thực tế: 15 phút (900.000 ms)
-  const isExpired = Boolean(orderCreatedAt && !isCompleted && (Date.now() - new Date(orderCreatedAt).getTime() > 15 * 60 * 1000));
+  // Kiểm tra thời hạn hiệu lực hiển thị giao diện: 15 phút (900.000 ms)
+  let isExpired = Boolean(orderCreatedAt && !isCompleted && (Date.now() - new Date(orderCreatedAt).getTime() > 15 * 60 * 1000));
 
-  // Nếu đơn vẫn đang chờ và còn hạn (<= 15 phút), tự động quét thông báo Gmail từ Sacombank
-  if (!isCompleted && !isExpired) {
+  // Luôn quét thông báo Gmail từ Sacombank nếu đơn chưa completed (đảm bảo khách chuyển tiền lúc nào cũng được cộng)
+  if (!isCompleted) {
     try {
       const { matchedOrders } = await syncGmailSacombankPayments(orderCode);
       if (matchedOrders.includes(orderCode)) {
         isCompleted = true;
+        isExpired = false;
       }
     } catch (err) {
       console.warn('Lỗi quét Gmail Sacombank trong check-order:', err);

@@ -249,10 +249,10 @@ export async function syncGmailSacombankPayments(targetOrderCode?: string, force
   for (const ord of pendingOrders) {
     if (!ord.orderCode) continue;
 
-    // Kiểm tra hiệu lực 15 phút (10 phút hiển thị + 5 phút vùng đệm ngầm)
+    // Đơn hợp lệ trong vòng 48 tiếng (cho phép khách chuyển khoản trễ vẫn được cộng tiền tự động)
     const createdTime = new Date(ord.createdAt || Date.now()).getTime();
     const ageMs = Date.now() - createdTime;
-    if (ageMs > 15 * 60 * 1000) {
+    if (ageMs > 48 * 60 * 60 * 1000) {
       continue;
     }
 

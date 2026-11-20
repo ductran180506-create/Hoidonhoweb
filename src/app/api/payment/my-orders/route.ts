@@ -28,9 +28,9 @@ export async function GET(req: NextRequest) {
         .order('created_at', { ascending: false })
         .limit(30);
 
-      // Nếu user có đơn đang pending/processing trong 15 phút gần nhất, tự động quét Gmail Sacombank để đối soát ngay
+      // Nếu user có đơn đang pending/processing trong 48 giờ gần nhất, tự động quét Gmail Sacombank để đối soát ngay
       let newlyMatched: string[] = [];
-      if (!error && sbTxs && sbTxs.some(tx => (tx.status === 'pending' || tx.status === 'processing') && (Date.now() - new Date(tx.created_at).getTime() <= 15 * 60 * 1000))) {
+      if (!error && sbTxs && sbTxs.some(tx => (tx.status === 'pending' || tx.status === 'processing') && (Date.now() - new Date(tx.created_at).getTime() <= 48 * 60 * 60 * 1000))) {
         try {
           const syncRes = await syncGmailSacombankPayments();
           newlyMatched = syncRes.matchedOrders;

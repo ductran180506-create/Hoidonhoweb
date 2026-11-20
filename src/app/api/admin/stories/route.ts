@@ -139,9 +139,9 @@ export async function GET(req: NextRequest) {
         };
       });
 
-      // Tự động quét Gmail Sacombank nếu đang có đơn pending hoặc processing trong 15 phút gần nhất
+      // Tự động quét Gmail Sacombank nếu đang có đơn pending hoặc processing trong 48 giờ gần nhất
       let newlyMatched: string[] = [];
-      if ((sbTx || []).some(t => (t.status === 'pending' || t.status === 'processing') && (Date.now() - new Date(t.created_at).getTime() <= 15 * 60 * 1000))) {
+      if ((sbTx || []).some(t => (t.status === 'pending' || t.status === 'processing') && (Date.now() - new Date(t.created_at).getTime() <= 48 * 60 * 60 * 1000))) {
         try {
           const syncRes = await syncGmailSacombankPayments();
           newlyMatched = syncRes.matchedOrders;
