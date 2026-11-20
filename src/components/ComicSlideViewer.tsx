@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { toCdnUrl } from '@/lib/supabase';
 import { 
   ChevronLeft, ChevronRight, Maximize2, 
   X, Sparkles, ArrowRight, CheckCircle2,
@@ -50,7 +51,7 @@ function SlideImage({
         </div>
       ) : (
         <img
-          src={src}
+          src={toCdnUrl(src)}
           alt={alt}
           onLoad={() => setLoaded(true)}
           onError={() => setError(true)}
@@ -451,7 +452,7 @@ export default function ComicSlideViewer({
               className="relative w-full bg-black rounded-lg overflow-hidden flex items-center justify-center border border-[#1E1E26]/60 shadow-lg"
             >
               <img
-                src={imgUrl}
+                src={toCdnUrl(imgUrl)}
                 alt={`${title} - Trang ${idx + 1}`}
                 className="w-full max-w-full h-auto object-contain mx-auto block select-none pointer-events-none"
                 loading={idx < 3 ? 'eager' : 'lazy'}

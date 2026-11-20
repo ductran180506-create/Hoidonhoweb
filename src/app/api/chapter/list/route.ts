@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin, toCdnUrls } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
           chapterIndex: c.chapter_number || (idx + 1),
           title: c.title,
           priceCoins: c.price,
-          images: c.images || [],
+          images: toCdnUrls(c.images),
           createdAt: c.created_at,
         })),
       }, { headers: noCacheHeaders });
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
       chapterIndex: c.chapterIndex,
       title: c.title,
       priceCoins: c.priceCoins,
-      images: c.images || [],
+      images: toCdnUrls(c.images),
       createdAt: c.createdAt,
     })),
   }, { headers: noCacheHeaders });

@@ -14,6 +14,7 @@ import ShareButton from '@/components/ShareButton';
 import CommentsSection from '@/components/CommentsSection';
 import { saveReadingProgress } from '@/lib/reading-history';
 import { trackPageView } from '@/lib/analytics';
+import { toCdnUrl } from '@/lib/supabase';
 
 function ContinuousReaderContent() {
   const params = useParams();
@@ -243,7 +244,7 @@ function ContinuousReaderContent() {
       {/* Thông tin truyện */}
       <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 flex gap-3 sm:gap-3.5 items-center">
         <div className="w-12 h-16 sm:w-16 sm:h-20 flex-shrink-0 bg-[#0A0A0D] rounded-lg overflow-hidden border border-[#1E1E26] shadow-sm">
-          <img src={story.coverImage} alt={story.title} className="w-full h-full object-cover" />
+          <img src={toCdnUrl(story.coverImage)} alt={story.title} className="w-full h-full object-cover" />
         </div>
 
         <div className="space-y-1 flex-1 min-w-0">

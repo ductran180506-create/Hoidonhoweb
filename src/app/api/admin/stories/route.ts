@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { Story, Chapter } from '@/lib/types';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, toCdnUrl } from '@/lib/supabase';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
 import { syncGmailSacombankPayments } from '@/lib/gmail-payment';
 
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
           code: s.tiktok_code || '',
           title: s.title,
           slug: s.slug,
-          coverImage: s.cover_image,
+          coverImage: toCdnUrl(s.cover_image),
           genre: s.category || 'Tình cảm',
           summary: cleanSummary,
           views: s.views || 0,

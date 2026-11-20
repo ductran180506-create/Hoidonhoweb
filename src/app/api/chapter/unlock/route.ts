@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getAuthenticatedUserId } from '@/lib/user-auth';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, toCdnUrls } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         success: true,
         unlocked: true,
         content: chapter.content,
-        images: chapter.images || [],
+        images: toCdnUrls(chapter.images),
       });
     }
 
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
         success: true,
         unlocked: true,
         content: chapter.content,
-        images: chapter.images || [],
+        images: toCdnUrls(chapter.images),
       });
     }
 
@@ -187,7 +187,7 @@ export async function POST(req: NextRequest) {
       unlocked: true,
       newBalance,
       content: chapter.content,
-      images: chapter.images || [],
+      images: toCdnUrls(chapter.images),
       message: `Đã mở khóa full bộ thành công! (Trừ ${unlockPrice} Điểm)`,
     });
   } catch (error: any) {

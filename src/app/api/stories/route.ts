@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { Story } from '@/lib/types';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabase, supabaseAdmin, toCdnUrl } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -76,7 +76,7 @@ export async function GET() {
           code: s.tiktok_code || '',
           title: s.title,
           slug: s.slug,
-          coverImage: s.cover_image,
+          coverImage: toCdnUrl(s.cover_image),
           genre: s.category || 'Tình cảm',
           summary: cleanSummary,
           views: s.views || 0,
@@ -106,7 +106,7 @@ export async function GET() {
       code: s.code,
       title: s.title,
       slug: s.slug,
-      coverImage: s.coverImage,
+      coverImage: toCdnUrl(s.coverImage),
       genre: s.genre,
       summary: s.summary,
       views: s.views,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, toCdnUrl } from '@/lib/supabase';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
           const { data: publicData } = supabaseAdmin.storage
             .from('comics')
             .getPublicUrl(uniqueFilename);
-          fileUrl = publicData.publicUrl;
+          fileUrl = toCdnUrl(publicData.publicUrl);
         } else {
           console.warn('Supabase storage warning:', uploadError.message);
         }

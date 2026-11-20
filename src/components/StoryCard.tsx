@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Story } from '@/lib/types';
+import { toCdnUrl } from '@/lib/supabase';
 
 interface StoryCardProps {
   story: Story;
@@ -15,7 +16,7 @@ export default function StoryCard({ story }: StoryCardProps) {
       {/* Bìa truyện tỷ lệ đứng 3:4 */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#0A0A0D]">
         <img
-          src={story.coverImage}
+          src={toCdnUrl(story.coverImage)}
           alt={story.title}
           loading="lazy"
           decoding="async"
