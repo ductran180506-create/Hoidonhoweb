@@ -63,6 +63,7 @@ export default function AdminPage() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerFilter, setCustomerFilter] = useState<'all' | 'recharged' | 'google' | 'vip' | 'has_coins'>('all');
   const [storySearch, setStorySearch] = useState('');
+  const [orderSearch, setOrderSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired'>('all');
   const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<'all' | 'bug' | 'content' | 'payment' | 'other'>('all');
   const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<'all' | 'new' | 'reviewed'>('all');
@@ -810,9 +811,22 @@ export default function AdminPage() {
   });
 
   const filteredOrders = safeOrders.filter((o) => {
-    if (orderFilter === 'completed') return o.status === 'completed';
-    if (orderFilter === 'pending') return o.status === 'pending' || o.status === 'processing';
-    if (orderFilter === 'expired') return o.status === 'expired';
+    if (orderFilter === 'completed' && o.status !== 'completed') return false;
+    if (orderFilter === 'pending' && o.status !== 'pending' && o.status !== 'processing') return false;
+    if (orderFilter === 'expired' && o.status !== 'expired') return false;
+
+    if (orderSearch.trim()) {
+      const q = orderSearch.toLowerCase().trim();
+      const anyO = o as any;
+      const code = (o.orderCode || '').toLowerCase();
+      const name = (anyO.userName || o.userId || '').toLowerCase();
+      const email = (anyO.userEmail || '').toLowerCase();
+      const pkg = (o.packageType || '').toLowerCase();
+      const amount = (o.amountVnd || '').toString();
+      const matches = code.includes(q) || name.includes(q) || email.includes(q) || pkg.includes(q) || amount.includes(q);
+      if (!matches) return false;
+    }
+
     return true;
   });
 
@@ -2124,55 +2138,87 @@ export default function AdminPage() {
       {/* ============================================================ */}
       {activeTab === 'revenue' && (
         <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5">
             <div>
-              <h2 className="text-sm font-semibold text-white">Sổ Nhật Ký Chuyển Khoản VietQR • Sacombank</h2>
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <span>Sổ Nhật Ký Chuyển Khoản VietQR • Sacombank</span>
+                {orderSearch && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-medium">
+                    Tìm thấy: {filteredOrders.length} đơn
+                  </span>
+                )}
+              </h2>
               <p className="text-[11px] text-[#71717A]">
                 Đối soát tự động qua thông báo Gmail ngân hàng Sacombank (040121635056 - TRAN CONG DUC)
               </p>
             </div>
 
-            <div className="overflow-x-auto no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
-              <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
-                <button
-                  onClick={() => setOrderFilter('all')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                    orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  Tất cả ({safeOrders.length})
-                </button>
-                <button
-                  onClick={() => setOrderFilter('completed')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                    orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  Thành công ({safeOrders.filter(o => o.status === 'completed').length})
-                </button>
-                <button
-                  onClick={() => setOrderFilter('pending')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                    orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  Chờ quét ({safeOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
-                </button>
-                <button
-                  onClick={() => setOrderFilter('expired')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                    orderFilter === 'expired' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  Đã hết hạn ({safeOrders.filter(o => o.status === 'expired').length})
-                </button>
-                <button
-                  onClick={handleCleanupTestData}
-                  className="px-2.5 py-1 rounded text-[11px] font-medium text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/30 transition ml-1 whitespace-nowrap"
-                  title="Xóa toàn bộ user test và đơn test để chuẩn bị ra mắt"
-                >
-                  Dọn Data Test
-                </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              {/* Ô TÌM KIẾM ĐƠN HÀNG DÒNG TIỀN */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  placeholder="Tìm mã đơn (CR...), tên, email..."
+                  className="w-full pl-8 pr-7 py-1.5 bg-[#0A0A0D] border border-[#272733] rounded-lg text-xs text-white placeholder-[#52525B] focus:outline-none focus:border-[#7C5CFC] transition"
+                />
+                {orderSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setOrderSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#71717A] hover:text-white transition"
+                    title="Xóa tìm kiếm"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Các tab lọc trạng thái */}
+              <div className="overflow-x-auto no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+                <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
+                  <button
+                    onClick={() => setOrderFilter('all')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    Tất cả ({safeOrders.length})
+                  </button>
+                  <button
+                    onClick={() => setOrderFilter('completed')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    Thành công ({safeOrders.filter(o => o.status === 'completed').length})
+                  </button>
+                  <button
+                    onClick={() => setOrderFilter('pending')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    Chờ quét ({safeOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
+                  </button>
+                  <button
+                    onClick={() => setOrderFilter('expired')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      orderFilter === 'expired' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    Đã hết hạn ({safeOrders.filter(o => o.status === 'expired').length})
+                  </button>
+                  <button
+                    onClick={handleCleanupTestData}
+                    className="px-2.5 py-1 rounded text-[11px] font-medium text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/30 transition ml-1 whitespace-nowrap"
+                    title="Xóa toàn bộ user test và đơn test để chuẩn bị ra mắt"
+                  >
+                    Dọn Data Test
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -2193,7 +2239,20 @@ export default function AdminPage() {
                 {filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-[#52525B]">
-                      Chưa có đơn nạp nào.
+                      {orderSearch ? (
+                        <div className="space-y-2">
+                          <p>Không tìm thấy đơn nạp nào khớp với "{orderSearch}".</p>
+                          <button
+                            type="button"
+                            onClick={() => setOrderSearch('')}
+                            className="px-3 py-1 bg-[#181824] hover:bg-[#222232] text-xs text-[#A78BFA] border border-[#2F2F42] rounded-lg transition"
+                          >
+                            Xóa tìm kiếm
+                          </button>
+                        </div>
+                      ) : (
+                        'Chưa có đơn nạp nào.'
+                      )}
                     </td>
                   </tr>
                 ) : (
