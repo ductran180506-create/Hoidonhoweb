@@ -162,6 +162,9 @@ export async function GET(req: NextRequest) {
         }
       });
 
+      // Đọc các đơn từ Local DB trước để tính toán nạp tiền
+      const localOrders = db.getAllOrders();
+
       // Tính toán chi tiết số tiền nạp & phương thức đăng nhập cho từng độc giả
       Object.values(mergedUserMap).forEach((u: any) => {
         const userTxs = (sbTx || []).filter(t => t.user_id === u.id && t.status === 'completed');
@@ -185,7 +188,6 @@ export async function GET(req: NextRequest) {
       );
 
       // Kết hợp đơn hàng từ cả Supabase transactions và Local DB orders
-      const localOrders = db.getAllOrders();
       const orderMap: Record<string, any> = {};
 
       // 1. Thêm đơn từ Local DB
