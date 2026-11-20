@@ -852,7 +852,7 @@ export default function AdminPage() {
 
   // 2. DASHBOARD CHUYÊN NGHIỆP KIỂU STUDIO
   return (
-    <div className="space-y-6 pb-20 text-white">
+    <div className="space-y-5 sm:space-y-6 pb-20 text-white max-w-full overflow-x-hidden">
       {/* Toast thông báo */}
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 animate-fadeIn">
@@ -866,8 +866,6 @@ export default function AdminPage() {
           </div>
         </div>
       )}
-
-      
 
       {/* Header Studio */}
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-4">
@@ -912,133 +910,135 @@ export default function AdminPage() {
       </header>
 
       {/* Bảng Chỉ Số Thực Nhận (Flat Ledger Metrics) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <div 
           onClick={() => setActiveTab('revenue')}
-          className={`p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
+          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
             activeTab === 'revenue' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
-          <div className="text-[11px] font-medium text-[#71717A]">
+          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
             Doanh thu VietQR
           </div>
-          <div className="text-xl font-bold text-white mt-1">
+          <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
             {(stats?.totalRevenue || 0).toLocaleString('vi-VN')} đ
           </div>
-          <div className="text-[10px] text-[#A1A1AA] mt-1">
-            {stats?.completedOrders || 0} đơn chuyển khoản thành công
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
+            {stats?.completedOrders || 0} đơn thành công
           </div>
         </div>
 
         <div 
           onClick={() => setActiveTab('customers')}
-          className={`p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
+          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
             activeTab === 'customers' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
-          <div className="text-[11px] font-medium text-[#71717A]">
+          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
             Độc giả đăng ký
           </div>
-          <div className="text-xl font-bold text-white mt-1">
+          <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
             {safeUsers.length} người
           </div>
-          <div className="text-[10px] text-[#A1A1AA] mt-1">
-            {totalVipUsers} VIP • {totalCirculatingCoins} Điểm trong ví
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
+            {totalVipUsers} VIP • {totalCirculatingCoins} Điểm
           </div>
         </div>
 
         <div 
           onClick={() => setActiveTab('stories')}
-          className={`p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
+          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
             activeTab === 'stories' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
-          <div className="text-[11px] font-medium text-[#71717A]">
+          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
             Kho truyện xuất bản
           </div>
-          <div className="text-xl font-bold text-white mt-1">
+          <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
             {stats?.totalStories || 0} bộ
           </div>
-          <div className="text-[10px] text-[#A1A1AA] mt-1">
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
             Slide 9:16 lướt ngang
           </div>
         </div>
 
-        <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
-          <div className="text-[11px] font-medium text-[#71717A]">
-            Tự động Gmail • Sacombank
+        <div className="p-3 sm:p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
+          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
+            Sacombank tự động
           </div>
-          <div className="text-xs font-semibold text-emerald-400 mt-2 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>Đã liên kết (040121635056)</span>
+          <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+            <span className="truncate">Đã liên kết (040121635056)</span>
           </div>
-          <div className="text-[10px] text-[#71717A] mt-1">
-            congducc2k6@gmail.com • Tự động 24/7
+          <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate">
+            congducc2k6@gmail.com • 24/7
           </div>
         </div>
       </div>
 
-      {/* Segmented Control Bar (Kiểu Linear / Vercel) */}
-      <div className="flex items-center gap-1 p-1 bg-[#111116] border border-[#1E1E26] rounded-lg w-max">
-        <button
-          onClick={() => setActiveTab('stories')}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition ${
-            activeTab === 'stories'
-              ? 'bg-[#22222E] text-white shadow-sm'
-              : 'text-[#71717A] hover:text-white'
-          }`}
-        >
-          Kho Truyện & Đăng Bài ({stories.length})
-        </button>
+      {/* Segmented Control Bar (Kiểu Linear / Vercel - Vuốt ngang mượt mà trên Mobile) */}
+      <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 no-scrollbar pb-1">
+        <div className="inline-flex items-center gap-1 p-1 bg-[#111116] border border-[#1E1E26] rounded-lg min-w-max">
+          <button
+            onClick={() => setActiveTab('stories')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+              activeTab === 'stories'
+                ? 'bg-[#22222E] text-white shadow-sm'
+                : 'text-[#71717A] hover:text-white'
+            }`}
+          >
+            Kho Truyện & Đăng Bài ({stories.length})
+          </button>
 
-        <button
-          onClick={() => setActiveTab('customers')}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition ${
-            activeTab === 'customers'
-              ? 'bg-[#22222E] text-white shadow-sm'
-              : 'text-[#71717A] hover:text-white'
-          }`}
-        >
-          Độc Giả & Khách Hàng ({users.length})
-        </button>
+          <button
+            onClick={() => setActiveTab('customers')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+              activeTab === 'customers'
+                ? 'bg-[#22222E] text-white shadow-sm'
+                : 'text-[#71717A] hover:text-white'
+            }`}
+          >
+            Độc Giả & Khách Hàng ({users.length})
+          </button>
 
-        <button
-          onClick={() => setActiveTab('revenue')}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition ${
-            activeTab === 'revenue'
-              ? 'bg-[#22222E] text-white shadow-sm'
-              : 'text-[#71717A] hover:text-white'
-          }`}
-        >
-          Dòng Tiền & Doanh Thu
-        </button>
+          <button
+            onClick={() => setActiveTab('revenue')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+              activeTab === 'revenue'
+                ? 'bg-[#22222E] text-white shadow-sm'
+                : 'text-[#71717A] hover:text-white'
+            }`}
+          >
+            Dòng Tiền & Doanh Thu
+          </button>
 
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition ${
-            activeTab === 'analytics'
-              ? 'bg-[#22222E] text-white shadow-sm'
-              : 'text-[#71717A] hover:text-white'
-          }`}
-        >
-          📊 Thống Kê & Traffic ({analytics?.totalViews || 0})
-        </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+              activeTab === 'analytics'
+                ? 'bg-[#22222E] text-white shadow-sm'
+                : 'text-[#71717A] hover:text-white'
+            }`}
+          >
+            📊 Thống Kê & Traffic ({analytics?.totalViews || 0})
+          </button>
 
-        <button
-          onClick={() => setActiveTab('feedback')}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
-            activeTab === 'feedback'
-              ? 'bg-[#22222E] text-white shadow-sm'
-              : 'text-[#71717A] hover:text-white'
-          }`}
-        >
-          <span>📬 Hòm Thư Góp Ý</span>
-          {feedbackList.filter(f => f.status === 'new').length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#7C5CFC] text-white font-bold animate-pulse">
-              {feedbackList.filter(f => f.status === 'new').length}
-            </span>
-          )}
-        </button>
+          <button
+            onClick={() => setActiveTab('feedback')}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'feedback'
+                ? 'bg-[#22222E] text-white shadow-sm'
+                : 'text-[#71717A] hover:text-white'
+            }`}
+          >
+            <span>📬 Hòm Thư Góp Ý</span>
+            {feedbackList.filter(f => f.status === 'new').length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#7C5CFC] text-white font-bold animate-pulse">
+                {feedbackList.filter(f => f.status === 'new').length}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ============================================================ */}
@@ -1805,57 +1805,59 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative w-full sm:w-56">
                 <Search className="w-3.5 h-3.5 text-[#52525B] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
                   placeholder="Tìm theo tài khoản hoặc SĐT..."
-                  className="w-48 sm:w-64 pl-8 pr-3 py-1.5 bg-[#0A0A0D] border border-[#272733] rounded-lg text-xs text-white focus:outline-none focus:border-[#7C5CFC]"
+                  className="w-full pl-8 pr-3 py-1.5 bg-[#0A0A0D] border border-[#272733] rounded-lg text-xs text-white focus:outline-none focus:border-[#7C5CFC]"
                 />
               </div>
 
-              <div className="flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs flex-wrap">
-                <button
-                  onClick={() => setCustomerFilter('all')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                    customerFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  Tất cả ({safeUsers.length})
-                </button>
-                <button
-                  onClick={() => setCustomerFilter('recharged')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                    customerFilter === 'recharged' ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  Đã nạp tiền ({totalRechargedUsers})
-                </button>
-                <button
-                  onClick={() => setCustomerFilter('google')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                    customerFilter === 'google' ? 'bg-sky-950/70 text-sky-300 border border-sky-500/30' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  Google ({totalGoogleUsers})
-                </button>
-                <button
-                  onClick={() => setCustomerFilter('vip')}
-                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                    customerFilter === 'vip' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                  }`}
-                >
-                  VIP ({totalVipUsers})
-                </button>
+              <div className="overflow-x-auto no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+                <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
+                  <button
+                    onClick={() => setCustomerFilter('all')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      customerFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    Tất cả ({safeUsers.length})
+                  </button>
+                  <button
+                    onClick={() => setCustomerFilter('recharged')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      customerFilter === 'recharged' ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    Đã nạp tiền ({totalRechargedUsers})
+                  </button>
+                  <button
+                    onClick={() => setCustomerFilter('google')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      customerFilter === 'google' ? 'bg-sky-950/70 text-sky-300 border border-sky-500/30' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    Google ({totalGoogleUsers})
+                  </button>
+                  <button
+                    onClick={() => setCustomerFilter('vip')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      customerFilter === 'vip' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    VIP ({totalVipUsers})
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 no-scrollbar">
+            <table className="w-full text-left text-xs min-w-[660px]">
               <thead>
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
                   <th className="pb-2.5 font-medium">Tài Khoản / Người Dùng</th>
@@ -1995,51 +1997,53 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs">
-              <button
-                onClick={() => setOrderFilter('all')}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                  orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                }`}
-              >
-                Tất cả ({safeOrders.length})
-              </button>
-              <button
-                onClick={() => setOrderFilter('completed')}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                  orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                }`}
-              >
-                Thành công ({safeOrders.filter(o => o.status === 'completed').length})
-              </button>
-              <button
-                onClick={() => setOrderFilter('pending')}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                  orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                }`}
-              >
-                Chờ quét ({safeOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
-              </button>
-              <button
-                onClick={() => setOrderFilter('expired')}
-                className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                  orderFilter === 'expired' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
-                }`}
-              >
-                Đã hết hạn ({safeOrders.filter(o => o.status === 'expired').length})
-              </button>
-              <button
-                onClick={handleCleanupTestData}
-                className="px-2.5 py-1 rounded text-[11px] font-medium text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/30 transition ml-2"
-                title="Xóa toàn bộ user test và đơn test để chuẩn bị ra mắt"
-              >
-                Dọn Data Test
-              </button>
+            <div className="overflow-x-auto no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+              <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
+                <button
+                  onClick={() => setOrderFilter('all')}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                    orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                  }`}
+                >
+                  Tất cả ({safeOrders.length})
+                </button>
+                <button
+                  onClick={() => setOrderFilter('completed')}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                    orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                  }`}
+                >
+                  Thành công ({safeOrders.filter(o => o.status === 'completed').length})
+                </button>
+                <button
+                  onClick={() => setOrderFilter('pending')}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                    orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                  }`}
+                >
+                  Chờ quét ({safeOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
+                </button>
+                <button
+                  onClick={() => setOrderFilter('expired')}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                    orderFilter === 'expired' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                  }`}
+                >
+                  Đã hết hạn ({safeOrders.filter(o => o.status === 'expired').length})
+                </button>
+                <button
+                  onClick={handleCleanupTestData}
+                  className="px-2.5 py-1 rounded text-[11px] font-medium text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/30 transition ml-1 whitespace-nowrap"
+                  title="Xóa toàn bộ user test và đơn test để chuẩn bị ra mắt"
+                >
+                  Dọn Data Test
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 no-scrollbar">
+            <table className="w-full text-left text-xs min-w-[580px]">
               <thead>
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
                   <th className="pb-2.5 font-medium">Mã Đơn / Nội Dung CK</th>
@@ -2267,8 +2271,8 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 no-scrollbar">
+                <table className="w-full text-left text-xs min-w-[500px]">
                   <thead>
                     <tr className="border-b border-[#1E1E26] text-[#71717A]">
                       <th className="pb-2 font-medium">Thiết Bị / Mã Máy</th>

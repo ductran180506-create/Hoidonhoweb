@@ -38,7 +38,7 @@ export default function RootLayout({
       <body className="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-carrot-500 selection:text-white font-sans antialiased">
         <AuthProvider>
           <Navbar />
-          <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+          <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 overflow-x-hidden">
             {children}
           </main>
           <Footer />
