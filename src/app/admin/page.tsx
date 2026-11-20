@@ -1292,6 +1292,20 @@ export default function AdminPage() {
                       >
                         Áp Dụng Khóa
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDefaultLockPrice(0);
+                          setDefaultLockFrom(9999);
+                          setChapters(chapters.map((c) => ({ ...c, priceCoins: 0 })));
+                          showToast('Đã hủy khóa toàn bộ: Tất cả các tập đã chuyển về Miễn Phí (0đ)');
+                        }}
+                        className="px-2.5 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded text-[11px] font-medium transition shadow-sm flex items-center gap-1"
+                        title="Hủy khóa tất cả các tập, đưa mức khóa về 0 điểm và mở miễn phí toàn bộ"
+                      >
+                        <span>🔓 Hủy Khóa Toàn Bộ</span>
+                      </button>
                     </div>
 
                     <div className="text-[10px] text-[#71717A] italic">
