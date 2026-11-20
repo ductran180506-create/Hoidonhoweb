@@ -2230,17 +2230,17 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 no-scrollbar">
+          <div className="max-h-[560px] overflow-y-auto overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 admin-table-scroll rounded-lg border border-[#1A1A24]/60">
             <table className="w-full text-left text-xs min-w-[660px]">
-              <thead>
+              <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                  <th className="pb-2.5 font-medium">Tài Khoản / Người Dùng</th>
-                  <th className="pb-2.5 font-medium">Hạng</th>
-                  <th className="pb-2.5 font-medium">Đã Nạp</th>
-                  <th className="pb-2.5 font-medium">Số Dư Điểm</th>
-                  <th className="pb-2.5 font-medium">Tập Đã Mở</th>
-                  <th className="pb-2.5 font-medium">Ngày Tạo</th>
-                  <th className="pb-2.5 font-medium text-right">Điều Chỉnh Điểm</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Tài Khoản / Người Dùng</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Hạng</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Đã Nạp</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Số Dư Điểm</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Tập Đã Mở</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Ngày Tạo</th>
+                  <th className="py-2.5 font-medium text-right bg-[#111116]">Điều Chỉnh Điểm</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1C1C24]">
@@ -2448,16 +2448,16 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 no-scrollbar">
+          <div className="max-h-[560px] overflow-y-auto overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 admin-table-scroll rounded-lg border border-[#1A1A24]/60">
             <table className="w-full text-left text-xs min-w-[580px]">
-              <thead>
+              <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                  <th className="pb-2.5 font-medium">Mã Đơn / Nội Dung CK</th>
-                  <th className="pb-2.5 font-medium">Khách Hàng</th>
-                  <th className="pb-2.5 font-medium">Gói Nạp</th>
-                  <th className="pb-2.5 font-medium">Số Tiền</th>
-                  <th className="pb-2.5 font-medium">Trạng Thái</th>
-                  <th className="pb-2.5 font-medium text-right">Thời Gian</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Mã Đơn / Nội Dung CK</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Khách Hàng</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Gói Nạp</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Số Tiền</th>
+                  <th className="py-2.5 font-medium bg-[#111116]">Trạng Thái</th>
+                  <th className="py-2.5 font-medium text-right bg-[#111116]">Thời Gian</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1C1C24]">
@@ -2658,7 +2658,7 @@ export default function AdminPage() {
                   <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
                     Top Bộ Truyện Xem Nhiều
                   </h3>
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto admin-table-scroll pr-1">
                     {analytics.topStories.map((st: any, idx: number) => (
                       <div key={idx} className="flex justify-between items-center text-xs p-2 bg-[#0A0A0D] rounded-lg border border-[#1C1C24]">
                         <span className="text-white font-medium truncate max-w-[200px]">{st.title}</span>
@@ -2695,14 +2695,14 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 no-scrollbar">
+              <div className="max-h-[560px] overflow-y-auto overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 admin-table-scroll rounded-lg border border-[#1A1A24]/60">
                 <table className="w-full text-left text-xs min-w-[500px]">
-                  <thead>
+                  <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                     <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                      <th className="pb-2 font-medium">Thiết Bị / Mã Máy</th>
-                      <th className="pb-2 font-medium">Nguồn Đến</th>
-                      <th className="pb-2 font-medium">Trang Xem Gần Nhất</th>
-                      <th className="pb-2 font-medium text-right">Hoạt Động Gần Nhất</th>
+                      <th className="py-2.5 font-medium bg-[#111116]">Thiết Bị / Mã Máy</th>
+                      <th className="py-2.5 font-medium bg-[#111116]">Nguồn Đến</th>
+                      <th className="py-2.5 font-medium bg-[#111116]">Trang Xem Gần Nhất</th>
+                      <th className="py-2.5 font-medium text-right bg-[#111116]">Hoạt Động Gần Nhất</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1C1C24]">
@@ -2715,7 +2715,7 @@ export default function AdminPage() {
                         </td>
                       </tr>
                     ) : (
-                      periodMachines.slice(0, 100).map((evt: any) => {
+                      periodMachines.slice(0, 300).map((evt: any) => {
                         const isRecent = evt.timeAgo === 'Vừa truy cập xong' || evt.timeAgo?.includes('phút');
                         const timeStr = evt.lastActive || evt.createdAt;
                         const displayTime = timeStr && !isNaN(new Date(timeStr).getTime()) 
