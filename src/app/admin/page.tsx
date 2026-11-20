@@ -3084,7 +3084,7 @@ export default function AdminPage() {
               }
 
               return (
-                <div className="divide-y divide-[#1C1C24] space-y-3">
+                <div className="divide-y divide-[#1C1C24] space-y-3 max-h-[600px] overflow-y-auto admin-table-scroll pr-1">
                   {displayList.map((item) => (
                   <div key={item.id} className="pt-3 first:pt-0 space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
