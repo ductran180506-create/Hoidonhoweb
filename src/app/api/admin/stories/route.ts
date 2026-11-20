@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // TỐI ƯU SIÊU TỐC: Bắn song song đồng thời 6 truy vấn bằng Promise.all thay vì đợi tuần tự
+    // TỐI ƯU SIÊU TỐC: Bắn song song đồng thời 6 truy vấn bằng Promise.all với limit lớn để hiển thị FULL 100% dữ liệu
     const [
       storiesRes,
       chaptersRes,
@@ -26,10 +26,10 @@ export async function GET(req: NextRequest) {
     ] = await Promise.all([
       supabaseAdmin.from('stories').select('*').order('created_at', { ascending: false }),
       supabaseAdmin.from('chapters').select('*').order('chapter_number', { ascending: true }),
-      supabaseAdmin.from('users').select('*').order('created_at', { ascending: false }),
-      supabaseAdmin.from('transactions').select('*').order('created_at', { ascending: false }),
-      supabaseAdmin.from('unlocked_chapters').select('user_id'),
-      supabaseAdmin.auth.admin.listUsers().catch(() => ({ data: { users: [] }, error: null })),
+      supabaseAdmin.from('users').select('*').order('created_at', { ascending: false }).limit(2000),
+      supabaseAdmin.from('transactions').select('*').order('created_at', { ascending: false }).limit(2000),
+      supabaseAdmin.from('unlocked_chapters').select('user_id').limit(5000),
+      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }).catch(() => ({ data: { users: [] }, error: null })),
     ]);
 
     const sbStories = storiesRes.data;
@@ -118,6 +118,66 @@ export async function GET(req: NextRequest) {
             createdAt: au.created_at,
           };
         }
+      });
+
+      // Thêm các tài khoản từ giao dịch nạp tiền Supabase (nếu chưa có trong danh sách)
+      (sbTx || []).forEach(t => {
+        if (t.user_id && !mergedUserMap[t.user_id]) {
+          const au = authUsersMap[t.user_id];
+          const localWallet = db.getWallet(t.user_id);
+          const bal = localWallet.balance || 0;
+          mergedUserMap[t.user_id] = {
+            id: t.user_id,
+            phone: au?.email || t.user_id,
+            name: au?.user_metadata?.full_name || au?.user_metadata?.name || (au?.email ? au.email.split('@')[0] : t.user_id),
+            email: au?.email || '',
+            avatar: au?.user_metadata?.avatar_url || '',
+            balance: bal,
+            coins: bal,
+            isVip: false,
+            vipUntil: null,
+            unlockedCount: (sbUnlocked || []).filter(x => x.user_id === t.user_id).length,
+            createdAt: t.created_at,
+          };
+        }
+      });
+
+      // Thêm các tài khoản đăng ký cục bộ từ Local DB
+      db.getAllUsersWithWallets().forEach(u => {
+        if (!mergedUserMap[u.id]) {
+          const au = authUsersMap[u.id];
+          mergedUserMap[u.id] = {
+            id: u.id,
+            phone: u.phone,
+            name: au?.user_metadata?.full_name || u.phone,
+            email: au?.email || '',
+            avatar: au?.user_metadata?.avatar_url || '',
+            balance: u.balance || 0,
+            coins: u.coins || 0,
+            isVip: u.isVip,
+            vipUntil: u.vipUntil || null,
+            unlockedCount: u.unlockedCount || 0,
+            createdAt: u.createdAt,
+          };
+        }
+      });
+
+      // Tính toán chi tiết số tiền nạp & phương thức đăng nhập cho từng độc giả
+      Object.values(mergedUserMap).forEach((u: any) => {
+        const userTxs = (sbTx || []).filter(t => t.user_id === u.id && t.status === 'completed');
+        const userLocalOrders = localOrders.filter(lo => lo.userId === u.id && lo.status === 'completed');
+        
+        let totalPaid = 0;
+        userTxs.forEach(t => { totalPaid += Number(t.amount_vnd) || 0; });
+        userLocalOrders.forEach(lo => {
+          if (!userTxs.some(t => t.payment_code === lo.orderCode)) {
+            totalPaid += Number(lo.amountVnd) || 0;
+          }
+        });
+
+        u.totalRechargedVnd = totalPaid;
+        u.hasRecharged = totalPaid > 0;
+        u.isGoogle = Boolean(authUsersMap[u.id] || (u.email && u.email.includes('@')));
       });
 
       const users = Object.values(mergedUserMap).sort(

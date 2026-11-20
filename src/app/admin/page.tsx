@@ -61,7 +61,7 @@ export default function AdminPage() {
   
   // Bộ lọc
   const [customerSearch, setCustomerSearch] = useState('');
-  const [customerFilter, setCustomerFilter] = useState<'all' | 'vip' | 'has_coins'>('all');
+  const [customerFilter, setCustomerFilter] = useState<'all' | 'recharged' | 'google' | 'vip' | 'has_coins'>('all');
   const [storySearch, setStorySearch] = useState('');
   const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired'>('all');
   const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<'all' | 'bug' | 'content' | 'payment' | 'other'>('all');
@@ -769,6 +769,8 @@ export default function AdminPage() {
     
     if (!matchSearch) return false;
     if (customerFilter === 'vip') return u.isVip;
+    if (customerFilter === 'recharged') return Boolean(u.hasRecharged || (u.totalRechargedVnd || 0) > 0);
+    if (customerFilter === 'google') return Boolean(u.isGoogle);
     if (customerFilter === 'has_coins') return (u.coins || 0) > 0;
     return true;
   });
@@ -788,6 +790,8 @@ export default function AdminPage() {
 
   const totalCirculatingCoins = safeUsers.reduce((acc, u) => acc + (u.coins || 0), 0);
   const totalVipUsers = safeUsers.filter((u) => u.isVip).length;
+  const totalRechargedUsers = safeUsers.filter((u) => u.hasRecharged || (u.totalRechargedVnd || 0) > 0).length;
+  const totalGoogleUsers = safeUsers.filter((u) => u.isGoogle).length;
 
   // 1. MÀN HÌNH KHÓA QUẢN TRỊ
   if (!isAuthenticated) {
@@ -1813,19 +1817,35 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs">
+              <div className="flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs flex-wrap">
                 <button
                   onClick={() => setCustomerFilter('all')}
                   className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                    customerFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A]'
+                    customerFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                   }`}
                 >
-                  Tất cả ({users.length})
+                  Tất cả ({safeUsers.length})
+                </button>
+                <button
+                  onClick={() => setCustomerFilter('recharged')}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
+                    customerFilter === 'recharged' ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30' : 'text-[#71717A] hover:text-white'
+                  }`}
+                >
+                  Đã nạp tiền ({totalRechargedUsers})
+                </button>
+                <button
+                  onClick={() => setCustomerFilter('google')}
+                  className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
+                    customerFilter === 'google' ? 'bg-sky-950/70 text-sky-300 border border-sky-500/30' : 'text-[#71717A] hover:text-white'
+                  }`}
+                >
+                  Google ({totalGoogleUsers})
                 </button>
                 <button
                   onClick={() => setCustomerFilter('vip')}
                   className={`px-2.5 py-1 rounded text-[11px] font-medium transition ${
-                    customerFilter === 'vip' ? 'bg-[#22222E] text-white' : 'text-[#71717A]'
+                    customerFilter === 'vip' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
                   }`}
                 >
                   VIP ({totalVipUsers})
@@ -1838,18 +1858,19 @@ export default function AdminPage() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                  <th className="pb-2.5 font-medium">Tài Khoản / SĐT</th>
+                  <th className="pb-2.5 font-medium">Tài Khoản / Người Dùng</th>
                   <th className="pb-2.5 font-medium">Hạng</th>
+                  <th className="pb-2.5 font-medium">Đã Nạp</th>
                   <th className="pb-2.5 font-medium">Số Dư Điểm</th>
                   <th className="pb-2.5 font-medium">Tập Đã Mở</th>
-                  <th className="pb-2.5 font-medium">Ngày Đăng Ký</th>
+                  <th className="pb-2.5 font-medium">Ngày Tạo</th>
                   <th className="pb-2.5 font-medium text-right">Điều Chỉnh Điểm</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1C1C24]">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-[#52525B]">
+                    <td colSpan={7} className="py-8 text-center text-[#52525B]">
                       Không có độc giả nào phù hợp.
                     </td>
                   </tr>
@@ -1866,8 +1887,15 @@ export default function AdminPage() {
                             </div>
                           )}
                           <div className="min-w-0">
-                            <div className="font-medium text-white text-xs truncate max-w-[160px] sm:max-w-[200px]">
-                              {u.name || u.phone || u.email || u.id}
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-white text-xs truncate max-w-[160px] sm:max-w-[200px]">
+                                {u.name || u.phone || u.email || u.id}
+                              </span>
+                              {u.isGoogle && (
+                                <span className="text-[9px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-1 py-0.2 rounded font-mono flex-shrink-0">
+                                  Google
+                                </span>
+                              )}
                             </div>
                             {u.email && u.email !== u.name ? (
                               <div className="text-[10px] text-[#71717A] truncate max-w-[160px] sm:max-w-[200px] font-mono">
@@ -1890,7 +1918,16 @@ export default function AdminPage() {
                           <span className="text-[10px] text-[#71717A]">Thường</span>
                         )}
                       </td>
-                      <td className="py-3 font-semibold text-white">
+                      <td className="py-3">
+                        {u.totalRechargedVnd > 0 ? (
+                          <span className="font-semibold text-emerald-400 font-mono">
+                            {u.totalRechargedVnd.toLocaleString('vi-VN')} đ
+                          </span>
+                        ) : (
+                          <span className="text-[#52525B] font-mono">0 đ</span>
+                        )}
+                      </td>
+                      <td className="py-3 font-semibold text-white font-mono">
                         {u.coins || 0} Điểm
                       </td>
                       <td className="py-3 text-[#A1A1AA]">
