@@ -1619,7 +1619,7 @@ export default function AdminPage() {
                 </div>
 
                 {coverImage && (
-                  <div className="relative w-24 aspect-[3/4] rounded-lg overflow-hidden border border-[#2E2E3C] group">
+                  <div className="relative w-24 aspect-[9/16] rounded-lg overflow-hidden border border-[#2E2E3C] group">
                     <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
                     <button
                       type="button"
@@ -2226,7 +2226,7 @@ export default function AdminPage() {
                     <img 
                       src={st.coverImage} 
                       alt={st.title} 
-                      className="w-9 h-12 object-cover rounded bg-[#1C1C24] flex-shrink-0" 
+                      className="w-9 aspect-[9/16] object-cover rounded bg-[#1C1C24] flex-shrink-0" 
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 truncate">

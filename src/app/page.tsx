@@ -168,13 +168,13 @@ function HomeContent() {
 
       {/* Lưới truyện tranh */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-64 bg-[#111116] border border-[#1E1E26] rounded-xl animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="aspect-[9/16] bg-[#111116] border border-[#1E1E26] rounded-xl animate-pulse" />
           ))}
         </div>
       ) : filteredStories.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
           {filteredStories.map((story) => (
             <StoryCard key={story.id} story={story} />
           ))}

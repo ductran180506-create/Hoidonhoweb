@@ -13,8 +13,8 @@ export default function StoryCard({ story }: StoryCardProps) {
       href={`/truyen/${story.slug}`}
       className="group block bg-[#111116] border border-[#1E1E26] hover:border-[#2E2E3C] rounded-xl overflow-hidden transition-all duration-200"
     >
-      {/* Bìa truyện tỷ lệ đứng 3:4 */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#0A0A0D]">
+      {/* Bìa truyện tỷ lệ đứng chuẩn 9:16 (full ảnh không bị cắt) */}
+      <div className="relative aspect-[9/16] w-full overflow-hidden bg-[#0A0A0D]">
         <img
           src={toCdnUrl(story.coverImage)}
           alt={story.title}

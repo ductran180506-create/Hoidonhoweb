@@ -243,7 +243,7 @@ function ContinuousReaderContent() {
 
       {/* Thông tin truyện */}
       <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 flex gap-3 sm:gap-3.5 items-center">
-        <div className="w-12 h-16 sm:w-16 sm:h-20 flex-shrink-0 bg-[#0A0A0D] rounded-lg overflow-hidden border border-[#1E1E26] shadow-sm">
+        <div className="w-12 sm:w-16 aspect-[9/16] flex-shrink-0 bg-[#0A0A0D] rounded-lg overflow-hidden border border-[#1E1E26] shadow-sm">
           <img src={toCdnUrl(story.coverImage)} alt={story.title} className="w-full h-full object-cover" />
         </div>
 
