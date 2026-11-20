@@ -735,20 +735,28 @@ export default function AdminPage() {
     setCreating(true);
 
     try {
-      // Chỉ lưu các tập ĐÃ CÓ ẢNH HOẶC CÓ NỘI DUNG
+      // Lưu các tập: Nếu tập sắp ra mắt chưa có ảnh nhưng đã có ảnh bìa truyện, tự động dùng ảnh bìa làm preview
       const finalChapters = chapters
-        .map(ch => ({
-          title: ch.title,
-          content: ch.content || '',
-          images: (ch.images && ch.images.length > 0)
+        .map(ch => {
+          let imgs = (ch.images && ch.images.length > 0)
             ? ch.images
-            : (ch.imageLinks ? ch.imageLinks.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : []),
-          priceCoins: ch.priceCoins,
-        }))
+            : (ch.imageLinks ? ch.imageLinks.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : []);
+
+          if (imgs.length === 0 && coverImage) {
+            imgs = [coverImage];
+          }
+
+          return {
+            title: ch.title,
+            content: ch.content || '',
+            images: imgs,
+            priceCoins: ch.priceCoins,
+          };
+        })
         .filter(ch => ch.images.length > 0 || ch.content.trim().length > 0);
 
       if (finalChapters.length === 0) {
-        showToast('Vui lòng tải ít nhất 1 ảnh cho tập truyện trước khi lưu', 'error');
+        showToast('Vui lòng tải ít nhất 1 ảnh (hoặc ảnh bìa) cho tập truyện trước khi lưu', 'error');
         setCreating(false);
         return;
       }
@@ -1860,6 +1868,30 @@ export default function AdminPage() {
                           <div className="mt-2 text-[10px] text-[#52525B]">
                             Tự động xếp đúng số thứ tự 1, 2, ... 10 và nén WebP tốc độ cao
                           </div>
+                        </div>
+                      )}
+
+                      {/* Nút 1-Click: Dùng ảnh bìa làm preview tập sắp ra mắt */}
+                      {(!chap.images || chap.images.length === 0) && (
+                        <div className="flex items-center justify-center pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!coverImage) {
+                                showToast('Vui lòng tải ảnh bìa truyện lên trước', 'error');
+                                return;
+                              }
+                              setChapters(prev => {
+                                const next = [...prev];
+                                next[idx] = { ...next[idx], images: [coverImage] };
+                                return next;
+                              });
+                              showToast(`Đã gán ảnh bìa làm preview cho ${chap.title || `Tập ${idx + 1}`}`);
+                            }}
+                            className="px-3 py-1.5 bg-[#171722] hover:bg-[#222232] border border-[#2E2E42] hover:border-[#7C5CFC] text-[#A78BFA] hover:text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition shadow-sm"
+                          >
+                            <span>🖼️ Dùng ảnh bìa làm xem trước (Tập sắp ra mắt)</span>
+                          </button>
                         </div>
                       )}
 

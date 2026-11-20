@@ -350,11 +350,24 @@ export async function POST(req: NextRequest) {
 
       const storyId = `story-${Date.now()}`;
 
-      // Lọc CHỈ LƯU các tập ĐÃ CÓ NỘI DUNG (ảnh hoặc chữ). Tập trống chưa ra mắt sẽ không được lưu.
+      // Lọc và lưu các tập: Nếu tập sắp ra mắt chưa có ảnh riêng nhưng truyện có ảnh bìa, tự động dùng ảnh bìa làm preview
       const validChapters = Array.isArray(chapters)
-        ? chapters.filter((chap: any) => {
-            const hasImages = (Array.isArray(chap.images) && chap.images.length > 0) ||
-              (typeof chap.imageLinks === 'string' && chap.imageLinks.trim().length > 0);
+        ? chapters.map((chap: any) => {
+            let imgs: string[] = [];
+            if (Array.isArray(chap.images) && chap.images.length > 0) {
+              imgs = chap.images;
+            } else if (typeof chap.imageLinks === 'string' && chap.imageLinks.trim().length > 0) {
+              imgs = chap.imageLinks.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean);
+            }
+            if (imgs.length === 0 && coverImage) {
+              imgs = [coverImage];
+            }
+            return {
+              ...chap,
+              images: imgs,
+            };
+          }).filter((chap: any) => {
+            const hasImages = Array.isArray(chap.images) && chap.images.length > 0;
             const hasContent = typeof chap.content === 'string' && chap.content.trim().length > 0;
             return hasImages || hasContent;
           })
@@ -457,6 +470,29 @@ export async function POST(req: NextRequest) {
 
       const cleanCode = code.replace('#', '').trim();
 
+      // Lọc và lưu các tập: Nếu tập sắp ra mắt chưa có ảnh riêng nhưng truyện có ảnh bìa, tự động dùng ảnh bìa làm preview
+      const validChapters = Array.isArray(chapters)
+        ? chapters.map((chap: any) => {
+            let imgs: string[] = [];
+            if (Array.isArray(chap.images) && chap.images.length > 0) {
+              imgs = chap.images;
+            } else if (typeof chap.imageLinks === 'string' && chap.imageLinks.trim().length > 0) {
+              imgs = chap.imageLinks.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean);
+            }
+            if (imgs.length === 0 && coverImage) {
+              imgs = [coverImage];
+            }
+            return {
+              ...chap,
+              images: imgs,
+            };
+          }).filter((chap: any) => {
+            const hasImages = Array.isArray(chap.images) && chap.images.length > 0;
+            const hasContent = typeof chap.content === 'string' && chap.content.trim().length > 0;
+            return hasImages || hasContent;
+          })
+        : [];
+
       // 1. Cập nhật Supabase
       try {
         await supabaseAdmin.from('stories').update({
@@ -468,16 +504,6 @@ export async function POST(req: NextRequest) {
           category: genre || 'Tình cảm',
           updated_at: new Date().toISOString()
         }).eq('id', storyId);
-
-        // Lọc CHỈ LƯU các tập ĐÃ CÓ NỘI DUNG
-        const validChapters = Array.isArray(chapters)
-          ? chapters.filter((chap: any) => {
-              const hasImages = (Array.isArray(chap.images) && chap.images.length > 0) ||
-                (typeof chap.imageLinks === 'string' && chap.imageLinks.trim().length > 0);
-              const hasContent = typeof chap.content === 'string' && chap.content.trim().length > 0;
-              return hasImages || hasContent;
-            })
-          : [];
 
         // Xóa các tập cũ và ghi lại danh sách tập mới đã lọc
         await supabaseAdmin.from('chapters').delete().eq('story_id', storyId);
@@ -506,14 +532,7 @@ export async function POST(req: NextRequest) {
       }
 
       // 2. Cập nhật Local DB
-      const validChaptersLocal = Array.isArray(chapters)
-        ? chapters.filter((chap: any) => {
-            const hasImages = (Array.isArray(chap.images) && chap.images.length > 0) ||
-              (typeof chap.imageLinks === 'string' && chap.imageLinks.trim().length > 0);
-            const hasContent = typeof chap.content === 'string' && chap.content.trim().length > 0;
-            return hasImages || hasContent;
-          })
-        : [];
+      const validChaptersLocal = validChapters;
 
       db.updateStory(storyId, {
         code: cleanCode,
