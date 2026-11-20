@@ -223,8 +223,9 @@ export default function AdminPage() {
     showToast('Đã đăng xuất quản trị', 'info');
   };
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent?: boolean | any) => {
+    const isSilent = silent === true;
+    if (!isSilent) setLoading(true);
     try {
       const res = await fetch('/api/admin/stories', {
         headers: getAdminHeaders(),
@@ -263,10 +264,19 @@ export default function AdminPage() {
       } catch (fbErr) {}
     } catch (e) {
       console.error(e);
-      showToast('Không thể tải dữ liệu', 'error');
+      if (!isSilent) showToast('Không thể tải dữ liệu', 'error');
     }
-    setLoading(false);
+    if (!isSilent) setLoading(false);
   };
+
+  // Tự động đồng bộ Realtime liên tục mỗi 6 giây khi đang ở trang Admin
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   // Tự động đồng bộ đơn hàng bên Admin khi có đơn đang chờ hoặc đang xử lý
   useEffect(() => {
@@ -859,6 +869,39 @@ export default function AdminPage() {
       return 'Tùy chọn ngày';
     }
     return 'Toàn bộ';
+  };
+
+  const formatTimeAgoBadge = (d: string | undefined) => {
+    if (!d) return null;
+    const diffMs = Date.now() - new Date(d).getTime();
+    if (diffMs < 0) return null;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+
+    if (diffMin < 2) {
+      return (
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          Vừa xong
+        </span>
+      );
+    }
+    if (diffMin < 60) {
+      return (
+        <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-mono">
+          {diffMin}m trước
+        </span>
+      );
+    }
+    if (diffHour < 24) {
+      return (
+        <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-[#1F1F2C] text-[#A1A1AA] font-mono">
+          {diffHour}h trước
+        </span>
+      );
+    }
+    return null;
   };
 
   // Tính toán số liệu theo khoảng thời gian được chọn:
@@ -2219,9 +2262,15 @@ export default function AdminPage() {
         <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3">
             <div>
-              <h2 className="text-sm font-semibold text-white">Danh Sách Độc Giả</h2>
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <span>Danh Sách Độc Giả</span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Real-time</span>
+                </span>
+              </h2>
               <p className="text-[11px] text-[#71717A]">
-                Theo dõi số dư ví Điểm và lịch sử mở khóa
+                Tự động đồng bộ thời gian thực • Giờ giấc đăng ký chi tiết
               </p>
             </div>
 
@@ -2285,7 +2334,7 @@ export default function AdminPage() {
                   <th className="py-2.5 font-medium bg-[#111116]">Đã Nạp</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Số Dư Điểm</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Tập Đã Mở</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Ngày Tạo</th>
+                  <th className="py-2.5 font-medium bg-[#111116] min-w-[130px]">Ngày & Giờ Tạo</th>
                   <th className="py-2.5 font-medium text-right bg-[#111116]">Điều Chỉnh Điểm</th>
                 </tr>
               </thead>
@@ -2355,8 +2404,32 @@ export default function AdminPage() {
                       <td className="py-3 text-[#A1A1AA]">
                         {u.unlockedCount ?? (u.unlockedChapters?.length || 0)} tập
                       </td>
-                      <td className="py-3 text-[#71717A] text-[11px]">
-                        {u.createdAt && !isNaN(new Date(u.createdAt).getTime()) ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '—'}
+                      <td className="py-2.5">
+                        {u.createdAt && !isNaN(new Date(u.createdAt).getTime()) ? (
+                          <div className="space-y-0.5 min-w-[125px]">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-white text-xs font-bold">
+                                {new Date(u.createdAt).toLocaleTimeString('vi-VN', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                  timeZone: 'Asia/Ho_Chi_Minh',
+                                })}
+                              </span>
+                              {formatTimeAgoBadge(u.createdAt)}
+                            </div>
+                            <div className="text-[10px] text-[#71717A] font-mono">
+                              {new Date(u.createdAt).toLocaleDateString('vi-VN', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                timeZone: 'Asia/Ho_Chi_Minh',
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-[#52525B]">—</span>
+                        )}
                       </td>
                       <td className="py-3 text-right">
                         <div className="inline-flex items-center gap-1">
