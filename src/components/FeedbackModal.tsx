@@ -85,23 +85,23 @@ export default function FeedbackModal() {
   return (
     <>
       {/* Nút bấm nổi ở góc dưới bên phải */}
-      <div className="fixed bottom-4 right-4 z-40 sm:bottom-6 sm:right-6">
+      <div className="fixed bottom-3 right-3 z-40 sm:bottom-6 sm:right-6">
         <button
           onClick={() => {
             setIsOpen(true);
             setSuccess(false);
             setErrorMsg(null);
           }}
-          className="group flex items-center gap-2 px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-full bg-[#181822] hover:bg-[#222230] text-white text-xs font-medium border border-[#2D2D3D] hover:border-[#7C5CFC]/60 shadow-lg shadow-black/50 transition-all duration-200 active:scale-95"
+          className="group flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#181822]/95 backdrop-blur-md hover:bg-[#222230] text-white text-xs font-medium border border-[#2D2D3D] hover:border-[#7C5CFC]/60 shadow-lg shadow-black/50 transition-all duration-200 active:scale-95"
           title="Góp ý cho website hoặc liên hệ hỗ trợ"
         >
           <div className="relative">
-            <MessageSquarePlus className="w-4 h-4 text-[#A78BFA] group-hover:scale-110 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#7C5CFC] animate-ping" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#7C5CFC]" />
+            <MessageSquarePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#A78BFA] group-hover:scale-110 transition-transform" />
+            <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-[#7C5CFC] animate-ping" />
+            <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-[#7C5CFC]" />
           </div>
           <span className="hidden sm:inline text-[#E4E4E7] group-hover:text-white">Góp ý & Hỗ trợ</span>
-          <span className="sm:hidden text-[11px] text-[#E4E4E7]">Hỗ trợ</span>
+          <span className="sm:hidden text-[10px] text-[#E4E4E7] font-medium">Hỗ trợ</span>
         </button>
       </div>
 

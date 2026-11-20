@@ -65,8 +65,8 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0E0E12]/95 backdrop-blur-md border-b border-[#1E1E26]">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+    <header className="sticky top-0 z-40 bg-[#0E0E12]/95 backdrop-blur-md border-b border-[#1E1E26] w-full">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2 sm:gap-4">
         {/* Logo Hồi Đó Nhỏ */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <Link 
@@ -75,7 +75,7 @@ export default function Navbar() {
             className="flex items-center gap-2 group select-none cursor-pointer"
             title="Hồi Đó Nhỏ - Truyện Tranh AI"
           >
-            <span className="font-bold text-white text-base tracking-tight uppercase">
+            <span className="font-bold text-white text-sm sm:text-base tracking-tight uppercase">
               HỒI ĐÓ NHỎ
             </span>
           </Link>
@@ -103,14 +103,14 @@ export default function Navbar() {
         </form>
 
         {/* Khu vực tài khoản / ví */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {user ? (
             <div className="flex items-center gap-1 sm:gap-1.5">
               {/* Huy hiệu Tên Độc Giả: Bấm để mở Lịch Sử Nạp & Đơn Chờ */}
               <button
                 type="button"
                 onClick={() => setIsHistoryOpen(true)}
-                className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] hover:border-[#333344] rounded-lg text-xs text-[#E4E4E7] transition active:scale-95 cursor-pointer relative"
+                className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] hover:border-[#333344] rounded-lg text-xs text-[#E4E4E7] transition active:scale-95 cursor-pointer relative"
                 title="Bấm để xem lịch sử nạp & đơn chờ thanh toán"
               >
                 {user.avatar ? (
@@ -118,7 +118,7 @@ export default function Navbar() {
                 ) : (
                   <UserIcon className="w-3.5 h-3.5 text-[#7C5CFC] flex-shrink-0" />
                 )}
-                <span className="font-semibold max-w-[68px] xs:max-w-[100px] sm:max-w-[150px] truncate" title={user.name || user.phone}>
+                <span className="font-semibold max-w-[60px] xs:max-w-[100px] sm:max-w-[150px] truncate" title={user.name || user.phone}>
                   {user.name || user.phone}
                 </span>
                 {user.isVip && (
@@ -151,14 +151,14 @@ export default function Navbar() {
               </button>
             </div>
           ) : isAdmin ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5">
               <Link
                 href="/admin"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-amber-300 hover:text-white bg-amber-500/15 border border-amber-500/30 rounded-lg transition font-medium animate-fadeIn"
+                className="flex items-center gap-1 px-2 py-1 text-xs text-amber-300 hover:text-white bg-amber-500/15 border border-amber-500/30 rounded-lg transition font-medium animate-fadeIn"
               >
                 <Sliders className="w-3.5 h-3.5 text-amber-400" />
                 <span className="hidden sm:inline">👑 Quản Trị Viên</span>
-                <span className="sm:hidden">👑 Admin</span>
+                <span className="sm:hidden text-[11px]">Admin</span>
               </Link>
               <button
                 onClick={() => {
@@ -176,7 +176,7 @@ export default function Navbar() {
           ) : (
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs text-[#A1A1AA] hover:text-white bg-[#14141B] hover:bg-[#1E1E28] border border-[#22222B] rounded-lg transition font-medium active:scale-95"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs text-[#A1A1AA] hover:text-white bg-[#14141B] hover:bg-[#1E1E28] border border-[#22222B] rounded-lg transition font-medium active:scale-95"
             >
               <UserIcon className="w-3.5 h-3.5 text-[#7C5CFC]" />
               <span>Đăng Nhập</span>
@@ -187,9 +187,11 @@ export default function Navbar() {
           {!user && (
             <button
               onClick={() => setIsRechargeOpen(true)}
-              className="px-2.5 sm:px-3 py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-sm active:scale-95 whitespace-nowrap flex items-center gap-1"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-sm active:scale-95 whitespace-nowrap flex items-center gap-1"
             >
-              <span>☕ Mời Cà Phê</span>
+              <span>☕</span>
+              <span className="hidden xs:inline">Mời Cà Phê</span>
+              <span className="xs:hidden">Cà Phê</span>
             </button>
           )}
         </div>

@@ -215,47 +215,49 @@ function ContinuousReaderContent() {
   const currentData = currentChapter ? unlockedContents[currentChapter.id] : null;
 
   return (
-    <div className="max-w-2xl sm:max-w-3xl mx-auto space-y-4 pb-20 protect-content animate-fadeIn">
+    <div className="max-w-2xl sm:max-w-3xl mx-auto space-y-3.5 sm:space-y-4 pb-20 protect-content animate-fadeIn w-full overflow-hidden">
       {/* Sticky Top Reader Bar */}
-      <div className="sticky top-14 z-30 bg-[#0E0E12]/95 backdrop-blur-md border-b border-[#1E1E26] -mx-4 px-4 py-2 flex items-center justify-between text-xs">
+      <div className="sticky top-14 z-30 bg-[#0E0E12]/95 backdrop-blur-md border-b border-[#1E1E26] -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 flex items-center justify-between text-xs">
         <Link
           href="/"
-          className="text-[#71717A] hover:text-white flex items-center gap-1 transition"
+          className="text-[#9E9EA8] hover:text-white flex items-center gap-1.5 transition active:scale-95 flex-shrink-0"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Tủ Truyện</span>
+          <ArrowLeft className="w-4 h-4 text-[#7C5CFC]" />
+          <span className="text-[11px] sm:text-xs font-medium">Tủ Truyện</span>
         </Link>
 
-        <div className="text-white font-medium truncate max-w-[170px] sm:max-w-xs text-center flex items-center gap-1.5">
-          <span className="text-[#F59E0B] font-mono font-bold text-[10px]">#{story.code}</span>
-          <span className="truncate">{story.title}</span>
+        <div className="text-white font-medium truncate max-w-[150px] xs:max-w-[200px] sm:max-w-xs text-center flex items-center justify-center gap-1.5 px-2">
+          <span className="text-[#F59E0B] font-mono font-bold text-[10px] bg-[#F59E0B]/10 border border-[#F59E0B]/25 px-1.5 py-0.2 rounded flex-shrink-0">
+            #{story.code}
+          </span>
+          <span className="truncate text-xs font-semibold">{story.title}</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-[#A1A1AA]">
-            Tập {activeChapterIndex}/{chapters.length}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-[11px] font-mono text-[#D4D4D8] bg-[#181822] border border-[#272738] px-2 py-0.5 rounded-full">
+            Tập <strong className="text-[#F59E0B]">{activeChapterIndex}</strong>/{chapters.length}
           </span>
         </div>
       </div>
 
       {/* Thông tin truyện */}
-      <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 flex gap-3.5 items-center">
-        <div className="w-14 sm:w-16 aspect-[3/4] flex-shrink-0 bg-[#0A0A0D] rounded-lg overflow-hidden border border-[#1E1E26]">
+      <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 flex gap-3 sm:gap-3.5 items-center">
+        <div className="w-12 h-16 sm:w-16 sm:h-20 flex-shrink-0 bg-[#0A0A0D] rounded-lg overflow-hidden border border-[#1E1E26] shadow-sm">
           <img src={story.coverImage} alt={story.title} className="w-full h-full object-cover" />
         </div>
 
         <div className="space-y-1 flex-1 min-w-0">
-          <div className="flex items-center gap-2 text-[10px] text-[#71717A]">
-            <span>{story.genre}</span>
-            <span>•</span>
-            <span>{chapters.length} tập</span>
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#71717A]">
+            <span className="bg-[#181824] border border-[#242436] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">{story.genre}</span>
             <span>•</span>
             <span className="text-amber-400/90 font-medium">{chapters.length >= 5 ? 'Trọn bộ' : 'Đang cập nhật'}</span>
+            <span>•</span>
+            <span>{chapters.length} tập</span>
             <a
               href="https://www.tiktok.com/@carrot.tia"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-white transition ml-auto"
+              className="text-[#71717A] hover:text-white transition ml-auto hidden xs:inline"
             >
               @carrot.tia ↗
             </a>
@@ -271,21 +273,21 @@ function ContinuousReaderContent() {
         </div>
       </div>
 
-      {/* Thanh chọn Tập truyện lướt ngang & Thanh kéo điều khiển */}
-      <div className="space-y-2">
+      {/* Thanh chọn Tập truyện lướt ngang */}
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs px-1 text-[#71717A]">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-white">Danh sách tập</span>
-            <span className="px-2 py-0.5 rounded-full bg-[#1C1C26] text-[#A1A1AA] text-[11px] font-mono border border-[#272733]">
-              Tổng {chapters.length} tập
+            <span className="px-2 py-0.2 rounded-full bg-[#1C1C26] text-[#A1A1AA] text-[10px] font-mono border border-[#272733]">
+              {chapters.length} tập
             </span>
           </div>
           <span className="text-[11px] text-[#A1A1AA]">
-            Đang xem: <strong className="text-[#F59E0B] font-mono font-bold">Tập {activeChapterIndex}</strong> / {chapters.length}
+            Đang xem: <strong className="text-[#F59E0B] font-mono font-bold">Tập {activeChapterIndex}</strong>/{chapters.length}
           </span>
         </div>
 
-        {/* Danh sách các nút tập truyện lướt ngang */}
+        {/* Danh sách các nút tập truyện lướt ngang - mượt mà, không thanh cuộn thô trên mobile */}
         <div
           id="chapter-buttons-slider"
           onWheel={(e) => {
@@ -293,7 +295,7 @@ function ContinuousReaderContent() {
               e.currentTarget.scrollLeft += e.deltaY;
             }
           }}
-          className="flex items-center gap-1.5 overflow-x-auto admin-slider-scroll py-1.5 scroll-smooth select-none"
+          className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 scroll-smooth select-none"
         >
           {chapters.map((chap) => {
             const isUnlocked = Boolean(unlockedContents[chap.id]);
@@ -302,19 +304,19 @@ function ContinuousReaderContent() {
               <button
                 key={chap.id}
                 onClick={() => setActiveChapterIndex(chap.chapterIndex)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition flex items-center gap-1.5 flex-shrink-0 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition flex items-center gap-1.5 flex-shrink-0 active:scale-95 ${
                   isActive
-                    ? 'bg-[#22222E] text-white shadow-sm border border-[#303040] ring-1 ring-[#7C5CFC]/50'
-                    : 'bg-[#111116] border border-[#1E1E26] text-[#71717A] hover:text-white'
+                    ? 'bg-[#7C5CFC]/20 text-white shadow-sm border border-[#7C5CFC] ring-1 ring-[#7C5CFC]/50'
+                    : 'bg-[#121218] border border-[#20202C] text-[#8E8EA0] hover:text-white hover:border-[#303042]'
                 }`}
               >
                 <span>{chap.title}</span>
                 {(!chap.priceCoins || chap.priceCoins === 0) ? (
-                  <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-950/40 px-1 py-0.2 rounded border border-emerald-800/40">
+                  <span className="text-[9px] text-emerald-400 font-bold bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-800/40">
                     Free
                   </span>
                 ) : !isUnlocked ? (
-                  <span className="text-[10px] text-[#F59E0B] flex items-center gap-0.5">
+                  <span className="text-[10px] text-[#F59E0B] font-medium flex items-center gap-0.5">
                     <Lock className="w-2.5 h-2.5" />
                     <span>{chap.priceCoins} Điểm</span>
                   </span>
@@ -338,8 +340,8 @@ function ContinuousReaderContent() {
                 Đọc Miễn Phí
               </span>
             ) : !isCurrentUnlocked ? (
-              <span className="text-[10px] text-[#F59E0B] flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Cần {currentChapter.priceCoins || 5} Điểm (Mở Full Bộ)
+              <span className="text-[10px] text-[#F59E0B] flex items-center gap-1 font-medium bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded">
+                <Lock className="w-3 h-3 text-[#F59E0B]" /> Cần {currentChapter.priceCoins || 5} Điểm (Mở Full Bộ)
               </span>
             ) : null}
           </div>
@@ -402,52 +404,69 @@ function ContinuousReaderContent() {
               </div>
             </div>
           ) : (
-            /* KHUNG MỞ KHÓA TẬP */
-            <div className="text-center py-8 space-y-3.5 bg-[#0A0A0D] border border-[#1E1E26] rounded-lg p-5">
-              <div className="w-10 h-10 mx-auto rounded-lg bg-[#14141B] border border-[#22222B] text-[#A1A1AA] flex items-center justify-center">
-                <Lock className="w-4 h-4 text-[#F59E0B]" />
+            /* KHUNG MỞ KHÓA TẬP CHUẨN ĐẸP TỐI ƯU MOBILE */
+            <div className="text-center py-7 px-4 sm:p-7 space-y-4 bg-gradient-to-b from-[#161622] via-[#0E0E14] to-[#0A0A0D] border border-amber-500/25 rounded-xl shadow-xl">
+              <div className="w-12 h-12 mx-auto rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-lg shadow-amber-500/10">
+                <Lock className="w-5 h-5 text-amber-400" />
               </div>
 
-              <div>
-                <div className="text-sm font-semibold text-white mb-0.5">
+              <div className="space-y-1">
+                <div className="text-base sm:text-lg font-bold text-white">
                   Mở Khóa Đọc Trọn Bộ ({currentChapter.priceCoins || 5} Điểm)
                 </div>
-                <p className="text-xs text-[#71717A] max-w-sm mx-auto">
-                  Chỉ cần 5 Điểm để mở khóa toàn bộ các tập còn lại của bộ truyện này!
+                <p className="text-xs text-[#A1A1AA] max-w-sm mx-auto leading-relaxed">
+                  ✨ Chỉ cần mở khóa một lần duy nhất để đọc trọn vẹn tất cả <strong className="text-amber-400">{chapters.length} tập</strong> của bộ truyện này!
                 </p>
               </div>
 
               <div className="max-w-xs mx-auto space-y-2 pt-1">
                 {user ? (
                   balance >= (currentChapter.priceCoins || 5) || user.isVip ? (
-                    <button
-                      onClick={() => handleUnlockChapter(currentChapter)}
-                      disabled={unlockingId === currentChapter.id}
-                      className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white font-semibold rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-[#7C5CFC]/20"
-                    >
-                      {unlockingId === currentChapter.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <span>🔓 Mở Khóa Đọc Full Bộ ({currentChapter.priceCoins || 5} Điểm) • Ví: {balance} Điểm</span>
-                      )}
-                    </button>
+                    <div className="space-y-1.5">
+                      <button
+                        onClick={() => handleUnlockChapter(currentChapter)}
+                        disabled={unlockingId === currentChapter.id}
+                        className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white font-semibold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-lg shadow-[#7C5CFC]/30 active:scale-95"
+                      >
+                        {unlockingId === currentChapter.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <span>🔓 Mở Khóa Đọc Full Bộ ({currentChapter.priceCoins || 5} Điểm)</span>
+                        )}
+                      </button>
+                      <div className="text-[11px] text-[#71717A]">
+                        Ví hiện có: <strong className="text-amber-300">{balance} Điểm</strong> (Dư sau mở: {balance - (currentChapter.priceCoins || 5)} Điểm)
+                      </div>
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       <button
                         onClick={() => setIsRechargeOpen(true)}
-                        className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white font-semibold rounded-lg text-xs transition flex items-center justify-center gap-1.5"
+                        className="w-full py-2.5 px-4 bg-gradient-to-r from-[#F59E0B] to-[#D97706] hover:from-[#D97706] hover:to-[#B45309] text-white font-bold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 active:scale-95"
                       >
-                        <span>☕ Mời Cà Phê Tích Điểm (Ví còn {balance} Điểm)</span>
+                        <Coins className="w-4 h-4" />
+                        <span>☕ Nạp {Math.max(0, (currentChapter.priceCoins || 5) - balance)} Điểm Còn Thiếu (Ví có {balance})</span>
                       </button>
+                      <div className="text-[11px] text-[#71717A]">
+                        Mở cổng QR Momo & Sacombank tự động cộng điểm sau 3 giây
+                      </div>
                     </div>
                   )
                 ) : (
-                  <button
-                    onClick={() => setIsAuthModalOpen(true)}
-                    className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white font-semibold rounded-lg text-xs transition"
-                  >
-                    Đăng nhập để mở khóa full bộ
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setIsAuthModalOpen(true)}
+                      className="w-full py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white font-semibold rounded-xl text-xs sm:text-sm transition shadow-lg shadow-[#7C5CFC]/25 active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <span>🔑 Đăng Nhập Để Mở Khóa Full Bộ</span>
+                    </button>
+                    <button
+                      onClick={() => setIsRechargeOpen(true)}
+                      className="w-full py-2 px-3 bg-[#181824] hover:bg-[#202030] text-[#A1A1AA] hover:text-white rounded-lg text-xs transition border border-[#2B2B3D] flex items-center justify-center gap-1"
+                    >
+                      <span>☕ Mời Cà Phê Ủng Hộ Kênh</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
