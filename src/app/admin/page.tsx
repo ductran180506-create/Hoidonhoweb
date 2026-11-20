@@ -817,6 +817,15 @@ export default function AdminPage() {
   const sevenDaysAgoStr = getLocalDateStr(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
   const thirtyDaysAgoStr = getLocalDateStr(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000));
 
+  // Danh sách 14 ngày gần nhất để bấm chọn nhanh 1-click
+  const recentDaysList = Array.from({ length: 14 }).map((_, i) => {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const dateStr = getLocalDateStr(d);
+    const [y, m, day] = dateStr.split('-');
+    const label = i === 0 ? `Hôm nay (${day}/${m})` : i === 1 ? `Hôm qua (${day}/${m})` : `${day}/${m}/${y} (${i} ngày trước)`;
+    return { dateStr, label };
+  });
+
   const checkDateMatch = (timestamp: string | undefined): boolean => {
     if (!timestamp) return false;
     if (dateFilterType === 'all') return true;
@@ -828,8 +837,8 @@ export default function AdminPage() {
     if (dateFilterType === 'last30') return itemDate >= thirtyDaysAgoStr && itemDate <= todayStr;
     if (dateFilterType === 'custom') {
       if (customStartDate && customEndDate) return itemDate >= customStartDate && itemDate <= customEndDate;
-      if (customStartDate) return itemDate >= customStartDate;
-      if (customEndDate) return itemDate <= customEndDate;
+      if (customStartDate) return itemDate === customStartDate;
+      if (customEndDate) return itemDate === customEndDate;
       return true;
     }
     return true;
@@ -845,8 +854,8 @@ export default function AdminPage() {
         if (customStartDate === customEndDate) return `Ngày ${customStartDate.split('-').reverse().join('/')}`;
         return `${customStartDate.split('-').reverse().join('/')} → ${customEndDate.split('-').reverse().join('/')}`;
       }
-      if (customStartDate) return `Từ ngày ${customStartDate.split('-').reverse().join('/')}`;
-      if (customEndDate) return `Đến ngày ${customEndDate.split('-').reverse().join('/')}`;
+      if (customStartDate) return `Ngày ${customStartDate.split('-').reverse().join('/')}`;
+      if (customEndDate) return `Ngày ${customEndDate.split('-').reverse().join('/')}`;
       return 'Tùy chọn ngày';
     }
     return 'Toàn bộ';
@@ -1120,28 +1129,64 @@ export default function AdminPage() {
 
           {/* Ô chọn ngày cụ thể hoặc khoảng ngày */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs bg-[#0A0A0D] p-1 rounded-lg border border-[#242434]">
-            <span className="text-[11px] text-[#71717A] px-1 font-medium">Chọn ngày:</span>
-            <input
-              type="date"
-              value={customStartDate}
+            {/* Menu Chọn Nhanh 1 Ngày (1 Click là xong) */}
+            <select
+              value={customStartDate && customStartDate === customEndDate ? customStartDate : ''}
               onChange={(e) => {
-                setCustomStartDate(e.target.value);
-                setDateFilterType('custom');
+                if (e.target.value) {
+                  setCustomStartDate(e.target.value);
+                  setCustomEndDate(e.target.value);
+                  setDateFilterType('custom');
+                }
               }}
-              className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-0.5 rounded focus:outline-none focus:border-[#7C5CFC]"
-              title="Từ ngày (YYYY-MM-DD)"
-            />
-            <span className="text-[#52525B]">→</span>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => {
-                setCustomEndDate(e.target.value);
-                setDateFilterType('custom');
-              }}
-              className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-0.5 rounded focus:outline-none focus:border-[#7C5CFC]"
-              title="Đến ngày (YYYY-MM-DD)"
-            />
+              className="bg-[#14141C] border border-[#2B2B3D] text-[#D4D4D8] text-xs px-2 py-1 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer"
+              title="Bấm chọn nhanh một ngày cụ thể"
+            >
+              <option value="">⚡ Chọn nhanh ngày...</option>
+              {recentDaysList.map((item) => (
+                <option key={item.dateStr} value={item.dateStr}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+
+            <span className="text-[#52525B] hidden xs:inline">|</span>
+
+            {/* Hoặc bấm trực tiếp vào ô để mở lịch */}
+            <div className="flex items-center gap-1">
+              <input
+                type="date"
+                value={customStartDate}
+                onClick={(e) => {
+                  try { (e.target as any).showPicker?.(); } catch {}
+                }}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCustomStartDate(val);
+                  if (!customEndDate) {
+                    setCustomEndDate(val);
+                  }
+                  setDateFilterType('custom');
+                }}
+                className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-1 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer"
+                title="Bấm vào để mở lịch chọn ngày bắt đầu"
+              />
+              <span className="text-[#52525B]">→</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onClick={(e) => {
+                  try { (e.target as any).showPicker?.(); } catch {}
+                }}
+                onChange={(e) => {
+                  setCustomEndDate(e.target.value);
+                  setDateFilterType('custom');
+                }}
+                className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-1 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer"
+                title="Bấm vào để mở lịch chọn ngày kết thúc"
+              />
+            </div>
+
             {(customStartDate || customEndDate) && (
               <button
                 type="button"
@@ -1150,10 +1195,11 @@ export default function AdminPage() {
                   setCustomEndDate('');
                   setDateFilterType('all');
                 }}
-                className="p-1 text-[#71717A] hover:text-white transition"
-                title="Xóa ngày chọn"
+                className="px-1.5 py-1 text-[#A1A1AA] hover:text-white hover:bg-[#20202C] rounded transition flex items-center gap-0.5 text-[10px]"
+                title="Xóa bộ lọc ngày về toàn bộ"
               >
                 <X className="w-3 h-3" />
+                <span>Xóa</span>
               </button>
             )}
           </div>
