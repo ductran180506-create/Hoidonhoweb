@@ -9,7 +9,7 @@ import {
   Users, Search, Coins, ExternalLink,
   Copy, Check, ChevronLeft, ChevronRight,
   FolderPlus, AlertCircle, ArrowUpRight, RefreshCw, Pencil,
-  Maximize2, ZoomIn, Move
+  Maximize2, ZoomIn, Move, Calendar
 } from 'lucide-react';
 import { Story, Order } from '@/lib/types';
 import { compressImage, formatFileSize } from '@/lib/image-compressor';
@@ -67,6 +67,11 @@ export default function AdminPage() {
   const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired'>('all');
   const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<'all' | 'bug' | 'content' | 'payment' | 'other'>('all');
   const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<'all' | 'new' | 'reviewed'>('all');
+
+  // Bộ lọc đo lường theo ngày tháng năm
+  const [dateFilterType, setDateFilterType] = useState<'all' | 'today' | 'yesterday' | 'last7' | 'last30' | 'thisMonth' | 'custom'>('all');
+  const [customStartDate, setCustomStartDate] = useState<string>('');
+  const [customEndDate, setCustomEndDate] = useState<string>('');
 
   // Toast
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'info' | 'error' } | null>(null);
@@ -788,7 +793,78 @@ export default function AdminPage() {
   const safeStories = Array.isArray(stories) ? stories : [];
   const safeOrders = Array.isArray(orders) ? orders : [];
 
+  // ==========================================
+  // BỘ LỌC ĐO LƯỜNG THỜI GIAN (NGÀY / THÁNG / NĂM)
+  // ==========================================
+  const getLocalDateStr = (d: Date | string | number | undefined): string => {
+    if (!d) return '';
+    try {
+      const date = new Date(d);
+      if (isNaN(date.getTime())) return '';
+      const vnDate = new Date(date.getTime() + (7 * 60 + date.getTimezoneOffset()) * 60000);
+      return vnDate.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  const now = new Date();
+  const todayStr = getLocalDateStr(now);
+  const yestStr = getLocalDateStr(new Date(now.getTime() - 24 * 60 * 60 * 1000));
+  const sevenDaysAgoStr = getLocalDateStr(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+  const thirtyDaysAgoStr = getLocalDateStr(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000));
+  const currentMonthStr = todayStr.substring(0, 7);
+
+  const checkDateMatch = (timestamp: string | undefined): boolean => {
+    if (!timestamp) return false;
+    if (dateFilterType === 'all') return true;
+    const itemDate = getLocalDateStr(timestamp);
+    if (!itemDate) return false;
+
+    if (dateFilterType === 'today') return itemDate === todayStr;
+    if (dateFilterType === 'yesterday') return itemDate === yestStr;
+    if (dateFilterType === 'last7') return itemDate >= sevenDaysAgoStr && itemDate <= todayStr;
+    if (dateFilterType === 'last30') return itemDate >= thirtyDaysAgoStr && itemDate <= todayStr;
+    if (dateFilterType === 'thisMonth') return itemDate.startsWith(currentMonthStr);
+    if (dateFilterType === 'custom') {
+      if (customStartDate && customEndDate) return itemDate >= customStartDate && itemDate <= customEndDate;
+      if (customStartDate) return itemDate >= customStartDate;
+      if (customEndDate) return itemDate <= customEndDate;
+      return true;
+    }
+    return true;
+  };
+
+  const getDateFilterLabel = () => {
+    if (dateFilterType === 'all') return 'Toàn thời gian';
+    if (dateFilterType === 'today') return `Hôm nay (${todayStr.split('-').reverse().join('/')})`;
+    if (dateFilterType === 'yesterday') return `Hôm qua (${yestStr.split('-').reverse().join('/')})`;
+    if (dateFilterType === 'last7') return `7 ngày qua (${sevenDaysAgoStr.split('-').reverse().join('/')} → nay)`;
+    if (dateFilterType === 'last30') return `30 ngày qua (${thirtyDaysAgoStr.split('-').reverse().join('/')} → nay)`;
+    if (dateFilterType === 'thisMonth') return `Tháng ${todayStr.split('-')[1]}/${todayStr.split('-')[0]}`;
+    if (dateFilterType === 'custom') {
+      if (customStartDate && customEndDate) {
+        if (customStartDate === customEndDate) return `Ngày ${customStartDate.split('-').reverse().join('/')}`;
+        return `${customStartDate.split('-').reverse().join('/')} → ${customEndDate.split('-').reverse().join('/')}`;
+      }
+      if (customStartDate) return `Từ ngày ${customStartDate.split('-').reverse().join('/')}`;
+      if (customEndDate) return `Đến ngày ${customEndDate.split('-').reverse().join('/')}`;
+      return 'Tùy chọn ngày';
+    }
+    return 'Tất cả';
+  };
+
+  // Tính toán số liệu theo khoảng thời gian được chọn:
+  const periodOrders = safeOrders.filter((o) => checkDateMatch(o.createdAt));
+  const periodCompletedOrders = periodOrders.filter((o) => o.status === 'completed');
+  const periodRevenue = periodCompletedOrders.reduce((sum, o) => sum + (o.amountVnd || 0), 0);
+  const periodUsers = safeUsers.filter((u) => checkDateMatch(u.createdAt));
+  const allMachines = Array.isArray(analytics?.machineList) ? analytics.machineList : [];
+  const periodMachines = allMachines.filter((m: any) => checkDateMatch(m.lastActive));
+
   const filteredUsers = safeUsers.filter((u) => {
+    if (dateFilterType !== 'all' && !checkDateMatch(u.createdAt)) return false;
+
     const q = customerSearch.trim().toLowerCase();
     const matchSearch = !q || 
       (u.name || '').toLowerCase().includes(q) ||
@@ -814,6 +890,8 @@ export default function AdminPage() {
     if (orderFilter === 'completed' && o.status !== 'completed') return false;
     if (orderFilter === 'pending' && o.status !== 'pending' && o.status !== 'processing') return false;
     if (orderFilter === 'expired' && o.status !== 'expired') return false;
+
+    if (dateFilterType !== 'all' && !checkDateMatch(o.createdAt)) return false;
 
     if (orderSearch.trim()) {
       const q = orderSearch.toLowerCase().trim();
@@ -951,7 +1029,164 @@ export default function AdminPage() {
         </div>
       </header>
 
-      {/* Bảng Chỉ Số Thực Nhận (Flat Ledger Metrics) */}
+      {/* ============================================================ */}
+      {/* THANH CÔNG CỤ ĐO LƯỜNG THEO NGÀY THÁNG NĂM                   */}
+      {/* ============================================================ */}
+      <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-[#181824] rounded-lg border border-[#272738] text-[#A78BFA] flex-shrink-0">
+              <Calendar className="w-4 h-4 text-[#A78BFA]" />
+            </div>
+            <div>
+              <div className="text-xs sm:text-sm font-semibold text-white flex flex-wrap items-center gap-2">
+                <span>Đo Lường Doanh Thu, Traffic & Khán Giả Theo Thời Gian</span>
+                {dateFilterType !== 'all' && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold">
+                    Đang xem: {getDateFilterLabel()}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-[#71717A] mt-0.5">
+                Bấm các mốc thời gian bên dưới hoặc nhập ngày/tháng/năm tùy ý để đo lường kết quả
+              </p>
+            </div>
+          </div>
+
+          {dateFilterType !== 'all' && (
+            <button
+              type="button"
+              onClick={() => {
+                setDateFilterType('all');
+                setCustomStartDate('');
+                setCustomEndDate('');
+              }}
+              className="self-start md:self-auto px-2.5 py-1 bg-[#181824] hover:bg-[#222232] text-[#A1A1AA] hover:text-white rounded-lg text-xs font-medium border border-[#2A2A3A] transition flex items-center gap-1 active:scale-95"
+            >
+              <X className="w-3.5 h-3.5 text-rose-400" />
+              <span>Xem Toàn Thời Gian (Hủy lọc)</span>
+            </button>
+          )}
+        </div>
+
+        {/* Các nút preset thời gian + Ô chọn ngày tùy ý */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pt-2 border-t border-[#1C1C24]">
+          <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
+            <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-1 rounded-lg border border-[#242434] text-xs min-w-max">
+              <button
+                type="button"
+                onClick={() => setDateFilterType('all')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                  dateFilterType === 'all'
+                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
+                    : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                Toàn bộ
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterType('today')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1 ${
+                  dateFilterType === 'today'
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm font-semibold'
+                    : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                <span>Hôm nay</span>
+                <span className="text-[9px] font-mono opacity-80">({todayStr.split('-').slice(1).reverse().join('/')})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterType('yesterday')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1 ${
+                  dateFilterType === 'yesterday'
+                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
+                    : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                <span>Hôm qua</span>
+                <span className="text-[9px] font-mono text-[#71717A]">({yestStr.split('-').slice(1).reverse().join('/')})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterType('last7')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                  dateFilterType === 'last7'
+                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
+                    : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                7 ngày qua
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterType('last30')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                  dateFilterType === 'last30'
+                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
+                    : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                30 ngày qua
+              </button>
+              <button
+                type="button"
+                onClick={() => setDateFilterType('thisMonth')}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                  dateFilterType === 'thisMonth'
+                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
+                    : 'text-[#71717A] hover:text-white'
+                }`}
+              >
+                Tháng {todayStr.split('-')[1]}/{todayStr.split('-')[0]}
+              </button>
+            </div>
+          </div>
+
+          {/* Ô chọn ngày cụ thể hoặc khoảng ngày */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs bg-[#0A0A0D] p-1 rounded-lg border border-[#242434]">
+            <span className="text-[11px] text-[#71717A] px-1 font-medium">Chọn ngày:</span>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => {
+                setCustomStartDate(e.target.value);
+                setDateFilterType('custom');
+              }}
+              className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-0.5 rounded focus:outline-none focus:border-[#7C5CFC]"
+              title="Từ ngày (YYYY-MM-DD)"
+            />
+            <span className="text-[#52525B]">→</span>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => {
+                setCustomEndDate(e.target.value);
+                setDateFilterType('custom');
+              }}
+              className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-0.5 rounded focus:outline-none focus:border-[#7C5CFC]"
+              title="Đến ngày (YYYY-MM-DD)"
+            />
+            {(customStartDate || customEndDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                  setDateFilterType('all');
+                }}
+                className="p-1 text-[#71717A] hover:text-white transition"
+                title="Xóa ngày chọn"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bảng Chỉ Số Thực Nhận (Flat Ledger Metrics - Đo lường động theo ngày chọn) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <div 
           onClick={() => setActiveTab('revenue')}
@@ -960,13 +1195,13 @@ export default function AdminPage() {
           }`}
         >
           <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            Doanh thu VietQR
+            {dateFilterType === 'all' ? 'Doanh thu VietQR' : `💰 Doanh thu (${getDateFilterLabel()})`}
           </div>
           <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
-            {(stats?.totalRevenue || 0).toLocaleString('vi-VN')} đ
+            {(dateFilterType === 'all' ? (stats?.totalRevenue || 0) : periodRevenue).toLocaleString('vi-VN')} đ
           </div>
           <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
-            {stats?.completedOrders || 0} đơn thành công
+            {dateFilterType === 'all' ? (stats?.completedOrders || 0) : periodCompletedOrders.length} đơn thành công
           </div>
         </div>
 
@@ -977,44 +1212,60 @@ export default function AdminPage() {
           }`}
         >
           <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            Độc giả đăng ký
+            {dateFilterType === 'all' ? 'Độc giả đăng ký' : `👥 Độc giả mới (${getDateFilterLabel()})`}
           </div>
           <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
-            {safeUsers.length} người
+            {dateFilterType === 'all' ? safeUsers.length : periodUsers.length} người
           </div>
           <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
-            {totalVipUsers} VIP • {totalCirculatingCoins} Điểm
+            {dateFilterType === 'all' ? `${totalVipUsers} VIP • ${totalCirculatingCoins} Điểm` : `Đăng ký trong kỳ`}
           </div>
         </div>
 
         <div 
-          onClick={() => setActiveTab('stories')}
+          onClick={() => setActiveTab('analytics')}
           className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
-            activeTab === 'stories' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
+            activeTab === 'analytics' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
           <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            Kho truyện xuất bản
+            {dateFilterType === 'all' ? 'Lượt khách (Traffic)' : `📊 Lượt khách (${getDateFilterLabel()})`}
           </div>
           <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
-            {stats?.totalStories || 0} bộ
+            {dateFilterType === 'all' ? (analytics?.totalMachines || analytics?.totalViews || 0) : periodMachines.length} máy
           </div>
           <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
-            Slide 9:16 lướt ngang
+            {dateFilterType === 'all' ? `Hôm nay: ${analytics?.todayActiveMachines || analytics?.todayViews || 0} máy` : `Truy cập trong kỳ`}
           </div>
         </div>
 
         <div className="p-3 sm:p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
           <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            Sacombank tự động
+            {dateFilterType === 'all' ? 'Sacombank tự động' : '🎯 Hiệu quả kỳ này'}
           </div>
-          <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-            <span className="truncate">Đã liên kết (040121635056)</span>
-          </div>
-          <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate">
-            congducc2k6@gmail.com • 24/7
-          </div>
+          {dateFilterType === 'all' ? (
+            <>
+              <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                <span className="truncate">Đã liên kết (040121635056)</span>
+              </div>
+              <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate">
+                congducc2k6@gmail.com • 24/7
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                <span className="truncate">
+                  {periodMachines.length > 0 ? ((periodCompletedOrders.length / periodMachines.length) * 100).toFixed(1) : '0'}% chuyển đổi
+                </span>
+              </div>
+              <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate">
+                {periodCompletedOrders.length} đơn nạp / {periodMachines.length} khách vào
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -2451,7 +2702,12 @@ export default function AdminPage() {
                 <div>
                   <h3 className="text-xs font-semibold text-white uppercase tracking-wider flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    Danh Sách Thiết Bị Truy Cập (1 Máy = 1 Khách)
+                    <span>Danh Sách Thiết Bị Truy Cập ({periodMachines.length} máy)</span>
+                    {dateFilterType !== 'all' && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                        {getDateFilterLabel()}
+                      </span>
+                    )}
                   </h3>
                   <p className="text-[10px] text-[#71717A]">
                     F5 / reload không làm tăng số lượng • Hiển thị thời gian cách đây bao lâu
@@ -2476,14 +2732,16 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1C1C24]">
-                    {!(analytics?.machineList || analytics?.recentEvents) || (analytics.machineList || analytics.recentEvents).length === 0 ? (
+                    {periodMachines.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="py-8 text-center text-[#52525B]">
-                          Chưa có thiết bị nào được ghi nhận.
+                          {dateFilterType !== 'all'
+                            ? `Không có thiết bị nào truy cập trong "${getDateFilterLabel()}".`
+                            : 'Chưa có thiết bị nào được ghi nhận.'}
                         </td>
                       </tr>
                     ) : (
-                      (analytics.machineList || analytics.recentEvents).map((evt: any) => {
+                      periodMachines.slice(0, 100).map((evt: any) => {
                         const isRecent = evt.timeAgo === 'Vừa truy cập xong' || evt.timeAgo?.includes('phút');
                         const timeStr = evt.lastActive || evt.createdAt;
                         const displayTime = timeStr && !isNaN(new Date(timeStr).getTime()) 

@@ -91,8 +91,8 @@ export async function GET(req: NextRequest) {
           sources,
           devices,
           topStories: Object.values(storyViews).sort((a, b) => b.count - a.count).slice(0, 5),
-          machineList: machineList.slice(0, 50),
-          recentEvents: machineList.slice(0, 30),
+          machineList: machineList,
+          recentEvents: machineList.slice(0, 50),
         },
       });
     }
