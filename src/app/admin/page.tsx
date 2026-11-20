@@ -801,8 +801,12 @@ export default function AdminPage() {
     try {
       const date = new Date(d);
       if (isNaN(date.getTime())) return '';
-      const vnDate = new Date(date.getTime() + (7 * 60 + date.getTimezoneOffset()) * 60000);
-      return vnDate.toISOString().split('T')[0];
+      return new Intl.DateTimeFormat('en-CA', { 
+        timeZone: 'Asia/Ho_Chi_Minh',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date);
     } catch {
       return '';
     }
@@ -810,10 +814,8 @@ export default function AdminPage() {
 
   const now = new Date();
   const todayStr = getLocalDateStr(now);
-  const yestStr = getLocalDateStr(new Date(now.getTime() - 24 * 60 * 60 * 1000));
   const sevenDaysAgoStr = getLocalDateStr(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
   const thirtyDaysAgoStr = getLocalDateStr(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000));
-  const currentMonthStr = todayStr.substring(0, 7);
 
   const checkDateMatch = (timestamp: string | undefined): boolean => {
     if (!timestamp) return false;
@@ -822,10 +824,8 @@ export default function AdminPage() {
     if (!itemDate) return false;
 
     if (dateFilterType === 'today') return itemDate === todayStr;
-    if (dateFilterType === 'yesterday') return itemDate === yestStr;
     if (dateFilterType === 'last7') return itemDate >= sevenDaysAgoStr && itemDate <= todayStr;
     if (dateFilterType === 'last30') return itemDate >= thirtyDaysAgoStr && itemDate <= todayStr;
-    if (dateFilterType === 'thisMonth') return itemDate.startsWith(currentMonthStr);
     if (dateFilterType === 'custom') {
       if (customStartDate && customEndDate) return itemDate >= customStartDate && itemDate <= customEndDate;
       if (customStartDate) return itemDate >= customStartDate;
@@ -838,10 +838,8 @@ export default function AdminPage() {
   const getDateFilterLabel = () => {
     if (dateFilterType === 'all') return 'Toàn thời gian';
     if (dateFilterType === 'today') return `Hôm nay (${todayStr.split('-').reverse().join('/')})`;
-    if (dateFilterType === 'yesterday') return `Hôm qua (${yestStr.split('-').reverse().join('/')})`;
     if (dateFilterType === 'last7') return `7 ngày qua (${sevenDaysAgoStr.split('-').reverse().join('/')} → nay)`;
     if (dateFilterType === 'last30') return `30 ngày qua (${thirtyDaysAgoStr.split('-').reverse().join('/')} → nay)`;
-    if (dateFilterType === 'thisMonth') return `Tháng ${todayStr.split('-')[1]}/${todayStr.split('-')[0]}`;
     if (dateFilterType === 'custom') {
       if (customStartDate && customEndDate) {
         if (customStartDate === customEndDate) return `Ngày ${customStartDate.split('-').reverse().join('/')}`;
@@ -851,7 +849,7 @@ export default function AdminPage() {
       if (customEndDate) return `Đến ngày ${customEndDate.split('-').reverse().join('/')}`;
       return 'Tùy chọn ngày';
     }
-    return 'Tất cả';
+    return 'Toàn bộ';
   };
 
   // Tính toán số liệu theo khoảng thời gian được chọn:
@@ -1076,7 +1074,7 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setDateFilterType('all')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
                   dateFilterType === 'all'
                     ? 'bg-[#22222E] text-white shadow-sm font-semibold'
                     : 'text-[#71717A] hover:text-white'
@@ -1087,59 +1085,35 @@ export default function AdminPage() {
               <button
                 type="button"
                 onClick={() => setDateFilterType('today')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
                   dateFilterType === 'today'
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm font-semibold'
                     : 'text-[#71717A] hover:text-white'
                 }`}
               >
                 <span>Hôm nay</span>
-                <span className="text-[9px] font-mono opacity-80">({todayStr.split('-').slice(1).reverse().join('/')})</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDateFilterType('yesterday')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition flex items-center gap-1 ${
-                  dateFilterType === 'yesterday'
-                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
-                    : 'text-[#71717A] hover:text-white'
-                }`}
-              >
-                <span>Hôm qua</span>
-                <span className="text-[9px] font-mono text-[#71717A]">({yestStr.split('-').slice(1).reverse().join('/')})</span>
               </button>
               <button
                 type="button"
                 onClick={() => setDateFilterType('last7')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
                   dateFilterType === 'last7'
-                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm font-semibold'
                     : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                7 ngày qua
+                <span>7 ngày qua</span>
               </button>
               <button
                 type="button"
                 onClick={() => setDateFilterType('last30')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
                   dateFilterType === 'last30'
-                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm font-semibold'
                     : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                30 ngày qua
-              </button>
-              <button
-                type="button"
-                onClick={() => setDateFilterType('thisMonth')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition ${
-                  dateFilterType === 'thisMonth'
-                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
-                    : 'text-[#71717A] hover:text-white'
-                }`}
-              >
-                Tháng {todayStr.split('-')[1]}/{todayStr.split('-')[0]}
+                <span>30 ngày qua</span>
               </button>
             </div>
           </div>
