@@ -296,6 +296,11 @@ export const db = {
     return data.stories;
   },
 
+  getStoryById: (id: string): Story | undefined => {
+    const data = ensureDataFile();
+    return data.stories.find(s => s.id === id);
+  },
+
   getStoryBySlug: (slug: string): Story | undefined => {
     const data = ensureDataFile();
     return data.stories.find(s => s.slug === slug);

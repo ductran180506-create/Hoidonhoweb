@@ -23,8 +23,25 @@ export default function StoryCard({ story }: StoryCardProps) {
         />
 
         {/* Mã TikTok */}
-        <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/85 backdrop-blur-sm text-white font-mono text-[11px] font-bold rounded border border-white/10">
+        <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/85 backdrop-blur-sm text-white font-mono text-[11px] font-bold rounded border border-white/10 shadow-sm">
           #{story.code}
+        </div>
+
+        {/* Trạng thái series: Còn tiếp / Sắp ra mắt / Full trọn bộ */}
+        <div className="absolute top-2 right-2">
+          {story.status === 'ongoing' ? (
+            <span className="px-1.5 py-0.5 bg-amber-950/90 border border-amber-500/40 text-amber-300 backdrop-blur-sm text-[10px] font-bold rounded shadow-sm flex items-center gap-1">
+              <span>⏳ Còn tiếp</span>
+            </span>
+          ) : story.status === 'upcoming' ? (
+            <span className="px-1.5 py-0.5 bg-purple-950/90 border border-purple-500/40 text-purple-300 backdrop-blur-sm text-[10px] font-bold rounded shadow-sm flex items-center gap-1">
+              <span>🚀 Sắp ra mắt</span>
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.5 bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 backdrop-blur-sm text-[10px] font-bold rounded shadow-sm flex items-center gap-1">
+              <span>👑 Full trọn bộ</span>
+            </span>
+          )}
         </div>
 
         {/* Số tập */}

@@ -50,6 +50,17 @@ export async function GET(req: NextRequest) {
     if (!storyErr && sbStories !== null) {
       const stories: Story[] = sbStories.map(s => {
         const chaps = (sbChapters || []).filter(c => c.story_id === s.id);
+        let storyStatus: 'ongoing' | 'completed' | 'upcoming' = 'completed';
+        let cleanSummary = s.description || '';
+        const match = cleanSummary.match(/<!--status:(ongoing|completed|upcoming)-->/);
+        if (match) {
+          storyStatus = match[1] as any;
+          cleanSummary = cleanSummary.replace(/<!--status:(ongoing|completed|upcoming)-->/, '').trim();
+        } else {
+          const localSt = db.getStoryById(s.id);
+          if (localSt?.status) storyStatus = localSt.status;
+        }
+
         return {
           id: s.id,
           code: s.tiktok_code || '',
@@ -57,9 +68,9 @@ export async function GET(req: NextRequest) {
           slug: s.slug,
           coverImage: s.cover_image,
           genre: s.category || 'Tình cảm',
-          summary: s.description || '',
+          summary: cleanSummary,
           views: s.views || 0,
-          status: 'completed',
+          status: storyStatus,
           chaptersCount: chaps.length,
           createdAt: s.created_at,
         };
@@ -318,7 +329,11 @@ export async function POST(req: NextRequest) {
     const { action } = body;
 
     if (action === 'create_story') {
-      const { code, title, coverImage, genre, summary, chapters } = body;
+      const { code, title, coverImage, genre, summary, chapters, status } = body;
+      const storyStatus: 'ongoing' | 'completed' | 'upcoming' =
+        status === 'ongoing' || status === 'upcoming' ? status : 'completed';
+      const cleanSummary = (summary || '').replace(/<!--status:(ongoing|completed|upcoming)-->/g, '').trim();
+      const packedSummary = `<!--status:${storyStatus}-->${cleanSummary}`;
 
       if (!code || !title) {
         return NextResponse.json({ success: false, message: 'Thiếu mã hoặc tiêu đề truyện' }, { status: 400 });
@@ -352,9 +367,9 @@ export async function POST(req: NextRequest) {
         slug,
         coverImage: coverImage || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop",
         genre: genre || "Kinh Dị",
-        summary: summary || "",
+        summary: cleanSummary,
         views: 1,
-        status: 'completed',
+        status: storyStatus,
         chaptersCount: validChapters.length,
         createdAt: new Date().toISOString(),
       };
@@ -365,7 +380,7 @@ export async function POST(req: NextRequest) {
           title: newStory.title,
           slug: newStory.slug,
           tiktok_code: newStory.code,
-          description: newStory.summary,
+          description: packedSummary,
           cover_image: newStory.coverImage,
           category: newStory.genre,
           is_hot: false,
@@ -421,7 +436,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'update_story') {
-      const { storyId, code, title, coverImage, genre, summary, chapters } = body;
+      const { storyId, code, title, coverImage, genre, summary, chapters, status } = body;
+      const storyStatus: 'ongoing' | 'completed' | 'upcoming' =
+        status === 'ongoing' || status === 'upcoming' ? status : 'completed';
+      const cleanSummary = (summary || '').replace(/<!--status:(ongoing|completed|upcoming)-->/g, '').trim();
+      const packedSummary = `<!--status:${storyStatus}-->${cleanSummary}`;
 
       if (!storyId || !code || !title) {
         return NextResponse.json({ success: false, message: 'Thiếu mã hoặc tiêu đề bộ truyện' }, { status: 400 });
@@ -444,7 +463,7 @@ export async function POST(req: NextRequest) {
           title,
           slug,
           tiktok_code: cleanCode,
-          description: summary || '',
+          description: packedSummary,
           cover_image: coverImage || '',
           category: genre || 'Tình cảm',
           updated_at: new Date().toISOString()
@@ -502,7 +521,8 @@ export async function POST(req: NextRequest) {
         slug,
         coverImage,
         genre,
-        summary,
+        summary: cleanSummary,
+        status: storyStatus,
         chaptersCount: validChaptersLocal.length,
       });
 
@@ -527,6 +547,30 @@ export async function POST(req: NextRequest) {
       db.replaceChaptersForStory(storyId, newLocalChapters);
 
       return NextResponse.json({ success: true, message: 'Đã cập nhật bộ truyện thành công' });
+    }
+
+    if (action === 'quick_update_status') {
+      const { storyId, status } = body;
+      if (!storyId || !status) {
+        return NextResponse.json({ success: false, message: 'Thiếu thông tin cập nhật' }, { status: 400 });
+      }
+      const validStatus: 'ongoing' | 'completed' | 'upcoming' =
+        status === 'ongoing' || status === 'upcoming' ? status : 'completed';
+
+      try {
+        const { data: currentStory } = await supabaseAdmin.from('stories').select('description').eq('id', storyId).single();
+        const cleanDesc = (currentStory?.description || '').replace(/<!--status:(ongoing|completed|upcoming)-->/g, '').trim();
+        const packedDesc = `<!--status:${validStatus}-->${cleanDesc}`;
+        await supabaseAdmin.from('stories').update({
+          description: packedDesc,
+          updated_at: new Date().toISOString(),
+        }).eq('id', storyId);
+      } catch (sbErr) {
+        console.warn('Lỗi update status Supabase:', sbErr);
+      }
+
+      db.updateStory(storyId, { status: validStatus });
+      return NextResponse.json({ success: true, status: validStatus });
     }
 
     if (action === 'delete_story') {

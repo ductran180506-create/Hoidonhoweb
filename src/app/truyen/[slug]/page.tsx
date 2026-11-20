@@ -250,7 +250,19 @@ function ContinuousReaderContent() {
           <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#71717A]">
             <span className="bg-[#181824] border border-[#242436] text-[#A1A1AA] px-1.5 py-0.2 rounded font-medium">{story.genre}</span>
             <span>•</span>
-            <span className="text-amber-400/90 font-medium">{chapters.length >= 5 ? 'Trọn bộ' : 'Đang cập nhật'}</span>
+            {story.status === 'ongoing' ? (
+              <span className="text-amber-400 font-semibold bg-amber-950/50 border border-amber-800/50 px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                <span>⏳</span> Còn tiếp
+              </span>
+            ) : story.status === 'upcoming' ? (
+              <span className="text-purple-400 font-semibold bg-purple-950/50 border border-purple-800/50 px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                <span>🚀</span> Sắp ra mắt
+              </span>
+            ) : (
+              <span className="text-emerald-400 font-semibold bg-emerald-950/50 border border-emerald-800/50 px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                <span>👑</span> Full trọn bộ
+              </span>
+            )}
             <span>•</span>
             <span>{chapters.length} tập</span>
             <a

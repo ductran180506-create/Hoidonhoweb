@@ -60,6 +60,17 @@ export async function GET() {
 
       const stories: Story[] = sbStories.map(s => {
         const count = (sbChapters || []).filter(c => c.story_id === s.id && Array.isArray(c.images) && c.images.length > 0).length;
+        let storyStatus: 'ongoing' | 'completed' | 'upcoming' = 'completed';
+        let cleanSummary = s.description || '';
+        const match = cleanSummary.match(/<!--status:(ongoing|completed|upcoming)-->/);
+        if (match) {
+          storyStatus = match[1] as any;
+          cleanSummary = cleanSummary.replace(/<!--status:(ongoing|completed|upcoming)-->/, '').trim();
+        } else {
+          const localSt = db.getStoryById(s.id);
+          if (localSt?.status) storyStatus = localSt.status;
+        }
+
         return {
           id: s.id,
           code: s.tiktok_code || '',
@@ -67,9 +78,9 @@ export async function GET() {
           slug: s.slug,
           coverImage: s.cover_image,
           genre: s.category || 'Tình cảm',
-          summary: s.description || '',
+          summary: cleanSummary,
           views: s.views || 0,
-          status: 'completed',
+          status: storyStatus,
           chaptersCount: count,
           createdAt: s.created_at,
         };

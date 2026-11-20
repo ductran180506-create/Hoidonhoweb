@@ -95,6 +95,7 @@ export default function AdminPage() {
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('Tuổi Thơ - Đời Thường');
   const [isCustomGenre, setIsCustomGenre] = useState(false);
+  const [storyStatus, setStoryStatus] = useState<'ongoing' | 'completed' | 'upcoming'>('completed');
   const [coverImage, setCoverImage] = useState('');
   const [coverUploading, setCoverUploading] = useState(false);
   const [coverStats, setCoverStats] = useState<{ original: number; compressed: number; reduction: number } | null>(null);
@@ -635,6 +636,7 @@ export default function AdminPage() {
     setTitle(st.title);
     setGenre(st.genre);
     setIsCustomGenre(!PRESET_GENRES.includes(st.genre));
+    setStoryStatus(st.status || 'completed');
     setCoverImage(st.coverImage);
     setSummary(st.summary);
 
@@ -674,12 +676,37 @@ export default function AdminPage() {
     setTitle('');
     setGenre('Tuổi Thơ - Đời Thường');
     setIsCustomGenre(false);
+    setStoryStatus('completed');
     setCoverImage('');
     setCoverStats(null);
     setSummary('');
     setChapters([
       { title: 'Tập 1', content: '', images: [], imageLinks: '', priceCoins: 0 },
     ]);
+  };
+
+  const handleQuickUpdateStatus = async (storyId: string, newStatus: 'ongoing' | 'completed' | 'upcoming') => {
+    try {
+      const res = await fetch('/api/admin/stories', {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({
+          action: 'quick_update_status',
+          storyId,
+          status: newStatus,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStories((prev) => prev.map((s) => (s.id === storyId ? { ...s, status: newStatus } : s)));
+        const label = newStatus === 'ongoing' ? 'Còn tiếp' : newStatus === 'upcoming' ? 'Sắp ra mắt' : 'Full trọn bộ';
+        showToast(`Đã chuyển trạng thái sang "${label}"`);
+      } else {
+        showToast(data.message || 'Lỗi cập nhật trạng thái', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    }
   };
 
   const handleCreateStory = async (e: React.FormEvent) => {
@@ -719,6 +746,7 @@ export default function AdminPage() {
           code,
           title,
           genre,
+          status: storyStatus,
           coverImage,
           summary,
           chapters: finalChapters,
@@ -1151,6 +1179,59 @@ export default function AdminPage() {
                   placeholder="Chiếc xe Dream cọc cạch của bố..."
                   className="w-full px-3 py-2 bg-[#0A0A0D] border border-[#272733] rounded-lg text-white focus:outline-none focus:border-[#7C5CFC]"
                 />
+              </div>
+
+              {/* Trạng thái series: Còn tiếp / Sắp ra mắt / Full trọn bộ */}
+              <div className="p-3 bg-[#0A0A0D] border border-[#22222E] rounded-lg space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="text-[#9E9EA8] font-medium flex items-center gap-1.5">
+                    <span>Trạng thái series (khán giả sẽ thấy trên trang chủ & tập truyện):</span>
+                  </label>
+                  <span className="text-[11px] text-[#A1A1AA]">
+                    {storyStatus === 'ongoing' ? '⏳ Đang ra tiếp các tập mới' : storyStatus === 'upcoming' ? '🚀 Chuẩn bị ra mắt khán giả' : '👑 Đã trọn bộ đầy đủ tập'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setStoryStatus('ongoing')}
+                    className={`py-2 px-3 rounded-lg font-medium text-xs border transition flex items-center justify-center gap-1.5 active:scale-95 ${
+                      storyStatus === 'ongoing'
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-300 ring-1 ring-amber-500/50 shadow-md shadow-amber-500/10 font-bold'
+                        : 'bg-[#121218] border-[#222230] text-[#71717A] hover:text-white hover:border-[#383848]'
+                    }`}
+                  >
+                    <span>⏳</span>
+                    <span>Còn tiếp</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStoryStatus('upcoming')}
+                    className={`py-2 px-3 rounded-lg font-medium text-xs border transition flex items-center justify-center gap-1.5 active:scale-95 ${
+                      storyStatus === 'upcoming'
+                        ? 'bg-purple-500/20 border-purple-500 text-purple-300 ring-1 ring-purple-500/50 shadow-md shadow-purple-500/10 font-bold'
+                        : 'bg-[#121218] border-[#222230] text-[#71717A] hover:text-white hover:border-[#383848]'
+                    }`}
+                  >
+                    <span>🚀</span>
+                    <span>Sắp ra mắt</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStoryStatus('completed')}
+                    className={`py-2 px-3 rounded-lg font-medium text-xs border transition flex items-center justify-center gap-1.5 active:scale-95 ${
+                      storyStatus === 'completed'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-500/10 font-bold'
+                        : 'bg-[#121218] border-[#222230] text-[#71717A] hover:text-white hover:border-[#383848]'
+                    }`}
+                  >
+                    <span>👑</span>
+                    <span>Full trọn bộ</span>
+                  </button>
+                </div>
               </div>
 
               {/* Ảnh bìa */}
@@ -1744,21 +1825,61 @@ export default function AdminPage() {
                   key={st.id}
                   className="p-2.5 bg-[#0A0A0D] border border-[#1E1E26] hover:border-[#2E2E3C] rounded-lg flex items-center justify-between text-xs transition"
                 >
-                  <div className="flex items-center gap-2.5 truncate max-w-[210px]">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
                     <img 
                       src={st.coverImage} 
                       alt={st.title} 
-                      className="w-8 h-11 object-cover rounded bg-[#1C1C24] flex-shrink-0" 
+                      className="w-9 h-12 object-cover rounded bg-[#1C1C24] flex-shrink-0" 
                     />
-                    <div className="truncate">
-                      <div className="flex items-center gap-1.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 truncate">
                         <span className="font-mono text-[10px] text-[#F59E0B] font-bold">
                           #{st.code}
                         </span>
                         <span className="font-medium text-white truncate">{st.title}</span>
                       </div>
-                      <div className="text-[10px] text-[#71717A] mt-0.5">
-                        {st.chaptersCount} tập • {st.genre}
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#71717A] mt-1">
+                        <span>{st.chaptersCount} tập</span>
+                        <span>•</span>
+                        {/* 3 nút chuyển trạng thái nhanh ngay tại danh sách */}
+                        <div className="inline-flex items-center gap-0.5 bg-[#14141C] p-0.5 rounded border border-[#252535]">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'ongoing'); }}
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-medium transition ${
+                              st.status === 'ongoing'
+                                ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 font-bold'
+                                : 'text-[#71717A] hover:text-white'
+                            }`}
+                            title="Bấm để đổi sang Còn tiếp"
+                          >
+                            ⏳ Còn tiếp
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'upcoming'); }}
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-medium transition ${
+                              st.status === 'upcoming'
+                                ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50 font-bold'
+                                : 'text-[#71717A] hover:text-white'
+                            }`}
+                            title="Bấm để đổi sang Sắp ra mắt"
+                          >
+                            🚀 Sắp ra mắt
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'completed'); }}
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-medium transition ${
+                              st.status === 'completed'
+                                ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50 font-bold'
+                                : 'text-[#71717A] hover:text-white'
+                            }`}
+                            title="Bấm để đổi sang Full trọn bộ"
+                          >
+                            👑 Full trọn bộ
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

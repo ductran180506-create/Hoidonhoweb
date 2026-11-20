@@ -32,7 +32,7 @@ export interface Story {
   genre: string; // "Kinh dị", "Giật gân", "Drama", "Xuyên không"...
   summary: string;
   views: number;
-  status: 'ongoing' | 'completed';
+  status: 'ongoing' | 'completed' | 'upcoming';
   chaptersCount: number;
   createdAt: string;
 }
