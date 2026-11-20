@@ -29,15 +29,40 @@ export async function GET(req: NextRequest) {
   try {
     // 1. Lấy danh sách máy từ Supabase Analytics (1 Hàng = 1 Máy duy nhất)
     let sbEvents: any[] | null = null;
+    let exactTotalCount = 0;
     try {
-      const { data, error } = await supabaseAdmin
+      // Tải song song nhiều trang để vượt qua giới hạn 1000 dòng mặc định của Supabase PostgREST
+      const { data: firstBatch, count, error: err1 } = await supabaseAdmin
         .from('analytics')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
-        .limit(2000);
+        .range(0, 999);
 
-      if (!error && data && data.length > 0) {
-        sbEvents = data;
+      if (!err1 && firstBatch && firstBatch.length > 0) {
+        exactTotalCount = count || firstBatch.length;
+        const allFetched: any[] = [...firstBatch];
+
+        // Nếu tổng số máy lớn hơn 1000, tải tiếp các trang còn lại (tối đa đến 10.000 máy)
+        if (exactTotalCount > 1000) {
+          const promises = [];
+          for (let start = 1000; start < Math.min(exactTotalCount, 10000); start += 1000) {
+            promises.push(
+              supabaseAdmin
+                .from('analytics')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .range(start, start + 999)
+            );
+          }
+          const results = await Promise.all(promises);
+          results.forEach((r) => {
+            if (r.data && Array.isArray(r.data)) {
+              allFetched.push(...r.data);
+            }
+          });
+        }
+
+        sbEvents = allFetched;
       }
     } catch (e) {}
 
@@ -45,8 +70,8 @@ export async function GET(req: NextRequest) {
     const todayStr = now.toISOString().split('T')[0];
 
     if (sbEvents && sbEvents.length > 0) {
-      // 1 Máy = 1 Hàng duy nhất trong bảng
-      const totalMachines = sbEvents.length;
+      // 1 Máy = 1 Hàng duy nhất trong bảng, ưu tiên lấy count chính xác từ DB
+      const totalMachines = exactTotalCount || sbEvents.length;
       const todayActiveMachines = sbEvents.filter(e => e.created_at && e.created_at.startsWith(todayStr)).length;
 
       const sources: Record<string, number> = {};
