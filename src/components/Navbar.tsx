@@ -187,11 +187,10 @@ export default function Navbar() {
           {!user && (
             <button
               onClick={() => setIsRechargeOpen(true)}
-              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-sm active:scale-95 whitespace-nowrap flex items-center gap-1"
+              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-sm active:scale-95 whitespace-nowrap flex items-center gap-1.5"
             >
               <span>☕</span>
-              <span className="hidden xs:inline">Mời Cà Phê</span>
-              <span className="xs:hidden">Cà Phê</span>
+              <span>Mời Cà Phê</span>
             </button>
           )}
         </div>
