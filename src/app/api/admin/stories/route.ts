@@ -192,6 +192,19 @@ export async function GET(req: NextRequest) {
         u.totalRechargedVnd = totalPaid;
         u.hasRecharged = totalPaid > 0;
         u.isGoogle = Boolean(authUsersMap[u.id] || (u.email && u.email.includes('@')));
+
+        // TỰ ĐỘNG ĐỒNG BỘ VIP NẾU CÓ ĐƠN VIP THÀNH CÔNG
+        const completedVipTx = userTxs.find(t => t.payment_code?.startsWith('VIP') || Number(t.amount_vnd) === 39000);
+        if (completedVipTx) {
+          const txTime = new Date(completedVipTx.created_at).getTime();
+          const vipExpire = new Date(txTime + 30 * 24 * 60 * 60 * 1000);
+          if (vipExpire > new Date()) {
+            u.isVip = true;
+            if (!u.vipUntil || new Date(u.vipUntil) < vipExpire) {
+              u.vipUntil = vipExpire.toISOString();
+            }
+          }
+        }
       });
 
       const users = Object.values(mergedUserMap).sort(
@@ -760,22 +773,28 @@ export async function POST(req: NextRequest) {
 
         if (targetOrder.isVip) {
           try {
+            const now = new Date();
+            let exp = new Date(now.getTime() + (targetOrder.vipDays || 30) * 24 * 60 * 60 * 1000);
+
             const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(targetOrder.userId);
             if (authUser?.user) {
               const currentVipUntil = authUser.user.user_metadata?.vip_until;
-              const now = new Date();
-              let exp = now;
               if (currentVipUntil && new Date(currentVipUntil) > now) {
-                exp = new Date(currentVipUntil);
+                exp = new Date(new Date(currentVipUntil).getTime() + (targetOrder.vipDays || 30) * 24 * 60 * 60 * 1000);
               }
-              exp.setDate(exp.getDate() + (targetOrder.vipDays || 30));
               await supabaseAdmin.auth.admin.updateUserById(targetOrder.userId, {
                 user_metadata: {
                   ...(authUser.user.user_metadata || {}),
+                  is_vip: true,
                   vip_until: exp.toISOString(),
                 },
               });
             }
+
+            // Đồng bộ local DB
+            try {
+              db.setVip(targetOrder.userId, exp.toISOString());
+            } catch (dErr) {}
           } catch (e) {}
         }
       } catch (err) {

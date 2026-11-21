@@ -64,7 +64,7 @@ export default function AdminPage() {
   const [customerFilter, setCustomerFilter] = useState<'all' | 'recharged' | 'google' | 'vip' | 'has_coins'>('all');
   const [storySearch, setStorySearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
-  const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired'>('all');
+  const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired' | 'vip'>('all');
   const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<'all' | 'bug' | 'content' | 'payment' | 'other'>('all');
   const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<'all' | 'new' | 'reviewed'>('all');
 
@@ -961,7 +961,7 @@ export default function AdminPage() {
     return Object.values(stMap).sort((a, b) => b.count - a.count).slice(0, 5);
   }, [dateFilterType, analytics?.topStories, periodMachines]);
 
-  const filteredUsers = baseUsers.filter((u) => {
+  const filteredUsers = (customerFilter === 'vip' ? safeUsers : baseUsers).filter((u) => {
     const q = customerSearch.trim().toLowerCase();
     const matchSearch = !q || 
       (u.name || '').toLowerCase().includes(q) ||
@@ -987,6 +987,10 @@ export default function AdminPage() {
     if (orderFilter === 'completed' && o.status !== 'completed') return false;
     if (orderFilter === 'pending' && o.status !== 'pending' && o.status !== 'processing') return false;
     if (orderFilter === 'expired' && o.status !== 'expired') return false;
+    if (orderFilter === 'vip') {
+      const isVipOrder = o.packageType === 'VIP_39K' || o.orderCode?.startsWith('VIP') || Number(o.amountVnd) === 39000;
+      if (!isVipOrder) return false;
+    }
 
     if (orderSearch.trim()) {
       const q = orderSearch.toLowerCase().trim();
@@ -2388,11 +2392,12 @@ export default function AdminPage() {
                   </button>
                   <button
                     onClick={() => setCustomerFilter('vip')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      customerFilter === 'vip' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap flex items-center gap-1 ${
+                      customerFilter === 'vip' ? 'bg-amber-950/70 text-amber-300 border border-amber-500/40 shadow-sm' : 'text-[#71717A] hover:text-white'
                     }`}
                   >
-                    VIP ({baseUsers.filter(u => u.isVip).length})
+                    <span>👑 VIP</span>
+                    <span className="font-mono">({safeUsers.filter(u => u.isVip).length})</span>
                   </button>
                 </div>
               </div>
@@ -2625,6 +2630,15 @@ export default function AdminPage() {
                     }`}
                   >
                     Chờ quét ({baseOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
+                  </button>
+                  <button
+                    onClick={() => setOrderFilter('vip')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap flex items-center gap-1 ${
+                      orderFilter === 'vip' ? 'bg-amber-950/70 text-amber-300 border border-amber-500/40 shadow-sm' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    <span>👑 Gói VIP</span>
+                    <span className="font-mono">({baseOrders.filter(o => o.packageType === 'VIP_39K' || o.orderCode?.startsWith('VIP') || Number(o.amountVnd) === 39000).length})</span>
                   </button>
                   <button
                     onClick={() => setOrderFilter('expired')}
