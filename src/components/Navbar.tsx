@@ -4,10 +4,20 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Search, Coins, User as UserIcon, LogOut, Sliders } from 'lucide-react';
+import { Search, Coins, User as UserIcon, LogOut, Sliders, Gift, CheckCircle2 } from 'lucide-react';
 
 export default function Navbar() {
-  const { user, balance, setIsRechargeOpen, setIsAuthModalOpen, logout, setIsHistoryOpen, setPendingOrder } = useAuth();
+  const { 
+    user, 
+    balance, 
+    setIsRechargeOpen, 
+    setIsAuthModalOpen, 
+    logout, 
+    setIsHistoryOpen, 
+    setPendingOrder,
+    setIsCheckInOpen,
+    checkInState
+  } = useAuth();
   const [searchCode, setSearchCode] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
@@ -128,6 +138,32 @@ export default function Navbar() {
                 )}
               </button>
 
+              {/* Nút Điểm Danh Nhận Xu */}
+              <button
+                type="button"
+                onClick={() => setIsCheckInOpen(true)}
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-xs transition font-semibold active:scale-95 cursor-pointer relative ${
+                  checkInState?.canCheckIn
+                    ? 'bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 shadow-sm'
+                    : 'bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] text-emerald-400/90'
+                }`}
+                title={checkInState?.canCheckIn ? 'Điểm danh nhận xu hôm nay' : 'Hôm nay đã điểm danh (Bấm để xem chuỗi thưởng)'}
+              >
+                {checkInState?.canCheckIn ? (
+                  <>
+                    <Gift className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                    <span className="hidden xs:inline">Điểm Danh</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping absolute -top-0.5 -right-0.5" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 absolute -top-0.5 -right-0.5" />
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="hidden sm:inline text-[11px]">Đã nhận</span>
+                  </>
+                )}
+              </button>
+
               {/* Số dư Điểm Tri Ân / Nút Mời Cà Phê */}
               <button 
                 onClick={() => {
@@ -183,15 +219,26 @@ export default function Navbar() {
             </button>
           )}
 
-          {/* Phím Mời Cà Phê nhanh cho khách */}
+          {/* Phím Điểm Danh & Mời Cà Phê nhanh cho khách */}
           {!user && (
-            <button
-              onClick={() => setIsRechargeOpen(true)}
-              className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-sm active:scale-95 whitespace-nowrap flex items-center gap-1.5"
-            >
-              <span>☕</span>
-              <span>Mời Cà Phê</span>
-            </button>
+            <>
+              <button
+                onClick={() => setIsCheckInOpen(true)}
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-gradient-to-r from-amber-500/15 to-orange-500/15 hover:from-amber-500/25 hover:to-orange-500/25 border border-amber-500/30 text-amber-300 text-xs font-semibold rounded-lg transition active:scale-95 flex items-center gap-1 relative shadow-sm"
+                title="Điểm danh nhận quà 7 ngày (+15 Điểm)"
+              >
+                <Gift className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden xs:inline">Điểm Danh</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 absolute -top-0.5 -right-0.5" />
+              </button>
+              <button
+                onClick={() => setIsRechargeOpen(true)}
+                className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-sm active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+              >
+                <span>☕</span>
+                <span>Mời Cà Phê</span>
+              </button>
+            </>
           )}
         </div>
       </div>

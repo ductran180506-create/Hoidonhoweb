@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
 import RechargeModal from '@/components/RechargeModal';
+import CheckInModal from '@/components/CheckInModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import PaymentHistoryModal from '@/components/PaymentHistoryModal';
 
@@ -44,6 +45,7 @@ export default function RootLayout({
           <Footer />
           <AuthModal />
           <RechargeModal />
+          <CheckInModal />
           <PaymentHistoryModal />
           <FeedbackModal />
         </AuthProvider>

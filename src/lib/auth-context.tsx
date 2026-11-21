@@ -28,6 +28,17 @@ interface AuthContextType {
   setSelectedPackage: (pkg: string | null) => void;
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
+  isCheckInOpen: boolean;
+  setIsCheckInOpen: (open: boolean) => void;
+  checkInState: {
+    canCheckIn: boolean;
+    streak: number;
+    nextReward: number;
+    timeLeftMs: number;
+    rewards: number[];
+    todayStr?: string;
+  } | null;
+  refreshCheckIn: () => Promise<void>;
   isHistoryOpen: boolean;
   setIsHistoryOpen: (open: boolean) => void;
   pendingOrder: any | null;
@@ -44,6 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isRechargeOpen, setIsRechargeOpen] = useState<boolean>(false);
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isCheckInOpen, setIsCheckInOpen] = useState<boolean>(false);
+  const [checkInState, setCheckInState] = useState<{
+    canCheckIn: boolean;
+    streak: number;
+    nextReward: number;
+    timeLeftMs: number;
+    rewards: number[];
+    todayStr?: string;
+  } | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [pendingOrder, setPendingOrder] = useState<any | null>(null);
 
@@ -184,6 +204,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const fetchCheckInStatus = async (userId?: string) => {
+    try {
+      const url = userId ? `/api/checkin?userId=${userId}` : '/api/checkin';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.success) {
+        setCheckInState({
+          canCheckIn: data.canCheckIn,
+          streak: data.streak,
+          nextReward: data.nextReward,
+          timeLeftMs: data.timeLeftMs,
+          rewards: data.rewards || [1, 1, 2, 2, 2, 2, 5],
+          todayStr: data.todayStr,
+        });
+      }
+    } catch (err) {
+      console.error('Lỗi kiểm tra điểm danh:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCheckInStatus(user?.id);
+  }, [user?.id]);
+
   const loginWithGoogle = async () => {
     try {
       const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}` : undefined;
@@ -257,6 +301,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshCheckIn = async () => {
+    await fetchCheckInStatus(user?.id);
+    if (user?.id) {
+      await fetchBalance(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -274,6 +325,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSelectedPackage,
         isAuthModalOpen,
         setIsAuthModalOpen,
+        isCheckInOpen,
+        setIsCheckInOpen,
+        checkInState,
+        refreshCheckIn,
         isHistoryOpen,
         setIsHistoryOpen,
         pendingOrder,

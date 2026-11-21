@@ -234,8 +234,8 @@ export async function GET(req: NextRequest) {
         } catch {}
       }
 
-      // 2. Gộp với giao dịch từ Supabase
-      (sbTx || []).forEach(t => {
+      // 2. Gộp với giao dịch nạp tiền từ Supabase (loại trừ các giao dịch tặng điểm danh CHECKIN_)
+      (sbTx || []).filter(t => !t.payment_code?.startsWith('CHECKIN_')).forEach(t => {
         const u = mergedUserMap[t.user_id];
         const existing = orderMap[t.payment_code];
         const status = (t.status === 'completed' || existing?.status === 'completed' || newlyMatched.includes(t.payment_code))
