@@ -248,10 +248,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (phone: string, pin: string) => {
     try {
+      const guestUserId = user?.id || pendingOrder?.userId;
+      const pendingOrderCode = pendingOrder?.orderCode;
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, pin, mode: 'login' }),
+        body: JSON.stringify({ phone, pin, mode: 'login', guestUserId, pendingOrderCode }),
       });
       const data = await res.json();
       if (data.success) {
@@ -268,10 +270,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (phone: string, pin: string, confirmPin?: string) => {
     try {
+      const guestUserId = user?.id || pendingOrder?.userId;
+      const pendingOrderCode = pendingOrder?.orderCode;
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, pin, confirmPin, mode: 'register' }),
+        body: JSON.stringify({ phone, pin, confirmPin, mode: 'register', guestUserId, pendingOrderCode }),
       });
       const data = await res.json();
       if (data.success) {

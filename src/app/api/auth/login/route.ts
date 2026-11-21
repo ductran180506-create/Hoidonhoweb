@@ -5,7 +5,7 @@ import { generateUserToken } from '@/lib/user-auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { phone, pin, confirmPin, mode = 'login' } = await req.json();
+    const { phone, pin, confirmPin, mode = 'login', guestUserId, pendingOrderCode } = await req.json();
 
     if (!phone || !pin) {
       return NextResponse.json({ success: false, message: 'Vui lòng nhập tài khoản và mật khẩu' }, { status: 400 });
@@ -20,6 +20,34 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanPhone = phone.trim().replace(/\s+/g, '');
+
+    // Hàm phụ trợ tự động gộp đơn và lượt mở khoá từ phiên khách vãng lai
+    const mergeGuestData = async (targetUserId: string) => {
+      try {
+        if (guestUserId && guestUserId !== targetUserId) {
+          // Chuyển transactions
+          await supabaseAdmin
+            .from('transactions')
+            .update({ user_id: targetUserId })
+            .eq('user_id', guestUserId);
+
+          // Chuyển unlocked chapters
+          await supabaseAdmin
+            .from('unlocked_chapters')
+            .update({ user_id: targetUserId })
+            .eq('user_id', guestUserId);
+        }
+
+        if (pendingOrderCode) {
+          await supabaseAdmin
+            .from('transactions')
+            .update({ user_id: targetUserId })
+            .eq('payment_code', pendingOrderCode);
+        }
+      } catch (err) {
+        console.warn('Merge guest data warning:', err);
+      }
+    };
 
     // 1. Kiểm tra tài khoản trên Supabase và Local DB
     let sbUser: any = null;
@@ -46,13 +74,27 @@ export async function POST(req: NextRequest) {
         }, { status: 400 });
       }
 
+      await mergeGuestData(cleanPhone);
+
+      let initialBalance = 0;
+      try {
+        const { data: mergedTx } = await supabaseAdmin
+          .from('transactions')
+          .select('coins, status')
+          .eq('user_id', cleanPhone)
+          .eq('status', 'completed');
+        if (mergedTx && mergedTx.length > 0) {
+          initialBalance = mergedTx.reduce((sum, t) => sum + (Number(t.coins) || 0), 0);
+        }
+      } catch (err) {}
+
       // Tạo trên Supabase
       try {
         await supabaseAdmin.from('users').insert({
           id: cleanPhone,
           phone: cleanPhone,
           pin_code: pin,
-          balance: 0,
+          balance: initialBalance,
           created_at: new Date().toISOString(),
           last_active: new Date().toISOString(),
         });
@@ -61,9 +103,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Tạo trên Local DB
-      const user = db.createUser(cleanPhone, pin);
+      const user = db.createUser(cleanPhone, pin, cleanPhone);
+      if (initialBalance > 0) {
+        db.adjustCoins(user.id, initialBalance);
+      }
       const isVip = db.isVip(user.id);
-      const sessionToken = generateUserToken(user.id);
+      const sessionToken = generateUserToken(cleanPhone);
 
       const displayName = user.phone.length >= 9 ? `${user.phone.slice(0, 3)}***${user.phone.slice(-3)}` : user.phone;
 
@@ -73,14 +118,14 @@ export async function POST(req: NextRequest) {
         message: 'Đăng ký tài khoản thành công!',
         token: sessionToken,
         user: {
-          id: user.id,
+          id: cleanPhone,
           phone: user.phone,
           name: displayName,
           vipUntil: user.vipUntil,
           isVip,
         },
         wallet: {
-          balance: 0,
+          balance: initialBalance,
         },
       });
 
@@ -114,9 +159,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Mật khẩu không chính xác' }, { status: 401 });
     }
 
+    await mergeGuestData(cleanPhone);
+
     let user = localUser;
     if (!user) {
-      user = db.createUser(cleanPhone, pin);
+      user = db.createUser(cleanPhone, pin, cleanPhone);
     }
     if (!sbUser) {
       try {
@@ -131,15 +178,15 @@ export async function POST(req: NextRequest) {
       } catch (e) {}
     }
 
-    const wallet = db.getWallet(user.id);
+    const wallet = db.getWallet(cleanPhone);
     const sbBalance = sbUser?.balance || 0;
     const balance = Math.max(wallet.balance, sbBalance);
     if (balance !== wallet.balance) {
-      db.adjustCoins(user.id, balance - wallet.balance);
+      db.adjustCoins(cleanPhone, balance - wallet.balance);
     }
 
-    const isVip = db.isVip(user.id);
-    const sessionToken = generateUserToken(user.id);
+    const isVip = db.isVip(cleanPhone);
+    const sessionToken = generateUserToken(cleanPhone);
 
     const displayName = user.phone.length >= 9 ? `${user.phone.slice(0, 3)}***${user.phone.slice(-3)}` : user.phone;
 
@@ -147,7 +194,7 @@ export async function POST(req: NextRequest) {
       success: true,
       token: sessionToken,
       user: {
-        id: user.id,
+        id: cleanPhone,
         phone: user.phone,
         name: displayName,
         vipUntil: user.vipUntil,

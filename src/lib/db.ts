@@ -329,10 +329,10 @@ export const db = {
     return data.users.find(u => u.phone === phone);
   },
 
-  createUser: (phone: string, pin: string): User => {
+  createUser: (phone: string, pin: string, customId?: string): User => {
     const data = ensureDataFile();
     const user: User = {
-      id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      id: customId || phone || `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       phone,
       pin,
       vipUntil: null,
