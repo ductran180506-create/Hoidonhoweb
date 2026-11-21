@@ -1071,23 +1071,23 @@ export default function AdminPage() {
 
   // 2. DASHBOARD CHUYÊN NGHIỆP KIỂU STUDIO
   return (
-    <div className="space-y-5 sm:space-y-6 pb-20 text-white max-w-full overflow-x-hidden">
+    <div className="space-y-4 sm:space-y-6 pb-20 text-white max-w-full overflow-x-hidden">
       {/* Toast thông báo */}
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 animate-fadeIn">
-          <div className={`px-3.5 py-2 rounded-lg shadow-xl text-xs font-medium flex items-center gap-2 border ${
+        <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-auto z-50 animate-fadeIn pointer-events-none flex justify-center sm:justify-end">
+          <div className={`px-3.5 py-2 rounded-lg shadow-2xl text-xs font-medium flex items-center gap-2 border pointer-events-auto max-w-sm ${
             toast.type === 'error'
               ? 'bg-[#1C1215] text-red-300 border-red-800/40'
               : 'bg-[#111A16] text-emerald-300 border-emerald-800/40'
           }`}>
-            <Check className="w-3.5 h-3.5 text-emerald-400" />
-            <span>{toast.message}</span>
+            <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+            <span className="truncate">{toast.message}</span>
           </div>
         </div>
       )}
 
       {/* Header Studio */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-4">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5 sm:pb-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
@@ -1102,10 +1102,10 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/"
-            className="px-3 py-1.5 bg-[#14141B] hover:bg-[#1C1C24] border border-[#272733] rounded-lg text-xs text-[#D4D4D8] flex items-center gap-1.5 transition font-medium"
+            className="px-2.5 sm:px-3 py-1.5 bg-[#14141B] hover:bg-[#1C1C24] border border-[#272733] rounded-lg text-xs text-[#D4D4D8] flex items-center gap-1.5 transition font-medium active:scale-95"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Xem Web Khách</span>
@@ -1113,7 +1113,7 @@ export default function AdminPage() {
 
           <button
             onClick={fetchData}
-            className="p-1.5 bg-[#14141B] hover:bg-[#1C1C24] border border-[#272733] rounded-lg text-[#71717A] hover:text-white transition"
+            className="p-1.5 bg-[#14141B] hover:bg-[#1C1C24] border border-[#272733] rounded-lg text-[#71717A] hover:text-white transition active:scale-95"
             title="Tải lại"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -1121,7 +1121,7 @@ export default function AdminPage() {
 
           <button
             onClick={handleAdminLogout}
-            className="px-2.5 py-1.5 text-xs text-[#A1A1AA] hover:text-red-300 transition"
+            className="px-2.5 py-1.5 text-xs text-[#A1A1AA] hover:text-red-300 transition active:scale-95 ml-auto sm:ml-0"
           >
             Đăng xuất
           </button>
@@ -1170,7 +1170,7 @@ export default function AdminPage() {
 
         {/* Các nút preset thời gian + Ô chọn ngày tùy ý */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pt-2 border-t border-[#1C1C24]">
-          <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
+          <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
             <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-1 rounded-lg border border-[#242434] text-xs min-w-max">
               <button
                 type="button"
@@ -1219,8 +1219,8 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Ô chọn ngày cụ thể hoặc khoảng ngày */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs bg-[#0A0A0D] p-1 rounded-lg border border-[#242434]">
+          {/* Ô chọn ngày cụ thể hoặc khoảng ngày: Tự co giãn 100% mượt mà trên Mobile */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 text-xs bg-[#0A0A0D] p-1.5 rounded-lg border border-[#242434] w-full lg:w-auto">
             {/* Menu Chọn Nhanh 1 Ngày (1 Click là xong) */}
             <select
               value={customStartDate && customStartDate === customEndDate ? customStartDate : ''}
@@ -1231,7 +1231,7 @@ export default function AdminPage() {
                   setDateFilterType('custom');
                 }
               }}
-              className="bg-[#14141C] border border-[#2B2B3D] text-[#D4D4D8] text-xs px-2 py-1 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer"
+              className="bg-[#14141C] border border-[#2B2B3D] text-[#D4D4D8] text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer w-full sm:w-auto"
               title="Bấm chọn nhanh một ngày cụ thể"
             >
               <option value="">⚡ Chọn nhanh ngày...</option>
@@ -1242,10 +1242,10 @@ export default function AdminPage() {
               ))}
             </select>
 
-            <span className="text-[#52525B] hidden xs:inline">|</span>
+            <span className="text-[#52525B] hidden sm:inline">|</span>
 
             {/* Hoặc bấm trực tiếp vào ô để mở lịch */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 w-full sm:w-auto">
               <input
                 type="date"
                 value={customStartDate}
@@ -1260,10 +1260,10 @@ export default function AdminPage() {
                   }
                   setDateFilterType('custom');
                 }}
-                className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-1 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer"
+                className="bg-[#14141C] border border-[#2B2B3D] text-white text-[11px] sm:text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer flex-1 sm:w-28 min-w-0"
                 title="Bấm vào để mở lịch chọn ngày bắt đầu"
               />
-              <span className="text-[#52525B]">→</span>
+              <span className="text-[#52525B] flex-shrink-0">→</span>
               <input
                 type="date"
                 value={customEndDate}
@@ -1274,26 +1274,26 @@ export default function AdminPage() {
                   setCustomEndDate(e.target.value);
                   setDateFilterType('custom');
                 }}
-                className="bg-[#14141C] border border-[#2B2B3D] text-white text-xs px-2 py-1 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer"
+                className="bg-[#14141C] border border-[#2B2B3D] text-white text-[11px] sm:text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer flex-1 sm:w-28 min-w-0"
                 title="Bấm vào để mở lịch chọn ngày kết thúc"
               />
-            </div>
 
-            {(customStartDate || customEndDate) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCustomStartDate('');
-                  setCustomEndDate('');
-                  setDateFilterType('all');
-                }}
-                className="px-1.5 py-1 text-[#A1A1AA] hover:text-white hover:bg-[#20202C] rounded transition flex items-center gap-0.5 text-[10px]"
-                title="Xóa bộ lọc ngày về toàn bộ"
-              >
-                <X className="w-3 h-3" />
-                <span>Xóa</span>
-              </button>
-            )}
+              {(customStartDate || customEndDate) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomStartDate('');
+                    setCustomEndDate('');
+                    setDateFilterType('all');
+                  }}
+                  className="px-2 py-1 text-[#A1A1AA] hover:text-white hover:bg-[#20202C] rounded transition flex items-center gap-0.5 text-[10px] flex-shrink-0 ml-0.5"
+                  title="Xóa bộ lọc ngày về toàn bộ"
+                >
+                  <X className="w-3 h-3" />
+                  <span className="hidden xs:inline">Xóa</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1382,11 +1382,11 @@ export default function AdminPage() {
       </div>
 
       {/* Segmented Control Bar (Kiểu Linear / Vercel - Vuốt ngang mượt mà trên Mobile) */}
-      <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 no-scrollbar pb-1">
+      <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 no-scrollbar pb-1 touch-pan-x">
         <div className="inline-flex items-center gap-1 p-1 bg-[#111116] border border-[#1E1E26] rounded-lg min-w-max">
           <button
             onClick={() => setActiveTab('stories')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
               activeTab === 'stories'
                 ? 'bg-[#22222E] text-white shadow-sm'
                 : 'text-[#71717A] hover:text-white'
@@ -1397,7 +1397,7 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab('customers')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
               activeTab === 'customers'
                 ? 'bg-[#22222E] text-white shadow-sm'
                 : 'text-[#71717A] hover:text-white'
@@ -1408,7 +1408,7 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab('revenue')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
               activeTab === 'revenue'
                 ? 'bg-[#22222E] text-white shadow-sm'
                 : 'text-[#71717A] hover:text-white'
@@ -1419,7 +1419,7 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab('analytics')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
               activeTab === 'analytics'
                 ? 'bg-[#22222E] text-white shadow-sm'
                 : 'text-[#71717A] hover:text-white'
@@ -1430,7 +1430,7 @@ export default function AdminPage() {
 
           <button
             onClick={() => setActiveTab('feedback')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap active:scale-95 ${
               activeTab === 'feedback'
                 ? 'bg-[#22222E] text-white shadow-sm'
                 : 'text-[#71717A] hover:text-white'
@@ -1450,10 +1450,10 @@ export default function AdminPage() {
       {/* 1. KHO TRUYỆN & ĐĂNG BÀI                                      */}
       {/* ============================================================ */}
       {activeTab === 'stories' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           {/* Cột Trái: Soạn thảo & Đăng bộ truyện mới (7 cột) */}
-          <div className="lg:col-span-7 bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#1E1E26] pb-3">
+          <div className="lg:col-span-7 bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#1E1E26] pb-3">
               <div>
                 <h2 className="text-sm font-semibold text-white">
                   {editingStoryId ? `Chỉnh Sửa Bộ Truyện #${code}` : 'Soạn Thảo Bộ Truyện Mới'}
@@ -1462,7 +1462,7 @@ export default function AdminPage() {
                   {editingStoryId ? 'Thêm tập mới, thay ảnh và cập nhật nội dung' : 'Ảnh tự động nén WebP trước khi lưu'}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-start sm:self-auto">
                 {editingStoryId && (
                   <button
                     type="button"
@@ -1774,9 +1774,9 @@ export default function AdminPage() {
 
                 {chapters.map((chap, idx) => (
                   <div key={idx} className="p-3 bg-[#0A0A0D] border border-[#22222E] rounded-lg space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-mono text-[#71717A]">{idx + 1}.</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <span className="text-[11px] font-mono text-[#71717A] flex-shrink-0">{idx + 1}.</span>
                         <input
                           type="text"
                           value={chap.title}
@@ -1785,11 +1785,11 @@ export default function AdminPage() {
                             updated[idx].title = e.target.value;
                             setChapters(updated);
                           }}
-                          className="bg-transparent font-medium text-white focus:outline-none border-b border-transparent focus:border-[#7C5CFC]"
+                          className="bg-transparent font-medium text-white focus:outline-none border-b border-transparent focus:border-[#7C5CFC] flex-1 sm:flex-initial"
                         />
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                         {/* Nhập/chọn số điểm của tập này */}
                         <div className="flex items-center gap-1 bg-[#14141B] border border-[#272733] rounded px-1.5 py-0.5">
                           <input
@@ -1828,14 +1828,14 @@ export default function AdminPage() {
                           className="px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/15 hover:bg-[#7C5CFC]/30 text-[#A78BFA] border border-[#7C5CFC]/30 transition font-medium whitespace-nowrap"
                           title="Tự động khóa mức xu này cho tập này và tất cả các tập sau"
                         >
-                          🔒 Khóa full bộ từ tập này ({chap.priceCoins > 0 ? chap.priceCoins : (defaultLockPrice || 5)}đ)
+                          🔒 Khóa full ({chap.priceCoins > 0 ? chap.priceCoins : (defaultLockPrice || 5)}đ)
                         </button>
 
                         {chapters.length > 1 && (
                           <button
                             type="button"
                             onClick={() => handleRemoveChapter(idx)}
-                            className="text-[#52525B] hover:text-red-400 transition"
+                            className="text-[#52525B] hover:text-red-400 transition p-1"
                             title="Xóa tập này"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2205,10 +2205,10 @@ export default function AdminPage() {
           </div>
 
           {/* Cột Phải: Kho truyện hiện có (5 cột) */}
-          <div className="lg:col-span-5 bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-3.5">
-            <div className="flex items-center justify-between border-b border-[#1E1E26] pb-3">
-              <h2 className="text-sm font-semibold text-white">Kho Truyện ({stories.length})</h2>
-              <div className="relative w-44">
+          <div className="lg:col-span-5 bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-3.5">
+            <div className="flex items-center justify-between border-b border-[#1E1E26] pb-3 gap-2">
+              <h2 className="text-sm font-semibold text-white whitespace-nowrap">Kho Truyện ({stories.length})</h2>
+              <div className="relative w-40 sm:w-44">
                 <Search className="w-3 h-3 text-[#52525B] absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -2220,104 +2220,111 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <div className="space-y-2 max-h-[650px] overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-[650px] overflow-y-auto pr-1">
               {filteredStories.map((st) => (
                 <div
                   key={st.id}
-                  className="p-2.5 bg-[#0A0A0D] border border-[#1E1E26] hover:border-[#2E2E3C] rounded-lg flex items-center justify-between text-xs transition"
+                  className="p-2.5 sm:p-3 bg-[#0A0A0D] border border-[#1E1E26] hover:border-[#2E2E3C] rounded-lg flex flex-col gap-2.5 text-xs transition"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
-                    <img 
-                      src={st.coverImage} 
-                      alt={st.title} 
-                      className="w-9 aspect-[9/16] object-cover rounded bg-[#1C1C24] flex-shrink-0" 
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="font-mono text-[10px] text-[#F59E0B] font-bold">
-                          #{st.code}
-                        </span>
-                        <span className="font-medium text-white truncate">{st.title}</span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#71717A] mt-1">
-                        <span>{st.chaptersCount} tập</span>
-                        <span>•</span>
-                        {/* 3 nút chuyển trạng thái nhanh ngay tại danh sách */}
-                        <div className="inline-flex items-center gap-0.5 bg-[#14141C] p-0.5 rounded border border-[#252535]">
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'ongoing'); }}
-                            className={`px-1.5 py-0.2 rounded text-[9px] font-medium transition ${
-                              st.status === 'ongoing'
-                                ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 font-bold'
-                                : 'text-[#71717A] hover:text-white'
-                            }`}
-                            title="Bấm để đổi sang Còn tiếp"
-                          >
-                            ⏳ Còn tiếp
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'upcoming'); }}
-                            className={`px-1.5 py-0.2 rounded text-[9px] font-medium transition ${
-                              st.status === 'upcoming'
-                                ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50 font-bold'
-                                : 'text-[#71717A] hover:text-white'
-                            }`}
-                            title="Bấm để đổi sang Sắp ra mắt"
-                          >
-                            🚀 Sắp ra mắt
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'completed'); }}
-                            className={`px-1.5 py-0.2 rounded text-[9px] font-medium transition ${
-                              st.status === 'completed'
-                                ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50 font-bold'
-                                : 'text-[#71717A] hover:text-white'
-                            }`}
-                            title="Bấm để đổi sang Full trọn bộ"
-                          >
-                            👑 Full trọn bộ
-                          </button>
+                  {/* Hàng 1: Ảnh bìa + Tên + Nhóm nút thao tác */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <img 
+                        src={st.coverImage} 
+                        alt={st.title} 
+                        className="w-9 sm:w-10 aspect-[9/16] object-cover rounded bg-[#1C1C24] flex-shrink-0" 
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-[10px] text-[#F59E0B] font-bold flex-shrink-0">
+                            #{st.code}
+                          </span>
+                          <span className="font-medium text-white truncate text-xs sm:text-sm">{st.title}</span>
+                        </div>
+                        <div className="text-[10px] text-[#71717A] mt-0.5">
+                          {st.chaptersCount} tập • {st.genre || 'Tình cảm'}
                         </div>
                       </div>
                     </div>
+
+                    {/* Nút thao tác nhanh */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => handleStartEditStory(st)}
+                        className="p-1.5 bg-[#14141B] hover:bg-[#7C5CFC]/20 text-[#9E9EA8] hover:text-[#7C5CFC] rounded transition"
+                        title="Sửa truyện & Thêm tập"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => handleCopyStoryLink(st)}
+                        className="p-1.5 bg-[#14141B] hover:bg-[#1E1E28] text-[#9E9EA8] hover:text-white rounded transition"
+                        title="Copy link dán TikTok"
+                      >
+                        {copiedStoryId === st.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+
+                      <Link
+                        href={`/truyen/${st.slug}`}
+                        target="_blank"
+                        className="p-1.5 bg-[#14141B] hover:bg-[#1E1E28] text-[#9E9EA8] hover:text-white rounded transition"
+                        title="Xem truyện"
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </Link>
+
+                      <button
+                        onClick={() => handleDeleteStory(st.id)}
+                        className="p-1.5 bg-[#14141B] hover:bg-red-950/40 text-[#71717A] hover:text-red-400 rounded transition"
+                        title="Xóa truyện"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleStartEditStory(st)}
-                      className="p-1.5 bg-[#14141B] hover:bg-[#7C5CFC]/20 text-[#9E9EA8] hover:text-[#7C5CFC] rounded transition"
-                      title="Sửa truyện & Thêm tập"
-                    >
-                      <Pencil className="w-3 h-3" />
-                    </button>
-
-                    <button
-                      onClick={() => handleCopyStoryLink(st)}
-                      className="p-1.5 bg-[#14141B] hover:bg-[#1E1E28] text-[#9E9EA8] hover:text-white rounded transition"
-                      title="Copy link dán TikTok"
-                    >
-                      {copiedStoryId === st.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                    </button>
-
-                    <Link
-                      href={`/truyen/${st.slug}`}
-                      target="_blank"
-                      className="p-1.5 bg-[#14141B] hover:bg-[#1E1E28] text-[#9E9EA8] hover:text-white rounded transition"
-                      title="Xem truyện"
-                    >
-                      <ArrowUpRight className="w-3 h-3" />
-                    </Link>
-
-                    <button
-                      onClick={() => handleDeleteStory(st.id)}
-                      className="p-1.5 bg-[#14141B] hover:bg-red-950/40 text-[#71717A] hover:text-red-400 rounded transition"
-                      title="Xóa truyện"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
+                  {/* Hàng 2: Ba nút trạng thái nhanh */}
+                  <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-[#181822]">
+                    <span className="text-[10px] text-[#71717A] hidden xs:inline">Trạng thái:</span>
+                    <div className="inline-flex items-center gap-1 bg-[#14141C] p-0.5 rounded border border-[#252535] overflow-x-auto no-scrollbar w-full sm:w-auto justify-between sm:justify-start">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'ongoing'); }}
+                        className={`px-2 py-0.5 rounded text-[9px] font-medium transition whitespace-nowrap flex-1 sm:flex-initial text-center ${
+                          st.status === 'ongoing'
+                            ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 font-bold'
+                            : 'text-[#71717A] hover:text-white'
+                        }`}
+                        title="Bấm để đổi sang Còn tiếp"
+                      >
+                        ⏳ Còn tiếp
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'upcoming'); }}
+                        className={`px-2 py-0.5 rounded text-[9px] font-medium transition whitespace-nowrap flex-1 sm:flex-initial text-center ${
+                          st.status === 'upcoming'
+                            ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50 font-bold'
+                            : 'text-[#71717A] hover:text-white'
+                        }`}
+                        title="Bấm để đổi sang Sắp ra mắt"
+                      >
+                        🚀 Sắp ra mắt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'completed'); }}
+                        className={`px-2 py-0.5 rounded text-[9px] font-medium transition whitespace-nowrap flex-1 sm:flex-initial text-center ${
+                          st.status === 'completed'
+                            ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50 font-bold'
+                            : 'text-[#71717A] hover:text-white'
+                        }`}
+                        title="Bấm để đổi sang Full trọn bộ"
+                      >
+                        👑 Full bộ
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -2332,7 +2339,7 @@ export default function AdminPage() {
       {/* 2. ĐỘC GIẢ & KHÁCH HÀNG                                       */}
       {/* ============================================================ */}
       {activeTab === 'customers' && (
-        <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-4">
+        <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3">
             <div>
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -2364,7 +2371,7 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="overflow-x-auto no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+              <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
                 <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
                   <button
                     onClick={() => setCustomerFilter('all')}
@@ -2404,7 +2411,12 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="max-h-[560px] overflow-y-auto overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 admin-table-scroll rounded-lg border border-[#1A1A24]/60">
+          <div className="flex items-center justify-between text-[11px] text-[#71717A] px-1 sm:hidden">
+            <span>👉 Vuốt ngang để xem đủ cột</span>
+            <span>{filteredUsers.length} người</span>
+          </div>
+
+          <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
             <table className="w-full text-left text-xs min-w-[660px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
@@ -2564,7 +2576,7 @@ export default function AdminPage() {
       {/* 3. DÒNG TIỀN & DOANH THU                                      */}
       {/* ============================================================ */}
       {activeTab === 'revenue' && (
-        <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-4">
+        <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5">
             <div>
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
@@ -2609,7 +2621,7 @@ export default function AdminPage() {
               </div>
 
               {/* Các tab lọc trạng thái */}
-              <div className="overflow-x-auto no-scrollbar -mx-2 px-2 sm:mx-0 sm:px-0">
+              <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
                 <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
                   <button
                     onClick={() => setOrderFilter('all')}
@@ -2664,7 +2676,12 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="max-h-[560px] overflow-y-auto overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 admin-table-scroll rounded-lg border border-[#1A1A24]/60">
+          <div className="flex items-center justify-between text-[11px] text-[#71717A] px-1 sm:hidden">
+            <span>👉 Vuốt ngang xem chi tiết đơn</span>
+            <span>{filteredOrders.length} đơn</span>
+          </div>
+
+          <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
             <table className="w-full text-left text-xs min-w-[580px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
@@ -2928,7 +2945,12 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="max-h-[560px] overflow-y-auto overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 admin-table-scroll rounded-lg border border-[#1A1A24]/60">
+              <div className="flex items-center justify-between text-[11px] text-[#71717A] px-1 sm:hidden">
+                <span>👉 Vuốt ngang xem chi tiết máy</span>
+                <span>{periodMachines.length} máy</span>
+              </div>
+
+              <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
                 <table className="w-full text-left text-xs min-w-[500px]">
                   <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                     <tr className="border-b border-[#1E1E26] text-[#71717A]">
@@ -3146,77 +3168,79 @@ export default function AdminPage() {
           </div>
 
           {/* Danh sách góp ý */}
-          <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-5 space-y-4">
+          <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
             {/* Thanh Phân Loại & Bộ Lọc */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-[#1E1E26]">
-              {/* Tabs phân loại Loại thư */}
-              <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                <button
-                  onClick={() => setFeedbackTypeFilter('all')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition ${
-                    feedbackTypeFilter === 'all'
-                      ? 'bg-[#7C5CFC] text-white shadow-sm'
-                      : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
-                  }`}
-                >
-                  Tất cả ({baseFeedback.length})
-                </button>
+              {/* Tabs phân loại Loại thư vuốt ngang trên Mobile */}
+              <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
+                <div className="inline-flex items-center gap-1.5 text-xs min-w-max">
+                  <button
+                    onClick={() => setFeedbackTypeFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition ${
+                      feedbackTypeFilter === 'all'
+                        ? 'bg-[#7C5CFC] text-white shadow-sm'
+                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                    }`}
+                  >
+                    Tất cả ({baseFeedback.length})
+                  </button>
 
-                <button
-                  onClick={() => setFeedbackTypeFilter('bug')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
-                    feedbackTypeFilter === 'bug'
-                      ? 'bg-red-500 text-white shadow-sm'
-                      : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
-                  }`}
-                >
-                  <span>🐛 Báo lỗi</span>
-                  <span className="text-[10px] opacity-80">
-                    ({baseFeedback.filter(f => f.type === 'bug').length})
-                  </span>
-                </button>
+                  <button
+                    onClick={() => setFeedbackTypeFilter('bug')}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                      feedbackTypeFilter === 'bug'
+                        ? 'bg-red-500 text-white shadow-sm'
+                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                    }`}
+                  >
+                    <span>🐛 Báo lỗi</span>
+                    <span className="text-[10px] opacity-80">
+                      ({baseFeedback.filter(f => f.type === 'bug').length})
+                    </span>
+                  </button>
 
-                <button
-                  onClick={() => setFeedbackTypeFilter('content')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
-                    feedbackTypeFilter === 'content'
-                      ? 'bg-amber-500 text-black font-semibold shadow-sm'
-                      : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
-                  }`}
-                >
-                  <span>💡 Góp ý truyện</span>
-                  <span className="text-[10px] opacity-80">
-                    ({baseFeedback.filter(f => f.type === 'content').length})
-                  </span>
-                </button>
+                  <button
+                    onClick={() => setFeedbackTypeFilter('content')}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                      feedbackTypeFilter === 'content'
+                        ? 'bg-amber-500 text-black font-semibold shadow-sm'
+                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                    }`}
+                  >
+                    <span>💡 Góp ý truyện</span>
+                    <span className="text-[10px] opacity-80">
+                      ({baseFeedback.filter(f => f.type === 'content').length})
+                    </span>
+                  </button>
 
-                <button
-                  onClick={() => setFeedbackTypeFilter('payment')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
-                    feedbackTypeFilter === 'payment'
-                      ? 'bg-emerald-500 text-black font-semibold shadow-sm'
-                      : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
-                  }`}
-                >
-                  <span>💳 Mở khóa / Điểm</span>
-                  <span className="text-[10px] opacity-80">
-                    ({baseFeedback.filter(f => f.type === 'payment').length})
-                  </span>
-                </button>
+                  <button
+                    onClick={() => setFeedbackTypeFilter('payment')}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                      feedbackTypeFilter === 'payment'
+                        ? 'bg-emerald-500 text-black font-semibold shadow-sm'
+                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                    }`}
+                  >
+                    <span>💳 Mở khóa / Điểm</span>
+                    <span className="text-[10px] opacity-80">
+                      ({baseFeedback.filter(f => f.type === 'payment').length})
+                    </span>
+                  </button>
 
-                <button
-                  onClick={() => setFeedbackTypeFilter('other')}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
-                    feedbackTypeFilter === 'other'
-                      ? 'bg-blue-500 text-white shadow-sm'
-                      : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
-                  }`}
-                >
-                  <span>💬 Ý kiến khác</span>
-                  <span className="text-[10px] opacity-80">
-                    ({baseFeedback.filter(f => f.type === 'other').length})
-                  </span>
-                </button>
+                  <button
+                    onClick={() => setFeedbackTypeFilter('other')}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
+                      feedbackTypeFilter === 'other'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                    }`}
+                  >
+                    <span>💬 Ý kiến khác</span>
+                    <span className="text-[10px] opacity-80">
+                      ({baseFeedback.filter(f => f.type === 'other').length})
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Lọc theo trạng thái: Chưa xem / Đã xem */}
