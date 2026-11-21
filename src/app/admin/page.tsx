@@ -2408,6 +2408,7 @@ export default function AdminPage() {
             <table className="w-full text-left text-xs min-w-[660px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A]">STT</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Tài Khoản / Người Dùng</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Hạng</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Đã Nạp</th>
@@ -2420,13 +2421,16 @@ export default function AdminPage() {
               <tbody className="divide-y divide-[#1C1C24]">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-[#52525B]">
+                    <td colSpan={8} className="py-8 text-center text-[#52525B]">
                       Không có độc giả nào phù hợp.
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((u) => (
+                  filteredUsers.map((u, idx) => (
                     <tr key={u.id} className="hover:bg-[#14141B] transition">
+                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold">
+                        #{idx + 1}
+                      </td>
                       <td className="py-3">
                         <div className="flex items-center gap-2.5">
                           {u.avatar ? (
@@ -2664,6 +2668,7 @@ export default function AdminPage() {
             <table className="w-full text-left text-xs min-w-[580px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A]">STT</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Mã Đơn / Nội Dung CK</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Khách Hàng</th>
                   <th className="py-2.5 font-medium bg-[#111116]">Gói Nạp</th>
@@ -2675,7 +2680,7 @@ export default function AdminPage() {
               <tbody className="divide-y divide-[#1C1C24]">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-[#52525B]">
+                    <td colSpan={7} className="py-8 text-center text-[#52525B]">
                       {orderSearch ? (
                         <div className="space-y-2">
                           <p>Không tìm thấy đơn nạp nào khớp với "{orderSearch}".</p>
@@ -2693,8 +2698,11 @@ export default function AdminPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredOrders.map((ord: any) => (
+                  filteredOrders.map((ord: any, idx: number) => (
                     <tr key={ord.id} className="hover:bg-[#14141B] transition">
+                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold">
+                        #{idx + 1}
+                      </td>
                       <td className="py-3 font-mono font-medium text-white">
                         {ord.orderCode}
                       </td>
@@ -2742,9 +2750,18 @@ export default function AdminPage() {
                             </button>
                           </div>
                         ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-[#181822] text-[#71717A] border border-[#272733] font-medium">
-                            ✕ Đã hết hạn
-                          </span>
+                          <div className="inline-flex items-center gap-2">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-[#181822] text-[#71717A] border border-[#272733] font-medium">
+                              ✕ Đã hết hạn
+                            </span>
+                            <button
+                              onClick={() => handleApproveOrder(ord.orderCode)}
+                              className="px-2 py-0.5 bg-[#1C1C26] hover:bg-emerald-950/60 text-[#A1A1AA] hover:text-emerald-300 border border-[#2B2B3A] hover:border-emerald-500/40 rounded text-[10px] font-medium transition"
+                              title="Bấm để duyệt nếu khách đã chuyển khoản muộn hoặc quên ghi mã"
+                            >
+                              Duyệt tay
+                            </button>
+                          </div>
                         )}
                       </td>
                       <td className="py-3 text-right text-[#71717A] text-[11px]">

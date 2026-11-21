@@ -289,7 +289,7 @@ export async function GET(req: NextRequest) {
           totalRevenue,
           totalUsers: users.length,
         },
-        orders: orders.slice(0, 100),
+        orders,
       });
     }
   } catch (err) {
