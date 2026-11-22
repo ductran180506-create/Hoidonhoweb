@@ -9,7 +9,8 @@ import {
   Users, Search, Coins, ExternalLink,
   Copy, Check, ChevronLeft, ChevronRight,
   FolderPlus, AlertCircle, ArrowUpRight, RefreshCw, Pencil,
-  Maximize2, ZoomIn, Move, Calendar, PanelLeft, Menu
+  Maximize2, ZoomIn, Move, Calendar, PanelLeft, Menu,
+  Sparkles, Save, RotateCcw, CheckCircle2, AlertTriangle, Gift, Crown, Percent
 } from 'lucide-react';
 import { Story, Order } from '@/lib/types';
 import { compressImage, formatFileSize } from '@/lib/image-compressor';
@@ -56,11 +57,103 @@ export default function AdminPage() {
   const [inputPass, setInputPass] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // 5 Phân khu chính: stories | customers | revenue | analytics | feedback
-  const [activeTab, setActiveTab] = useState<'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback'>('stories');
+  // 6 Phân khu chính: stories | customers | revenue | analytics | feedback | wheel
+  const [activeTab, setActiveTab] = useState<'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback' | 'wheel'>('stories');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { setIsLuckyWheelOpen } = useAuth();
+
+  // Cài đặt Vòng Quay May Mắn (Dữ liệu Real từ Database)
+  const [wheelSettings, setWheelSettings] = useState<any>(null);
+  const [wheelSaving, setWheelSaving] = useState(false);
+
+  const fetchWheelSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/stories', {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ action: 'get_lucky_wheel_settings' }),
+      });
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setWheelSettings(data.settings);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (activeTab === 'wheel') {
+      fetchWheelSettings();
+    }
+  }, [activeTab]);
+
+  const handleSaveWheelSettings = async () => {
+    if (!wheelSettings) return;
+    setWheelSaving(true);
+    try {
+      const res = await fetch('/api/admin/stories', {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ action: 'update_lucky_wheel_settings', settings: wheelSettings }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Đã lưu thành công cấu hình 8 giải thưởng & tỉ lệ nổ thưởng Real!');
+        if (data.settings) setWheelSettings(data.settings);
+      } else {
+        showToast(data.message || 'Lỗi lưu cấu hình', 'error');
+      }
+    } catch (e: any) {
+      showToast(e.message, 'error');
+    }
+    setWheelSaving(false);
+  };
+
+  const DEFAULT_PRESET_PRIZES = [
+    { id: 0, label: '+2 Điểm', sublabel: 'Thưởng xu', icon: '🎁', color: '#4F46E5', textColor: '#FFFFFF', type: 'coins', value: 2, weight: 28 },
+    { id: 1, label: '+5 Điểm', sublabel: 'Mở 1 tập', icon: '💎', color: '#2563EB', textColor: '#FFFFFF', type: 'coins', value: 5, weight: 20 },
+    { id: 2, label: '1 Ngày VIP', sublabel: 'Đọc Full', icon: '👑', color: '#D97706', textColor: '#FFFFFF', type: 'vip', value: 1, weight: 8 },
+    { id: 3, label: '+10 Điểm', sublabel: 'Gấp đôi vui', icon: '🔥', color: '#059669', textColor: '#FFFFFF', type: 'coins', value: 10, weight: 10 },
+    { id: 4, label: 'May Mắn Lần Sau', sublabel: 'Cố lên nhé', icon: '🍀', color: '#374151', textColor: '#D1D5DB', type: 'none', value: 0, weight: 18 },
+    { id: 5, label: '+3 Điểm', sublabel: 'Thưởng xu', icon: '⭐', color: '#DB2777', textColor: '#FFFFFF', type: 'coins', value: 3, weight: 11 },
+    { id: 6, label: '3 Ngày VIP', sublabel: 'Siêu giải', icon: '🏆', color: '#EA580C', textColor: '#FFFFFF', type: 'vip', value: 3, weight: 3 },
+    { id: 7, label: '+1 Điểm', sublabel: 'Thưởng nhẹ', icon: '🪙', color: '#7C3AED', textColor: '#FFFFFF', type: 'coins', value: 1, weight: 2 },
+  ];
+
+  const handleResetDefaultWheelSettings = () => {
+    if (confirm('Khôi phục toàn bộ cấu hình 8 giải thưởng và tỉ lệ về mặc định?')) {
+      setWheelSettings({
+        spinCostCoins: 3,
+        freeSpinDaily: true,
+        prizes: JSON.parse(JSON.stringify(DEFAULT_PRESET_PRIZES)),
+      });
+      showToast('Đã khôi phục cài đặt mặc định (bấm Lưu để áp dụng vào Database)');
+    }
+  };
+
+  const handleUpdatePrize = (index: number, field: string, val: any) => {
+    if (!wheelSettings?.prizes) return;
+    const newPrizes = [...wheelSettings.prizes];
+    newPrizes[index] = { ...newPrizes[index], [field]: val };
+    setWheelSettings({ ...wheelSettings, prizes: newPrizes });
+  };
+
+  const handleNormalizeWheelWeights = () => {
+    if (!wheelSettings?.prizes?.length) return;
+    const currentTotal = wheelSettings.prizes.reduce((sum: number, p: any) => sum + (Number(p.weight) || 0), 0);
+    if (currentTotal <= 0) return;
+    let runningSum = 0;
+    const newPrizes = wheelSettings.prizes.map((p: any, idx: number) => {
+      if (idx === wheelSettings.prizes.length - 1) {
+        return { ...p, weight: Math.max(1, 100 - runningSum) };
+      }
+      const scaled = Math.max(1, Math.round(((Number(p.weight) || 0) / currentTotal) * 100));
+      runningSum += scaled;
+      return { ...p, weight: scaled };
+    });
+    setWheelSettings({ ...wheelSettings, prizes: newPrizes });
+    showToast('Đã tự động cân bằng tổng tỉ lệ về 100%!');
+  };
 
   useEffect(() => {
     try {
@@ -78,6 +171,7 @@ export default function AdminPage() {
       case 'revenue': return 'Sổ Nhật Ký Chuyển Khoản & Doanh Thu';
       case 'analytics': return 'Thống Kê Traffic & Khán Giả';
       case 'feedback': return 'Hòm Thư Góp Ý & Phản Hồi';
+      case 'wheel': return 'Cài Đặt Vòng Quay May Mắn (Tỉ Lệ Real)';
       default: return 'Bảng Điều Khiển';
     }
   };
@@ -1234,20 +1328,33 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {dateFilterType !== 'all' && (
-            <button
-              type="button"
-              onClick={() => {
-                setDateFilterType('all');
-                setCustomStartDate('');
-                setCustomEndDate('');
-              }}
-              className="self-start md:self-auto px-2.5 py-1 bg-[#181824] hover:bg-[#222232] text-[#A1A1AA] hover:text-white rounded-lg text-xs font-medium border border-[#2A2A3A] transition flex items-center gap-1 active:scale-95"
-            >
-              <X className="w-3.5 h-3.5 text-rose-400" />
-              <span>Xem Toàn Thời Gian (Hủy lọc)</span>
-            </button>
-          )}
+          {/* Nút Reset Bộ Lọc Luôn Có Sẵn (Không gây giật khung/nhảy layout khi chọn) */}
+          <button
+            type="button"
+            onClick={() => {
+              setDateFilterType('all');
+              setCustomStartDate('');
+              setCustomEndDate('');
+            }}
+            title={dateFilterType !== 'all' ? 'Bấm để hủy lọc và xem toàn bộ dữ liệu' : 'Đang xem toàn bộ dữ liệu'}
+            className={`self-start md:self-auto px-3 py-1.5 rounded-lg text-xs font-semibold border transition flex items-center gap-1.5 active:scale-95 flex-shrink-0 cursor-pointer ${
+              dateFilterType !== 'all'
+                ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border-rose-500/50 shadow-sm'
+                : 'bg-[#181824] hover:bg-[#20202E] text-[#9CA3AF] hover:text-white border-[#272738]'
+            }`}
+          >
+            {dateFilterType !== 'all' ? (
+              <>
+                <X className="w-3.5 h-3.5 text-rose-400" />
+                <span>✕ Hủy lọc ({getDateFilterShortLabel()})</span>
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-3 h-3 text-[#A78BFA]" />
+                <span>Xem Toàn Bộ</span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Các nút preset thời gian + Ô chọn ngày tùy ý */}
@@ -1360,21 +1467,24 @@ export default function AdminPage() {
                 title="Bấm vào để mở lịch chọn ngày kết thúc"
               />
 
-              {(customStartDate || customEndDate) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCustomStartDate('');
-                    setCustomEndDate('');
-                    setDateFilterType('all');
-                  }}
-                  className="px-2 py-1 text-[#A1A1AA] hover:text-white hover:bg-[#20202C] rounded transition flex items-center gap-0.5 text-[10px] flex-shrink-0 ml-0.5"
-                  title="Xóa bộ lọc ngày về toàn bộ"
-                >
-                  <X className="w-3 h-3" />
-                  <span className="hidden xs:inline">Xóa</span>
-                </button>
-              )}
+              {/* Nút Xóa có kích thước cố định, mờ dần mượt mà, KHÔNG LÀM NHẢY KHUNG */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomStartDate('');
+                  setCustomEndDate('');
+                  setDateFilterType('all');
+                }}
+                disabled={!customStartDate && !customEndDate}
+                className={`w-7 h-7 rounded flex items-center justify-center transition flex-shrink-0 ${
+                  customStartDate || customEndDate
+                    ? 'text-rose-400 hover:text-white hover:bg-rose-500/20 cursor-pointer opacity-100'
+                    : 'text-transparent opacity-0 pointer-events-none'
+                }`}
+                title="Xóa ngày đã chọn về Toàn bộ"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>
@@ -1514,6 +1624,11 @@ export default function AdminPage() {
           {activeTab === 'feedback' && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-semibold">
               {baseFeedback.length} phản hồi
+            </span>
+          )}
+          {activeTab === 'wheel' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold">
+              8 giải thưởng • Real Data
             </span>
           )}
         </div>
@@ -3480,6 +3595,348 @@ export default function AdminPage() {
             );
           })()}
           </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 6. CÀI ĐẶT VÒNG QUAY MAY MẮN (DỮ LIỆU REAL DATABASE)         */}
+      {/* ============================================================ */}
+      {activeTab === 'wheel' && (
+        <div className="space-y-6 animate-fadeIn pb-12">
+          {/* Header & Thanh Thao Tác Lưu/Khôi phục */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111116] border border-[#1E1E26] rounded-xl p-5 shadow-lg">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                  <Sparkles className="w-5 h-5" />
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-white flex items-center gap-2">
+                    Cấu Hình Vòng Quay May Mắn (Dữ Liệu Real)
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold font-mono">
+                      Database Sync
+                    </span>
+                  </h2>
+                  <p className="text-xs text-[#A1A1AA]">
+                    Tùy chỉnh 8 ô giải thưởng, icon, màu sắc và tỉ lệ trúng thưởng nổ quà theo thuật toán ngẫu nhiên có trọng số (Real Data).
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {/* Nút Quay Thử Demo */}
+              <button
+                type="button"
+                onClick={() => setIsLuckyWheelOpen(true)}
+                className="px-3.5 py-2 rounded-lg bg-[#181824] hover:bg-[#202030] text-[#CBD5E1] hover:text-white border border-[#2B2B3E] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+              >
+                <span>🎡</span>
+                <span>Quay Thử Ngay</span>
+              </button>
+
+              {/* Nút Cân Bằng 100% */}
+              <button
+                type="button"
+                onClick={handleNormalizeWheelWeights}
+                className="px-3.5 py-2 rounded-lg bg-[#181824] hover:bg-[#202030] text-[#CBD5E1] hover:text-white border border-[#2B2B3E] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+                title="Tự động tính tỉ lệ chuẩn 100% cho 8 ô"
+              >
+                <Percent className="w-3.5 h-3.5 text-blue-400" />
+                <span>Cân bằng 100%</span>
+              </button>
+
+              {/* Nút Reset Mặc Định */}
+              <button
+                type="button"
+                onClick={handleResetDefaultWheelSettings}
+                className="px-3 py-2 rounded-lg bg-[#181824] hover:bg-rose-950/30 text-[#9CA3AF] hover:text-rose-300 border border-[#2B2B3E] hover:border-rose-500/30 text-xs font-medium flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                title="Khôi phục 8 giải mặc định"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Mặc định</span>
+              </button>
+
+              {/* Nút Lưu Cấu Hình Real */}
+              <button
+                type="button"
+                onClick={handleSaveWheelSettings}
+                disabled={wheelSaving}
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#7C5CFC] to-[#9061F9] hover:from-[#6D4AE8] hover:to-[#7E4CF0] text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95 transition disabled:opacity-50 cursor-pointer"
+              >
+                {wheelSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Đang lưu...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Lưu Cấu Hình Real</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {!wheelSettings ? (
+            <div className="p-12 text-center bg-[#111116] border border-[#1E1E26] rounded-xl flex flex-col items-center justify-center gap-3">
+              <Loader2 className="w-8 h-8 text-purple-400 animate-spin" />
+              <p className="text-sm text-[#A1A1AA]">Đang tải cấu hình vòng quay từ database...</p>
+            </div>
+          ) : (
+            <>
+              {/* Thẻ Chỉ Số Cài Đặt Chung (3 Cards) */}
+              {(() => {
+                const totalWeight = (wheelSettings.prizes || []).reduce((sum: number, p: any) => sum + (Number(p.weight) || 0), 0);
+                const isExact100 = totalWeight === 100;
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Card 1: Điểm Mỗi Lượt Quay */}
+                    <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl flex flex-col justify-between space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[#A1A1AA] font-medium flex items-center gap-1.5">
+                          <Coins className="w-4 h-4 text-amber-400" />
+                          Giá 1 Lượt Quay
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">
+                          Điểm Xu
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={wheelSettings.spinCostCoins ?? 3}
+                          onChange={(e) => setWheelSettings({ ...wheelSettings, spinCostCoins: Math.max(0, parseInt(e.target.value) || 0) })}
+                          className="w-24 bg-[#0A0A0E] border border-[#2B2B3D] focus:border-[#7C5CFC] text-white font-mono font-bold text-lg px-3 py-1.5 rounded-lg text-center"
+                        />
+                        <span className="text-xs text-[#A1A1AA]">điểm / 1 lần quay (Mặc định 3đ)</span>
+                      </div>
+                      <p className="text-[11px] text-[#71717A]">
+                        Mỗi tập truyện giá 5 điểm. Đặt 3 điểm khuyến khích độc giả dùng điểm dư quay kiếm thưởng.
+                      </p>
+                    </div>
+
+                    {/* Card 2: Lượt Quay Miễn Phí Hàng Ngày */}
+                    <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl flex flex-col justify-between space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[#A1A1AA] font-medium flex items-center gap-1.5">
+                          <Gift className="w-4 h-4 text-emerald-400" />
+                          Quay Miễn Phí Mỗi Ngày
+                        </span>
+                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold ${wheelSettings.freeSpinDaily ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-zinc-800 text-zinc-400'}`}>
+                          {wheelSettings.freeSpinDaily ? 'Đang Bật' : 'Đang Tắt'}
+                        </span>
+                      </div>
+                      <label className="flex items-center gap-3 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={wheelSettings.freeSpinDaily ?? true}
+                          onChange={(e) => setWheelSettings({ ...wheelSettings, freeSpinDaily: e.target.checked })}
+                          className="w-5 h-5 rounded border-[#2B2B3D] text-[#7C5CFC] focus:ring-[#7C5CFC] bg-[#0A0A0E] cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-white">Tặng 1 lượt quay miễn phí / ngày</span>
+                      </label>
+                      <p className="text-[11px] text-[#71717A]">
+                        Tự động reset lúc 00:00 mỗi ngày để kích thích độc giả quay trở lại website mỗi sáng.
+                      </p>
+                    </div>
+
+                    {/* Card 3: Kiểm Soát Tỉ Lệ Nổ Thưởng */}
+                    <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl flex flex-col justify-between space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[#A1A1AA] font-medium flex items-center gap-1.5">
+                          <Percent className="w-4 h-4 text-purple-400" />
+                          Tổng Tỉ Trọng Trúng Thưởng
+                        </span>
+                        {isExact100 ? (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            100% Hoàn Hảo
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-amber-400" />
+                            Tổng {totalWeight}%
+                          </span>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <div className="w-full bg-[#181824] h-2.5 rounded-full overflow-hidden flex">
+                          {(wheelSettings.prizes || []).map((p: any, i: number) => {
+                            const pct = totalWeight > 0 ? ((Number(p.weight) || 0) / totalWeight) * 100 : 12.5;
+                            return (
+                              <div
+                                key={i}
+                                style={{ width: `${pct}%`, backgroundColor: p.color || '#4F46E5' }}
+                                title={`Ô ${i+1}: ${p.label} (${p.weight}%)`}
+                                className="h-full transition-all duration-300 hover:brightness-125"
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-[#71717A]">
+                          <span>8 Ô phần thưởng</span>
+                          <span>{totalWeight}% trọng số</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#71717A]">
+                        Backend sử dụng thuật toán Weighted Random thực tế. Tỉ lệ càng cao thì cơ hội nổ quà càng lớn.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Danh Sách Chi Tiết 8 Ô Phần Thưởng */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#A1A1AA] flex items-center gap-2">
+                    <span>Cài Đặt Chi Tiết 8 Ô Giải Thưởng (Prizes Matrix)</span>
+                  </h3>
+                  <span className="text-[11px] text-[#71717A]">Vòng quay chia đều 8 góc 45 độ</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {(wheelSettings.prizes || []).map((prize: any, idx: number) => {
+                    const totalWeight = (wheelSettings.prizes || []).reduce((sum: number, p: any) => sum + (Number(p.weight) || 0), 0);
+                    const realChance = totalWeight > 0 ? (((Number(prize.weight) || 0) / totalWeight) * 100).toFixed(1) : '12.5';
+
+                    return (
+                      <div
+                        key={idx}
+                        className="p-4 bg-[#111116] border border-[#1E1E26] hover:border-[#2E2E3E] rounded-xl flex flex-col justify-between space-y-3.5 transition group shadow-sm"
+                      >
+                        {/* Header Ô */}
+                        <div className="flex items-center justify-between border-b border-[#1E1E24] pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-sm shadow-md flex-shrink-0"
+                              style={{ backgroundColor: prize.color || '#4F46E5', color: prize.textColor || '#FFFFFF' }}
+                            >
+                              {prize.icon || '🎁'}
+                            </span>
+                            <div>
+                              <span className="text-xs font-bold text-white">Ô #{idx + 1}</span>
+                              <div className="text-[10px] text-[#A1A1AA] font-mono">Tỉ lệ thực: <span className="text-purple-400 font-bold">{realChance}%</span></div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="color"
+                              value={prize.color || '#4F46E5'}
+                              onChange={(e) => handleUpdatePrize(idx, 'color', e.target.value)}
+                              className="w-6 h-6 rounded cursor-pointer border border-[#2B2B3D] bg-transparent p-0"
+                              title="Đổi màu nền nan quạt"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Fields nhập liệu */}
+                        <div className="space-y-2 text-xs">
+                          {/* Tên giải & Sublabel */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-[#71717A] font-medium block mb-1">Tên giải:</label>
+                              <input
+                                type="text"
+                                value={prize.label || ''}
+                                onChange={(e) => handleUpdatePrize(idx, 'label', e.target.value)}
+                                placeholder="+2 Điểm"
+                                className="w-full bg-[#0A0A0E] border border-[#2B2B3D] focus:border-[#7C5CFC] text-white px-2.5 py-1.5 rounded text-xs font-semibold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-[#71717A] font-medium block mb-1">Mô tả ngắn:</label>
+                              <input
+                                type="text"
+                                value={prize.sublabel || ''}
+                                onChange={(e) => handleUpdatePrize(idx, 'sublabel', e.target.value)}
+                                placeholder="Thưởng xu"
+                                className="w-full bg-[#0A0A0E] border border-[#2B2B3D] focus:border-[#7C5CFC] text-[#CBD5E1] px-2.5 py-1.5 rounded text-xs"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Icon emoji & Loại phần thưởng */}
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="col-span-1">
+                              <label className="text-[10px] text-[#71717A] font-medium block mb-1">Icon:</label>
+                              <input
+                                type="text"
+                                value={prize.icon || ''}
+                                onChange={(e) => handleUpdatePrize(idx, 'icon', e.target.value)}
+                                className="w-full bg-[#0A0A0E] border border-[#2B2B3D] focus:border-[#7C5CFC] text-white text-center px-1.5 py-1.5 rounded text-sm"
+                                placeholder="🎁"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="text-[10px] text-[#71717A] font-medium block mb-1">Loại giải:</label>
+                              <select
+                                value={prize.type || 'coins'}
+                                onChange={(e) => handleUpdatePrize(idx, 'type', e.target.value)}
+                                className="w-full bg-[#0A0A0E] border border-[#2B2B3D] focus:border-[#7C5CFC] text-[#CBD5E1] px-2 py-1.5 rounded text-xs font-medium cursor-pointer"
+                              >
+                                <option value="coins">🪙 Điểm Xu</option>
+                                <option value="vip">👑 Ngày VIP</option>
+                                <option value="none">🍀 May Mắn (0đ)</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Giá trị thưởng & Trọng số Weight */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[10px] text-[#71717A] font-medium block mb-1">
+                                {prize.type === 'vip' ? 'Số ngày VIP:' : prize.type === 'coins' ? 'Số điểm tặng:' : 'Giá trị:'}
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={prize.value ?? 0}
+                                disabled={prize.type === 'none'}
+                                onChange={(e) => handleUpdatePrize(idx, 'value', Math.max(0, parseInt(e.target.value) || 0))}
+                                className={`w-full bg-[#0A0A0E] border border-[#2B2B3D] focus:border-[#7C5CFC] text-white font-mono font-bold px-2.5 py-1.5 rounded text-xs ${prize.type === 'none' ? 'opacity-40' : ''}`}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] text-purple-300 font-semibold block mb-1 flex items-center justify-between">
+                                <span>Trọng số (%):</span>
+                                <span className="font-mono">{prize.weight}%</span>
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={prize.weight ?? 10}
+                                onChange={(e) => handleUpdatePrize(idx, 'weight', Math.max(0, parseInt(e.target.value) || 0))}
+                                className="w-full bg-[#0A0A0E] border border-purple-500/40 focus:border-[#7C5CFC] text-purple-300 font-mono font-bold px-2.5 py-1.5 rounded text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Thanh Progress mini biểu thị trọng số */}
+                        <div className="pt-1">
+                          <div className="w-full bg-[#1A1A24] h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-300"
+                              style={{ width: `${Math.min(100, Math.max(3, prize.weight))}%`, backgroundColor: prize.color || '#7C5CFC' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
         </div>

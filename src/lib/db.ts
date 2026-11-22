@@ -2,6 +2,39 @@ import fs from 'fs';
 import path from 'path';
 import { User, Wallet, Story, Chapter, UnlockedChapter, Order, AnalyticsEvent, Comment, FeedbackItem } from './types';
 
+export interface LuckyWheelPrize {
+  id: number;
+  label: string;
+  sublabel: string;
+  icon: string;
+  color: string;
+  textColor: string;
+  type: 'coins' | 'vip' | 'none';
+  value: number;
+  weight: number;
+}
+
+export interface LuckyWheelSettings {
+  spinCostCoins: number;
+  freeSpinDaily: boolean;
+  prizes: LuckyWheelPrize[];
+}
+
+export const DEFAULT_LUCKY_WHEEL_SETTINGS: LuckyWheelSettings = {
+  spinCostCoins: 3,
+  freeSpinDaily: true,
+  prizes: [
+    { id: 0, label: '+2 Điểm', sublabel: 'Thưởng xu', icon: '🎁', color: '#4F46E5', textColor: '#FFFFFF', type: 'coins', value: 2, weight: 28 },
+    { id: 1, label: '+5 Điểm', sublabel: 'Mở 1 tập', icon: '💎', color: '#2563EB', textColor: '#FFFFFF', type: 'coins', value: 5, weight: 20 },
+    { id: 2, label: '1 Ngày VIP', sublabel: 'Đọc Full', icon: '👑', color: '#D97706', textColor: '#FFFFFF', type: 'vip', value: 1, weight: 8 },
+    { id: 3, label: '+10 Điểm', sublabel: 'Gấp đôi vui', icon: '🔥', color: '#059669', textColor: '#FFFFFF', type: 'coins', value: 10, weight: 10 },
+    { id: 4, label: 'May Mắn Lần Sau', sublabel: 'Cố lên nhé', icon: '🍀', color: '#374151', textColor: '#D1D5DB', type: 'none', value: 0, weight: 18 },
+    { id: 5, label: '+3 Điểm', sublabel: 'Thưởng xu', icon: '⭐', color: '#DB2777', textColor: '#FFFFFF', type: 'coins', value: 3, weight: 11 },
+    { id: 6, label: '3 Ngày VIP', sublabel: 'Siêu giải', icon: '🏆', color: '#EA580C', textColor: '#FFFFFF', type: 'vip', value: 3, weight: 3 },
+    { id: 7, label: '+1 Điểm', sublabel: 'Thưởng nhẹ', icon: '🪙', color: '#7C3AED', textColor: '#FFFFFF', type: 'coins', value: 1, weight: 2 },
+  ],
+};
+
 interface DatabaseSchema {
   users: User[];
   wallets: Wallet[];
@@ -12,6 +45,7 @@ interface DatabaseSchema {
   analytics?: AnalyticsEvent[];
   comments?: Comment[];
   feedback?: FeedbackItem[];
+  luckyWheelSettings?: LuckyWheelSettings;
 }
 
 const IS_VERCEL = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -792,5 +826,25 @@ export const db = {
     data.feedback = (data.feedback || []).filter(f => f.id !== id);
     saveData(data);
     return data.feedback.length < prevLen;
+  },
+
+  getLuckyWheelSettings: (): LuckyWheelSettings => {
+    const data = ensureDataFile();
+    if (!data.luckyWheelSettings || !data.luckyWheelSettings.prizes?.length) {
+      return DEFAULT_LUCKY_WHEEL_SETTINGS;
+    }
+    return data.luckyWheelSettings;
+  },
+
+  saveLuckyWheelSettings: (settings: Partial<LuckyWheelSettings>): LuckyWheelSettings => {
+    const data = ensureDataFile();
+    const current = data.luckyWheelSettings || DEFAULT_LUCKY_WHEEL_SETTINGS;
+    data.luckyWheelSettings = {
+      spinCostCoins: typeof settings.spinCostCoins === 'number' ? settings.spinCostCoins : current.spinCostCoins,
+      freeSpinDaily: typeof settings.freeSpinDaily === 'boolean' ? settings.freeSpinDaily : current.freeSpinDaily,
+      prizes: Array.isArray(settings.prizes) && settings.prizes.length === 8 ? settings.prizes : current.prizes,
+    };
+    saveData(data);
+    return data.luckyWheelSettings;
   }
 };

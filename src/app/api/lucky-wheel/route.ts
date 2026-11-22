@@ -104,12 +104,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const publicPrizes = LUCKY_PRIZES.map(({ weight, ...rest }) => rest);
+    const wheelSettings = db.getLuckyWheelSettings();
+    const currentPrizes = wheelSettings.prizes || LUCKY_PRIZES;
+    const spinCost = wheelSettings.spinCostCoins || SPIN_COST_COINS;
+
+    const publicPrizes = currentPrizes.map(({ weight, ...rest }) => rest);
 
     return NextResponse.json({
       success: true,
       canFreeSpin,
-      costCoins: SPIN_COST_COINS,
+      costCoins: spinCost,
       timeLeftMs,
       todayStr,
       prizes: publicPrizes,
@@ -136,6 +140,10 @@ export async function POST(req: NextRequest) {
     const todayStr = getVietnamDateStr();
     const todayFreeCode = `LUCKY_FREE_${todayStr}`;
 
+    const wheelSettings = db.getLuckyWheelSettings();
+    const currentPrizes = wheelSettings.prizes || LUCKY_PRIZES;
+    const spinCost = wheelSettings.spinCostCoins || SPIN_COST_COINS;
+
     // 1. Kiểm tra điều kiện lượt quay
     if (spinType === 'free') {
       try {
@@ -149,7 +157,7 @@ export async function POST(req: NextRequest) {
         if (existingTx) {
           return NextResponse.json({
             success: false,
-            message: 'Hôm nay bạn đã dùng lượt quay miễn phí rồi! Bạn có thể dùng 3 Điểm để quay tiếp.',
+            message: `Hôm nay bạn đã dùng lượt quay miễn phí rồi! Bạn có thể dùng ${spinCost} Điểm để quay tiếp.`,
             needCoins: true,
           }, { status: 400 });
         }
@@ -157,7 +165,7 @@ export async function POST(req: NextRequest) {
         console.warn('Lỗi kiểm tra free spin:', err);
       }
     } else {
-      // Dùng điểm: kiểm tra số dư tối thiểu 3 điểm
+      // Dùng điểm: kiểm tra số dư tối thiểu
       const localBal = db.getWallet(userId)?.balance || 0;
       let sbBal = 0;
       try {
@@ -170,48 +178,49 @@ export async function POST(req: NextRequest) {
       } catch (e) {}
 
       const currentBal = Math.max(localBal, sbBal);
-      if (currentBal < SPIN_COST_COINS) {
+      if (currentBal < spinCost) {
         return NextResponse.json({
           success: false,
-          message: `Bạn cần tối thiểu ${SPIN_COST_COINS} Điểm để quay thưởng. Hãy nạp thêm nhé!`,
+          message: `Bạn cần tối thiểu ${spinCost} Điểm để quay thưởng. Hãy nạp thêm nhé!`,
           insufficientBalance: true,
           balance: currentBal,
         }, { status: 400 });
       }
     }
 
-    // 2. Server chọn giải thưởng ngẫu nhiên theo trọng số xác suất
-    const rand = Math.random() * 100;
+    // 2. Server chọn giải thưởng ngẫu nhiên theo trọng số xác suất (Dữ liệu thật từ cấu hình Admin)
+    const totalWeight = currentPrizes.reduce((sum, p) => sum + (Number(p.weight) || 0), 0) || 100;
+    const rand = Math.random() * totalWeight;
     let accumulated = 0;
     let winningIndex = 0;
 
-    for (let i = 0; i < LUCKY_PRIZES.length; i++) {
-      accumulated += LUCKY_PRIZES[i].weight;
+    for (let i = 0; i < currentPrizes.length; i++) {
+      accumulated += Number(currentPrizes[i].weight) || 0;
       if (rand <= accumulated) {
         winningIndex = i;
         break;
       }
     }
 
-    const prize = LUCKY_PRIZES[winningIndex];
+    const prize = currentPrizes[winningIndex];
 
     // 3. Trừ phí quay (nếu là quay bằng coin)
     if (spinType === 'coins') {
-      db.adjustCoins(userId, -SPIN_COST_COINS);
+      db.adjustCoins(userId, -spinCost);
       try {
         const { data: userRow } = await supabaseAdmin
           .from('users')
           .select('balance')
           .eq('id', userId)
           .maybeSingle();
-        const updatedBal = Math.max(0, (userRow?.balance || 0) - SPIN_COST_COINS);
+        const updatedBal = Math.max(0, (userRow?.balance || 0) - spinCost);
         await supabaseAdmin.from('users').update({ balance: updatedBal }).eq('id', userId);
 
         await supabaseAdmin.from('transactions').insert({
           id: `spin-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
           user_id: userId,
           amount_vnd: 0,
-          coins: -SPIN_COST_COINS,
+          coins: -spinCost,
           payment_code: `LUCKY_SPIN_${Date.now()}`,
           status: 'completed',
           created_at: new Date().toISOString(),

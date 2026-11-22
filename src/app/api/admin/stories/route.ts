@@ -812,6 +812,25 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (action === 'get_lucky_wheel_settings') {
+      const settings = db.getLuckyWheelSettings();
+      return NextResponse.json({ success: true, settings });
+    }
+
+    if (action === 'update_lucky_wheel_settings') {
+      const { settings } = body;
+      if (!settings || !Array.isArray(settings.prizes) || settings.prizes.length !== 8) {
+        return NextResponse.json({ success: false, message: 'Cấu hình giải thưởng không hợp lệ (phải đủ 8 giải)' }, { status: 400 });
+      }
+
+      const updated = db.saveLuckyWheelSettings(settings);
+      return NextResponse.json({
+        success: true,
+        message: 'Đã lưu cấu hình giải thưởng & tỉ lệ vòng quay thành công!',
+        settings: updated,
+      });
+    }
+
     return NextResponse.json({ success: false, message: 'Action không hợp lệ' }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

@@ -19,7 +19,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-export type AdminTab = 'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback';
+export type AdminTab = 'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback' | 'wheel';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
@@ -71,6 +71,8 @@ export default function AdminSidebar({
     }
   };
 
+  const isRail = isCollapsed && !isMobileOpen;
+
   return (
     <>
       {/* 1. LỚP PHỦ MỜ KHI MỞ TRÊN MOBILE (Backdrop Overlay) */}
@@ -85,67 +87,77 @@ export default function AdminSidebar({
       {/* 2. THANH SIDEBAR CHÍNH */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-50 lg:z-30 flex flex-col justify-between bg-[#111118] border-r border-[#1E1E2B] transition-all duration-300 ease-in-out ${
-          // Mobile: Drawer trượt từ mép trái
           isMobileOpen ? 'translate-x-0 w-72 shadow-2xl' : '-translate-x-full lg:translate-x-0'
         } ${
-          // Desktop: Co giãn linh hoạt 68px <-> 256px
           isCollapsed ? 'lg:w-[68px]' : 'lg:w-64'
         }`}
       >
         {/* KHU VỰC TRÊN CÙNG: LOGO & NÚT THU NHỎ */}
         <div className="flex flex-col flex-1 overflow-hidden">
+          
           {/* Header Bar */}
-          <div className="h-16 px-3.5 flex items-center justify-between border-b border-[#1E1E2B] flex-shrink-0">
-            {/* Logo + Tên Brand */}
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#7C5CFC] to-[#F59E0B] flex items-center justify-center font-black text-white text-sm shadow-md flex-shrink-0 select-none">
-                💎
-              </div>
-              {(!isCollapsed || isMobileOpen) && (
+          {isRail ? (
+            /* TRẠNG THÁI THU NHỎ (68px): Căn giữa nút PanelLeft hoàn hảo, không che mất hay cấn logo */
+            <div className="h-16 flex items-center justify-center border-b border-[#1E1E2B] flex-shrink-0">
+              <button
+                type="button"
+                onClick={toggleCollapse}
+                title="Mở rộng thanh điều hướng (256px)"
+                className="w-10 h-10 rounded-xl bg-[#1A1A26] hover:bg-[#222234] border border-[#2B2B3E] hover:border-[#7C5CFC]/50 text-[#A78BFA] hover:text-white flex items-center justify-center transition active:scale-95 cursor-pointer shadow-sm group relative"
+              >
+                <PanelLeft className="w-5 h-5 text-[#C4B5FD] group-hover:scale-110 transition-transform" />
+                {/* Floating Tooltip */}
+                <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
+                  Mở rộng thanh điều hướng (256px)
+                </div>
+              </button>
+            </div>
+          ) : (
+            /* TRẠNG THÁI MỞ RỘNG (256px): Đầy đủ Logo + Tên Brand + Nút gập */
+            <div className="h-16 px-3.5 flex items-center justify-between border-b border-[#1E1E2B] flex-shrink-0">
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#7C5CFC] to-[#F59E0B] flex items-center justify-center font-black text-white text-sm shadow-md flex-shrink-0 select-none">
+                  💎
+                </div>
                 <div className="flex flex-col whitespace-nowrap overflow-hidden animate-fadeIn">
                   <span className="font-bold text-xs tracking-wider text-white">HỒI ĐÓ NHỎ</span>
                   <span className="text-[9px] text-[#A1A1AA] uppercase tracking-wider font-medium">Atelier Backoffice</span>
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Nút Thu Nhỏ / Mở Rộng Sidebar (Chuẩn theo Hình 3) */}
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={toggleCollapse}
-                title={isCollapsed ? 'Mở rộng thanh điều hướng (256px)' : 'Thu nhỏ thanh điều hướng (68px)'}
-                className="hidden lg:flex p-1.5 rounded-lg text-[#9CA3AF] hover:text-white hover:bg-[#1E1E2A] border border-transparent hover:border-[#2C2C3C] transition active:scale-90 cursor-pointer flex-shrink-0"
-              >
-                {/* Icon PanelLeft đặc trưng theo Hình 3 */}
-                <PanelLeft className={`w-4 h-4 text-[#A78BFA] transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Nút đóng trên Mobile */}
-              <button
-                type="button"
-                onClick={() => setIsMobileOpen(false)}
-                className="lg:hidden p-1.5 text-[#9CA3AF] hover:text-white rounded-lg hover:bg-[#1E1E2A] transition cursor-pointer"
-              >
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={toggleCollapse}
+                  title="Thu nhỏ thanh điều hướng (68px)"
+                  className="hidden lg:flex p-1.5 rounded-lg text-[#9CA3AF] hover:text-white hover:bg-[#1E1E2A] border border-transparent hover:border-[#2C2C3C] transition active:scale-90 cursor-pointer flex-shrink-0"
+                >
+                  <PanelLeft className="w-4 h-4 text-[#A78BFA]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileOpen(false)}
+                  className="lg:hidden p-1.5 text-[#9CA3AF] hover:text-white rounded-lg hover:bg-[#1E1E2A] transition cursor-pointer"
+                >
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Ô TÌM KIẾM NHANH */}
-          <div className="p-2.5 flex-shrink-0">
-            {(!isCollapsed || isMobileOpen) ? (
+          <div className={`p-2.5 flex-shrink-0 ${isRail ? 'flex justify-center' : ''}`}>
+            {!isRail ? (
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[#161622] border border-[#232332] text-[#71717A] text-xs focus-within:border-[#7C5CFC]/60 transition">
                 <Search className="w-3.5 h-3.5 flex-shrink-0 text-[#9CA3AF]" />
                 <span className="truncate text-[11px] select-none text-[#71717A]">Tìm truyện, SĐT, đơn...</span>
               </div>
             ) : (
-              <div className="flex justify-center group relative">
-                <div className="p-2 rounded-lg text-[#9CA3AF] hover:text-white hover:bg-[#1E1E2A] cursor-pointer transition">
+              <div className="group relative">
+                <div className="w-10 h-10 rounded-xl bg-[#161622] border border-[#232332] flex items-center justify-center text-[#9CA3AF] hover:text-white hover:bg-[#1E1E2A] cursor-pointer transition">
                   <Search className="w-4 h-4" />
                 </div>
-                {/* Floating Tooltip */}
-                <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-2 top-1.5 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
+                <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 top-2 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                   Tìm kiếm nhanh
                 </div>
               </div>
@@ -157,7 +169,7 @@ export default function AdminSidebar({
             
             {/* NHÓM 1: VẬN HÀNH & NỘI DUNG */}
             <div>
-              {(!isCollapsed || isMobileOpen) && (
+              {!isRail && (
                 <div className="px-2.5 pb-1.5 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider select-none">
                   Vận Hành & Nội Dung
                 </div>
@@ -168,7 +180,7 @@ export default function AdminSidebar({
                   <button
                     type="button"
                     onClick={() => handleSelectTab('stories')}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition group cursor-pointer relative ${
+                    className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg transition group cursor-pointer relative ${
                       activeTab === 'stories'
                         ? 'bg-[#7C5CFC]/15 text-[#C4B5FD] font-semibold border border-[#7C5CFC]/30 shadow-sm'
                         : 'text-[#CBD5E1] hover:bg-[#181824] hover:text-white border border-transparent'
@@ -176,23 +188,21 @@ export default function AdminSidebar({
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <BookOpen className={`w-4 h-4 flex-shrink-0 ${activeTab === 'stories' ? 'text-[#A78BFA]' : 'text-[#818CF8]'}`} />
-                      {(!isCollapsed || isMobileOpen) && (
+                      {!isRail && (
                         <span className="truncate">Kho Truyện & Tập</span>
                       )}
                     </div>
-                    {(!isCollapsed || isMobileOpen) ? (
+                    {!isRail ? (
                       <span className="text-[10px] px-1.5 py-0.2 bg-[#222232] text-[#94A3B8] rounded font-semibold flex-shrink-0">
                         {counts.stories}
                       </span>
                     ) : (
-                      /* Badge nhỏ nổi khi thu nhỏ */
                       counts.stories > 0 && (
-                        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-indigo-500" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500" />
                       )
                     )}
 
-                    {/* Floating Tooltip khi thu nhỏ */}
-                    {isCollapsed && !isMobileOpen && (
+                    {isRail && (
                       <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                         Kho Truyện & Tập ({counts.stories})
                       </div>
@@ -209,22 +219,21 @@ export default function AdminSidebar({
                         handleSelectTab('stories');
                         onNewStoryClick();
                       }}
-                      className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-[#94A3B8] hover:bg-[#181824] hover:text-white transition group cursor-pointer border border-transparent relative"
+                      className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg text-[#94A3B8] hover:bg-[#181824] hover:text-white transition group cursor-pointer border border-transparent relative`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <PlusCircle className="w-4 h-4 flex-shrink-0 text-[#38BDF8]" />
-                        {(!isCollapsed || isMobileOpen) && (
+                        {!isRail && (
                           <span className="truncate">Thêm Truyện Mới</span>
                         )}
                       </div>
-                      {(!isCollapsed || isMobileOpen) && (
+                      {!isRail && (
                         <span className="text-[9px] px-1 py-0.2 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded font-bold">
                           + Mới
                         </span>
                       )}
 
-                      {/* Floating Tooltip khi thu nhỏ */}
-                      {isCollapsed && !isMobileOpen && (
+                      {isRail && (
                         <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                           Thêm Truyện Mới (+)
                         </div>
@@ -237,7 +246,7 @@ export default function AdminSidebar({
 
             {/* NHÓM 2: KINH DOANH & ĐƠN HÀNG */}
             <div>
-              {(!isCollapsed || isMobileOpen) && (
+              {!isRail && (
                 <div className="px-2.5 pb-1.5 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider select-none">
                   Kinh Doanh & Đơn Hàng
                 </div>
@@ -248,7 +257,7 @@ export default function AdminSidebar({
                   <button
                     type="button"
                     onClick={() => handleSelectTab('revenue')}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition group cursor-pointer relative ${
+                    className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg transition group cursor-pointer relative ${
                       activeTab === 'revenue'
                         ? 'bg-[#7C5CFC]/15 text-[#C4B5FD] font-semibold border border-[#7C5CFC]/30 shadow-sm'
                         : 'text-[#CBD5E1] hover:bg-[#181824] hover:text-white border border-transparent'
@@ -256,11 +265,11 @@ export default function AdminSidebar({
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Receipt className={`w-4 h-4 flex-shrink-0 ${activeTab === 'revenue' ? 'text-amber-400' : 'text-[#F59E0B]'}`} />
-                      {(!isCollapsed || isMobileOpen) && (
+                      {!isRail && (
                         <span className="truncate">Sổ Chuyển Khoản</span>
                       )}
                     </div>
-                    {(!isCollapsed || isMobileOpen) ? (
+                    {!isRail ? (
                       counts.pendingOrders > 0 ? (
                         <span className="text-[9px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded font-bold animate-pulse">
                           {counts.pendingOrders} chờ
@@ -271,16 +280,14 @@ export default function AdminSidebar({
                         </span>
                       )
                     ) : (
-                      /* Chấm đỏ nổi khi có đơn chờ duyệt (giống Hình 4) */
                       counts.pendingOrders > 0 && (
-                        <span className="absolute -top-1 -right-1 px-1 py-0.2 text-[9px] font-bold rounded-full bg-red-500 text-white animate-bounce shadow">
+                        <span className="absolute -top-1 -right-1 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-red-500 text-white animate-bounce shadow">
                           {counts.pendingOrders}
                         </span>
                       )
                     )}
 
-                    {/* Floating Tooltip khi thu nhỏ */}
-                    {isCollapsed && !isMobileOpen && (
+                    {isRail && (
                       <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                         Sổ Chuyển Khoản ({counts.pendingOrders > 0 ? `${counts.pendingOrders} chờ duyệt` : counts.totalOrders})
                       </div>
@@ -293,7 +300,7 @@ export default function AdminSidebar({
                   <button
                     type="button"
                     onClick={() => handleSelectTab('customers')}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition group cursor-pointer relative ${
+                    className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg transition group cursor-pointer relative ${
                       activeTab === 'customers'
                         ? 'bg-[#7C5CFC]/15 text-[#C4B5FD] font-semibold border border-[#7C5CFC]/30 shadow-sm'
                         : 'text-[#CBD5E1] hover:bg-[#181824] hover:text-white border border-transparent'
@@ -301,22 +308,21 @@ export default function AdminSidebar({
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Users className={`w-4 h-4 flex-shrink-0 ${activeTab === 'customers' ? 'text-[#A78BFA]' : 'text-[#60A5FA]'}`} />
-                      {(!isCollapsed || isMobileOpen) && (
+                      {!isRail && (
                         <span className="truncate">Độc Giả & Khách</span>
                       )}
                     </div>
-                    {(!isCollapsed || isMobileOpen) ? (
+                    {!isRail ? (
                       <span className="text-[10px] px-1.5 py-0.2 bg-[#222232] text-[#94A3B8] rounded font-semibold">
                         {counts.customers}
                       </span>
                     ) : (
                       counts.customers > 0 && (
-                        <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-blue-500" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500" />
                       )
                     )}
 
-                    {/* Floating Tooltip khi thu nhỏ */}
-                    {isCollapsed && !isMobileOpen && (
+                    {isRail && (
                       <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                         Độc Giả & Khách Hàng ({counts.customers})
                       </div>
@@ -324,41 +330,44 @@ export default function AdminSidebar({
                   </button>
                 </li>
 
-                {/* 2.3 Vòng Quay May Mắn */}
-                {onOpenLuckyWheel && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={onOpenLuckyWheel}
-                      className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-[#CBD5E1] hover:bg-[#181824] hover:text-white transition group cursor-pointer border border-transparent relative"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <Sparkles className="w-4 h-4 flex-shrink-0 text-pink-400" />
-                        {(!isCollapsed || isMobileOpen) && (
-                          <span className="truncate">Vòng Quay May Mắn</span>
-                        )}
-                      </div>
-                      {(!isCollapsed || isMobileOpen) && (
-                        <span className="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/30 rounded font-bold">
-                          HOT
-                        </span>
+                {/* 2.3 Vòng Quay May Mắn (Quản Lý & Tỉ Lệ Giải Thưởng) */}
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab('wheel')}
+                    className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg transition group cursor-pointer relative ${
+                      activeTab === 'wheel'
+                        ? 'bg-[#7C5CFC]/15 text-[#C4B5FD] font-semibold border border-[#7C5CFC]/30 shadow-sm'
+                        : 'text-[#CBD5E1] hover:bg-[#181824] hover:text-white border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Sparkles className={`w-4 h-4 flex-shrink-0 ${activeTab === 'wheel' ? 'text-pink-400' : 'text-pink-400'}`} />
+                      {!isRail && (
+                        <span className="truncate">Vòng Quay May Mắn</span>
                       )}
+                    </div>
+                    {!isRail ? (
+                      <span className="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/30 rounded font-bold">
+                        Cấu hình
+                      </span>
+                    ) : (
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-500" />
+                    )}
 
-                      {/* Floating Tooltip khi thu nhỏ */}
-                      {isCollapsed && !isMobileOpen && (
-                        <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
-                          Vòng Quay May Mắn (HOT)
-                        </div>
-                      )}
-                    </button>
-                  </li>
-                )}
+                    {isRail && (
+                      <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
+                        Cài Đặt Vòng Quay May Mắn (Giải Thưởng & Tỉ Lệ)
+                      </div>
+                    )}
+                  </button>
+                </li>
               </ul>
             </div>
 
             {/* NHÓM 3: HỆ THỐNG & BÁO CÁO */}
             <div>
-              {(!isCollapsed || isMobileOpen) && (
+              {!isRail && (
                 <div className="px-2.5 pb-1.5 text-[10px] font-semibold text-[#64748B] uppercase tracking-wider select-none">
                   Hệ Thống & Báo Cáo
                 </div>
@@ -369,7 +378,7 @@ export default function AdminSidebar({
                   <button
                     type="button"
                     onClick={() => handleSelectTab('analytics')}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition group cursor-pointer relative ${
+                    className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg transition group cursor-pointer relative ${
                       activeTab === 'analytics'
                         ? 'bg-[#7C5CFC]/15 text-[#C4B5FD] font-semibold border border-[#7C5CFC]/30 shadow-sm'
                         : 'text-[#CBD5E1] hover:bg-[#181824] hover:text-white border border-transparent'
@@ -377,18 +386,17 @@ export default function AdminSidebar({
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <BarChart3 className={`w-4 h-4 flex-shrink-0 ${activeTab === 'analytics' ? 'text-emerald-400' : 'text-emerald-400'}`} />
-                      {(!isCollapsed || isMobileOpen) && (
+                      {!isRail && (
                         <span className="truncate">Thống Kê Traffic</span>
                       )}
                     </div>
-                    {(!isCollapsed || isMobileOpen) && (
+                    {!isRail && (
                       <span className="text-[10px] px-1.5 py-0.2 bg-[#222232] text-[#94A3B8] rounded font-semibold">
                         {counts.analytics}
                       </span>
                     )}
 
-                    {/* Floating Tooltip khi thu nhỏ */}
-                    {isCollapsed && !isMobileOpen && (
+                    {isRail && (
                       <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                         Thống Kê Traffic ({counts.analytics} máy)
                       </div>
@@ -401,7 +409,7 @@ export default function AdminSidebar({
                   <button
                     type="button"
                     onClick={() => handleSelectTab('feedback')}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition group cursor-pointer relative ${
+                    className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg transition group cursor-pointer relative ${
                       activeTab === 'feedback'
                         ? 'bg-[#7C5CFC]/15 text-[#C4B5FD] font-semibold border border-[#7C5CFC]/30 shadow-sm'
                         : 'text-[#CBD5E1] hover:bg-[#181824] hover:text-white border border-transparent'
@@ -409,11 +417,11 @@ export default function AdminSidebar({
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Inbox className={`w-4 h-4 flex-shrink-0 ${activeTab === 'feedback' ? 'text-blue-400' : 'text-blue-400'}`} />
-                      {(!isCollapsed || isMobileOpen) && (
+                      {!isRail && (
                         <span className="truncate">Hòm Thư Góp Ý</span>
                       )}
                     </div>
-                    {(!isCollapsed || isMobileOpen) ? (
+                    {!isRail ? (
                       counts.newFeedback > 0 ? (
                         <span className="text-[9px] px-1.5 py-0.2 bg-purple-500/30 text-purple-200 border border-purple-500/50 rounded font-bold animate-pulse">
                           {counts.newFeedback} mới
@@ -425,14 +433,13 @@ export default function AdminSidebar({
                       )
                     ) : (
                       counts.newFeedback > 0 && (
-                        <span className="absolute -top-1 -right-1 px-1 py-0.2 text-[9px] font-bold rounded-full bg-purple-600 text-white animate-pulse">
+                        <span className="absolute -top-1 -right-1 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-purple-600 text-white animate-pulse">
                           {counts.newFeedback}
                         </span>
                       )
                     )}
 
-                    {/* Floating Tooltip khi thu nhỏ */}
-                    {isCollapsed && !isMobileOpen && (
+                    {isRail && (
                       <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                         Hòm Thư Góp Ý ({counts.feedback})
                       </div>
@@ -444,9 +451,9 @@ export default function AdminSidebar({
           </nav>
         </div>
 
-        {/* KHU VỰC CHÂN TRANG (FOOTER): PROFILE ADMIN & ĐĂNG XUẤT (Hình 2) */}
+        {/* KHU VỰC CHÂN TRANG (FOOTER): PROFILE ADMIN & ĐĂNG XUẤT */}
         <div className="p-2 border-t border-[#1E1E2B] bg-[#0E0E15] flex-shrink-0">
-          {(!isCollapsed || isMobileOpen) ? (
+          {!isRail ? (
             <div className="flex items-center justify-between p-2 rounded-lg bg-[#161622] border border-[#222230]">
               <div className="flex items-center gap-2 overflow-hidden">
                 <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white text-xs flex-shrink-0 shadow">
@@ -476,12 +483,11 @@ export default function AdminSidebar({
                 type="button"
                 onClick={onLogout}
                 title="Đăng xuất"
-                className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white text-xs hover:ring-2 hover:ring-red-400 transition cursor-pointer"
+                className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white text-xs hover:ring-2 hover:ring-red-400 transition cursor-pointer shadow"
               >
                 A
               </button>
-              {/* Floating Tooltip */}
-              <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 top-1 px-2.5 py-1 bg-[#1E1E2B] text-red-300 text-[11px] rounded shadow-xl border border-red-500/30 whitespace-nowrap z-50">
+              <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 top-2 px-2.5 py-1 bg-[#1E1E2B] text-red-300 text-[11px] rounded shadow-xl border border-red-500/30 whitespace-nowrap z-50">
                 Đăng xuất (admin@carrot.tia)
               </div>
             </div>
