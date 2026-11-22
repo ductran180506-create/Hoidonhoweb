@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { X, Sparkles, Trophy, Gift, Coins, AlertCircle, Clock, Volume2, VolumeX, ShieldCheck } from 'lucide-react';
+import { X, Sparkles, Trophy, Gift, Coins, AlertCircle, Clock, Volume2, VolumeX, ShieldCheck, Coffee } from 'lucide-react';
 
 interface PrizeItem {
   id: number;
@@ -197,7 +197,7 @@ export default function LuckyWheelModal() {
     }
 
     if (spinType === 'coins' && balance < costCoins) {
-      setErrorMessage(`Bạn cần tối thiểu ${costCoins} Điểm để quay. Hãy nạp thêm nhé!`);
+      setErrorMessage(`Bạn cần tối thiểu ${costCoins} Điểm để quay. Hãy mời cà phê để nhận thêm điểm nhé!`);
       return;
     }
 
@@ -444,8 +444,8 @@ export default function LuckyWheelModal() {
                   }}
                   className="py-2.5 px-3 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/40 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5 active:scale-98"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Nạp Thêm Điểm (10k)</span>
+                  <Coffee className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Mời Cà Phê</span>
                 </button>
               </div>
             )}

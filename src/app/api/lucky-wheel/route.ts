@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
       if (currentBal < spinCost) {
         return NextResponse.json({
           success: false,
-          message: `Bạn cần tối thiểu ${spinCost} Điểm để quay thưởng. Hãy nạp thêm nhé!`,
+          message: `Bạn cần tối thiểu ${spinCost} Điểm để quay thưởng. Hãy mời cà phê để nhận thêm điểm nhé!`,
           insufficientBalance: true,
           balance: currentBal,
         }, { status: 400 });
