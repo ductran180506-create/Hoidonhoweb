@@ -336,12 +336,12 @@ export async function POST(req: NextRequest) {
       let uEmail = '';
       let uAvatar = '';
       try {
-        const uRow = await supabaseAdmin.from('users').select('*').eq('id', userId).maybeSingle();
-        if (uRow?.data) {
-          uName = uRow.data.name || uRow.data.phone || userId;
-          uPhone = uRow.data.phone || '';
-          uEmail = uRow.data.email || '';
-          uAvatar = uRow.data.avatar || '';
+        const { data: uData } = await supabaseAdmin.from('users').select('*').eq('id', userId).maybeSingle();
+        if (uData) {
+          uName = uData.name || uData.phone || uData.email || userId;
+          uPhone = uData.phone || '';
+          uEmail = uData.email || '';
+          uAvatar = uData.avatar || '';
         }
       } catch (e) {}
 

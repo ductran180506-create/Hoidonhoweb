@@ -457,6 +457,9 @@ export default function AdminPage() {
         if (data.success) {
           setStats(data.stats || { totalStories: 0, totalOrders: 0, completedOrders: 0, totalRevenue: 0, totalUsers: 0 });
           setOrders(Array.isArray(data.orders) ? data.orders : []);
+          if (Array.isArray(data.luckySpins)) {
+            setLuckySpins(data.luckySpins);
+          }
           if (Array.isArray(data.users)) {
             setUsers(
               data.users.map((u: any) => ({
