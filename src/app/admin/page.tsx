@@ -879,6 +879,21 @@ export default function AdminPage() {
     return 'Toàn bộ';
   };
 
+  const getDateFilterShortLabel = () => {
+    if (dateFilterType === 'all') return 'Toàn bộ';
+    if (dateFilterType === 'today') return 'Hôm nay';
+    if (dateFilterType === 'last7') return '7 ngày';
+    if (dateFilterType === 'last30') return '30 ngày';
+    if (dateFilterType === 'custom') {
+      if (customStartDate && customEndDate) {
+        if (customStartDate === customEndDate) return customStartDate.split('-').slice(1).reverse().join('/');
+        return `${customStartDate.split('-').slice(1).reverse().join('/')} - ${customEndDate.split('-').slice(1).reverse().join('/')}`;
+      }
+      return 'Tùy chọn';
+    }
+    return 'Toàn bộ';
+  };
+
   const formatTimeAgoBadge = (d: string | undefined) => {
     if (!d) return null;
     const diffMs = Date.now() - new Date(d).getTime();
@@ -1302,82 +1317,104 @@ export default function AdminPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
         <div 
           onClick={() => setActiveTab('revenue')}
-          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
+          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[92px] sm:min-h-[105px] ${
             activeTab === 'revenue' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
-          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            {dateFilterType === 'all' ? 'Doanh thu VietQR' : `💰 Doanh thu (${getDateFilterLabel()})`}
+          <div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A] flex items-center justify-between gap-1">
+              <span className="truncate">💰 Doanh thu</span>
+              {dateFilterType !== 'all' && (
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-semibold flex-shrink-0">
+                  {getDateFilterShortLabel()}
+                </span>
+              )}
+            </div>
+            <div className="text-base sm:text-xl font-bold text-white mt-1 truncate font-mono">
+              {(dateFilterType === 'all' ? (stats?.totalRevenue || 0) : periodRevenue).toLocaleString('vi-VN')} đ
+            </div>
           </div>
-          <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
-            {(dateFilterType === 'all' ? (stats?.totalRevenue || 0) : periodRevenue).toLocaleString('vi-VN')} đ
-          </div>
-          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate font-mono">
             {dateFilterType === 'all' ? (stats?.completedOrders || 0) : periodCompletedOrders.length} đơn thành công
           </div>
         </div>
 
         <div 
           onClick={() => setActiveTab('customers')}
-          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
+          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[92px] sm:min-h-[105px] ${
             activeTab === 'customers' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
-          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            {dateFilterType === 'all' ? 'Độc giả đăng ký' : `👥 Độc giả mới (${getDateFilterLabel()})`}
+          <div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A] flex items-center justify-between gap-1">
+              <span className="truncate">👥 Độc giả mới</span>
+              {dateFilterType !== 'all' && (
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-semibold flex-shrink-0">
+                  {getDateFilterShortLabel()}
+                </span>
+              )}
+            </div>
+            <div className="text-base sm:text-xl font-bold text-white mt-1 truncate font-mono">
+              {dateFilterType === 'all' ? safeUsers.length : periodUsers.length} người
+            </div>
           </div>
-          <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
-            {dateFilterType === 'all' ? safeUsers.length : periodUsers.length} người
-          </div>
-          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate font-mono">
             {dateFilterType === 'all' ? `${totalVipUsers} VIP • ${totalCirculatingCoins} Điểm` : `Đăng ký trong kỳ`}
           </div>
         </div>
 
         <div 
           onClick={() => setActiveTab('analytics')}
-          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition ${
+          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[92px] sm:min-h-[105px] ${
             activeTab === 'analytics' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
-          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            {dateFilterType === 'all' ? 'Lượt khách (Traffic)' : `📊 Lượt khách (${getDateFilterLabel()})`}
+          <div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A] flex items-center justify-between gap-1">
+              <span className="truncate">📊 Lượt khách</span>
+              {dateFilterType !== 'all' && (
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-semibold flex-shrink-0">
+                  {getDateFilterShortLabel()}
+                </span>
+              )}
+            </div>
+            <div className="text-base sm:text-xl font-bold text-white mt-1 truncate font-mono">
+              {dateFilterType === 'all' ? (analytics?.totalMachines || analytics?.totalViews || 0) : periodMachines.length} máy
+            </div>
           </div>
-          <div className="text-base sm:text-xl font-bold text-white mt-1 truncate">
-            {dateFilterType === 'all' ? (analytics?.totalMachines || analytics?.totalViews || 0) : periodMachines.length} máy
-          </div>
-          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate">
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate font-mono">
             {dateFilterType === 'all' ? `Hôm nay: ${analytics?.todayActiveMachines || analytics?.todayViews || 0} máy` : `Truy cập trong kỳ`}
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
-          <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A]">
-            {dateFilterType === 'all' ? 'Sacombank tự động' : '🎯 Hiệu quả kỳ này'}
+        <div className="p-3 sm:p-4 bg-[#111116] border border-[#1E1E26] rounded-xl flex flex-col justify-between min-h-[92px] sm:min-h-[105px]">
+          <div>
+            <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A] flex items-center justify-between gap-1">
+              <span className="truncate">{dateFilterType === 'all' ? 'Sacombank tự động' : '🎯 Hiệu quả kỳ này'}</span>
+            </div>
+            {dateFilterType === 'all' ? (
+              <>
+                <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                  <span className="truncate">Đã liên kết (040121635056)</span>
+                </div>
+                <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate font-mono">
+                  congducc2k6@gmail.com • 24/7
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-base sm:text-xl font-bold text-emerald-400 mt-1 truncate font-mono flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+                  <span>{periodMachines.length > 0 ? ((periodCompletedOrders.length / periodMachines.length) * 100).toFixed(1) : '0'}%</span>
+                  <span className="text-[10px] font-normal text-[#A1A1AA]">chuyển đổi</span>
+                </div>
+                <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate font-mono">
+                  {periodCompletedOrders.length} đơn nạp / {periodMachines.length} khách vào
+                </div>
+              </>
+            )}
           </div>
-          {dateFilterType === 'all' ? (
-            <>
-              <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                <span className="truncate">Đã liên kết (040121635056)</span>
-              </div>
-              <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate">
-                congducc2k6@gmail.com • 24/7
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                <span className="truncate">
-                  {periodMachines.length > 0 ? ((periodCompletedOrders.length / periodMachines.length) * 100).toFixed(1) : '0'}% chuyển đổi
-                </span>
-              </div>
-              <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate">
-                {periodCompletedOrders.length} đơn nạp / {periodMachines.length} khách vào
-              </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -2411,23 +2448,23 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-[#71717A] px-1 sm:hidden">
-            <span>👉 Vuốt ngang để xem đủ cột</span>
-            <span>{filteredUsers.length} người</span>
+          <div className="flex items-center justify-between text-[11px] text-[#71717A] px-2.5 py-1.5 bg-[#0A0A0D] rounded-lg border border-[#1E1E26] sm:hidden">
+            <span>👉 Vuốt ngang xem đầy đủ các cột</span>
+            <span className="font-mono text-[#A78BFA] font-medium">{filteredUsers.length} người</span>
           </div>
 
           <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
-            <table className="w-full text-left text-xs min-w-[660px]">
+            <table className="w-full text-left text-xs min-w-[780px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A]">STT</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Tài Khoản / Người Dùng</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Hạng</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Đã Nạp</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Số Dư Điểm</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Tập Đã Mở</th>
-                  <th className="py-2.5 font-medium bg-[#111116] min-w-[130px]">Ngày & Giờ Tạo</th>
-                  <th className="py-2.5 font-medium text-right bg-[#111116]">Điều Chỉnh Điểm</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A] whitespace-nowrap">STT</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Tài Khoản / Người Dùng</th>
+                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Hạng</th>
+                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Đã Nạp</th>
+                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Số Dư Điểm</th>
+                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Tập Đã Mở</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] min-w-[130px] whitespace-nowrap">Ngày & Giờ Tạo</th>
+                  <th className="py-2.5 px-3 font-medium text-right bg-[#111116] whitespace-nowrap">Điều Chỉnh Điểm</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1C1C24]">
@@ -2440,10 +2477,10 @@ export default function AdminPage() {
                 ) : (
                   filteredUsers.map((u, idx) => (
                     <tr key={u.id} className="hover:bg-[#14141B] transition">
-                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold">
+                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold whitespace-nowrap">
                         #{idx + 1}
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-3">
                         <div className="flex items-center gap-2.5">
                           {u.avatar ? (
                             <img src={u.avatar} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-[#272733]" />
@@ -2452,9 +2489,9 @@ export default function AdminPage() {
                               {(u.name || u.phone || u.email || 'U')[0].toUpperCase()}
                             </div>
                           )}
-                          <div className="min-w-0">
+                          <div className="min-w-0 max-w-[170px] sm:max-w-[220px]">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-white text-xs truncate max-w-[160px] sm:max-w-[200px]">
+                              <span className="font-medium text-white text-xs truncate" title={u.name || u.phone || u.email || u.id}>
                                 {u.name || u.phone || u.email || u.id}
                               </span>
                               {u.isGoogle && (
@@ -2464,18 +2501,18 @@ export default function AdminPage() {
                               )}
                             </div>
                             {u.email && u.email !== u.name ? (
-                              <div className="text-[10px] text-[#71717A] truncate max-w-[160px] sm:max-w-[200px] font-mono">
+                              <div className="text-[10px] text-[#71717A] truncate font-mono" title={u.email}>
                                 {u.email}
                               </div>
                             ) : u.phone && u.phone !== u.name ? (
-                              <div className="text-[10px] text-[#71717A] truncate font-mono">
+                              <div className="text-[10px] text-[#71717A] truncate font-mono" title={u.phone}>
                                 {u.phone}
                               </div>
                             ) : null}
                           </div>
                         </div>
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-2 whitespace-nowrap">
                         {u.isVip ? (
                           <span className="text-[10px] text-[#F59E0B] font-semibold bg-[#F59E0B]/10 px-1.5 py-0.5 rounded border border-[#F59E0B]/20">
                             VIP
@@ -2484,7 +2521,7 @@ export default function AdminPage() {
                           <span className="text-[10px] text-[#71717A]">Thường</span>
                         )}
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-2 whitespace-nowrap">
                         {u.totalRechargedVnd > 0 ? (
                           <span className="font-semibold text-emerald-400 font-mono">
                             {u.totalRechargedVnd.toLocaleString('vi-VN')} đ
@@ -2493,13 +2530,13 @@ export default function AdminPage() {
                           <span className="text-[#52525B] font-mono">0 đ</span>
                         )}
                       </td>
-                      <td className="py-3 font-semibold text-white font-mono">
+                      <td className="py-3 px-2 font-semibold text-white font-mono whitespace-nowrap">
                         {u.coins || 0} Điểm
                       </td>
-                      <td className="py-3 text-[#A1A1AA]">
+                      <td className="py-3 px-2 text-[#A1A1AA] whitespace-nowrap">
                         {u.unlockedCount ?? (u.unlockedChapters?.length || 0)} tập
                       </td>
-                      <td className="py-2.5">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         {u.createdAt && !isNaN(new Date(u.createdAt).getTime()) ? (
                           <div className="space-y-0.5 min-w-[125px]">
                             <div className="flex items-center gap-1.5">
@@ -2526,7 +2563,7 @@ export default function AdminPage() {
                           <span className="text-[#52525B]">—</span>
                         )}
                       </td>
-                      <td className="py-3 text-right">
+                      <td className="py-3 px-3 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1">
                           <button
                             onClick={() => handleAdjustCoins(u.id, 5, u.phone || u.id)}
@@ -2579,7 +2616,7 @@ export default function AdminPage() {
         <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5">
             <div>
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <span>Sổ Nhật Ký Chuyển Khoản ({filteredOrders.length} đơn)</span>
                 {dateFilterType !== 'all' && (
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
@@ -2592,7 +2629,7 @@ export default function AdminPage() {
                   </span>
                 )}
               </h2>
-              <p className="text-[11px] text-[#71717A]">
+              <p className="text-[11px] text-[#71717A] mt-0.5 break-words">
                 Đối soát tự động qua thông báo Gmail ngân hàng Sacombank (040121635056 - TRAN CONG DUC)
               </p>
             </div>
@@ -2676,22 +2713,22 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-[#71717A] px-1 sm:hidden">
-            <span>👉 Vuốt ngang xem chi tiết đơn</span>
-            <span>{filteredOrders.length} đơn</span>
+          <div className="flex items-center justify-between text-[11px] text-[#71717A] px-2.5 py-1.5 bg-[#0A0A0D] rounded-lg border border-[#1E1E26] sm:hidden">
+            <span>👉 Vuốt ngang xem đầy đủ các cột</span>
+            <span className="font-mono text-[#A78BFA] font-medium">{filteredOrders.length} đơn</span>
           </div>
 
           <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
-            <table className="w-full text-left text-xs min-w-[580px]">
+            <table className="w-full text-left text-xs min-w-[760px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A]">STT</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Mã Đơn / Nội Dung CK</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Khách Hàng</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Gói Nạp</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Số Tiền</th>
-                  <th className="py-2.5 font-medium bg-[#111116]">Trạng Thái</th>
-                  <th className="py-2.5 font-medium text-right bg-[#111116]">Thời Gian</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A] whitespace-nowrap">STT</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Mã Đơn / Nội Dung CK</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Khách Hàng</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Gói Nạp</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Số Tiền</th>
+                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Trạng Thái</th>
+                  <th className="py-2.5 px-3 font-medium text-right bg-[#111116] whitespace-nowrap">Thời Gian</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1C1C24]">
@@ -2717,27 +2754,31 @@ export default function AdminPage() {
                 ) : (
                   filteredOrders.map((ord: any, idx: number) => (
                     <tr key={ord.id} className="hover:bg-[#14141B] transition">
-                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold">
+                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold whitespace-nowrap">
                         #{idx + 1}
                       </td>
-                      <td className="py-3 font-mono font-medium text-white">
+                      <td className="py-3 px-3 font-mono font-bold text-white whitespace-nowrap">
                         {ord.orderCode}
                       </td>
-                      <td className="py-3 text-[#A1A1AA]">
-                        <div className="font-medium text-white text-xs">{ord.userName || ord.userId}</div>
+                      <td className="py-3 px-3 text-[#A1A1AA] max-w-[180px]">
+                        <div className="font-medium text-white text-xs truncate" title={ord.userName || ord.userId}>
+                          {ord.userName || ord.userId}
+                        </div>
                         {ord.userEmail && (
-                          <div className="text-[10px] text-[#71717A]">{ord.userEmail}</div>
+                          <div className="text-[10px] text-[#71717A] truncate font-mono" title={ord.userEmail}>
+                            {ord.userEmail}
+                          </div>
                         )}
                       </td>
-                      <td className="py-3 text-[#D4D4D8]">
+                      <td className="py-3 px-3 text-[#D4D4D8] whitespace-nowrap">
                         <span className="px-2 py-0.5 rounded text-[10px] bg-[#1E1E28] text-[#D4D4D8] border border-[#2A2A38] font-mono">
                           {ord.packageType}
                         </span>
                       </td>
-                      <td className="py-3 font-semibold text-emerald-400">
+                      <td className="py-3 px-3 font-semibold text-emerald-400 whitespace-nowrap font-mono">
                         {ord.amountVnd.toLocaleString('vi-VN')} đ
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-3 whitespace-nowrap">
                         {ord.status === 'completed' ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
                             ✓ Thành công
@@ -2745,7 +2786,7 @@ export default function AdminPage() {
                         ) : ord.status === 'processing' ? (
                           <div className="inline-flex items-center gap-2">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/50 font-semibold animate-pulse">
-                              🔄 Đang xử lý (Khách báo đã CK)
+                              🔄 Đang xử lý
                             </span>
                             <button
                               onClick={() => handleApproveOrder(ord.orderCode)}
@@ -2781,7 +2822,7 @@ export default function AdminPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 text-right text-[#71717A] text-[11px]">
+                      <td className="py-3 px-3 text-right text-[#71717A] text-[11px] whitespace-nowrap font-mono">
                         {ord.createdAt && !isNaN(new Date(ord.createdAt).getTime())
                           ? `${new Date(ord.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(ord.createdAt).toLocaleDateString('vi-VN')}`
                           : '—'}
@@ -2794,8 +2835,6 @@ export default function AdminPage() {
           </div>
         </div>
       )}
-
-      
 
       {/* ============================================================ */}
       {/* 4. THỐNG KÊ TRAFFIC & LƯỢT TRUY CẬP TỪ TIKTOK                */}
@@ -2945,19 +2984,19 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-[#71717A] px-1 sm:hidden">
+              <div className="flex items-center justify-between text-[11px] text-[#71717A] px-2.5 py-1.5 bg-[#0A0A0D] rounded-lg border border-[#1E1E26] sm:hidden">
                 <span>👉 Vuốt ngang xem chi tiết máy</span>
-                <span>{periodMachines.length} máy</span>
+                <span className="font-mono text-[#A78BFA] font-medium">{periodMachines.length} máy</span>
               </div>
 
               <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
-                <table className="w-full text-left text-xs min-w-[500px]">
+                <table className="w-full text-left text-xs min-w-[680px]">
                   <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                     <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                      <th className="py-2.5 font-medium bg-[#111116]">Thiết Bị / Mã Máy</th>
-                      <th className="py-2.5 font-medium bg-[#111116]">Nguồn Đến</th>
-                      <th className="py-2.5 font-medium bg-[#111116]">Trang Xem Gần Nhất</th>
-                      <th className="py-2.5 font-medium text-right bg-[#111116]">Hoạt Động Gần Nhất</th>
+                      <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Thiết Bị / Mã Máy</th>
+                      <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Nguồn Đến</th>
+                      <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Trang Xem Gần Nhất</th>
+                      <th className="py-2.5 px-3 font-medium text-right bg-[#111116] whitespace-nowrap">Hoạt Động Gần Nhất</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1C1C24]">
@@ -2979,13 +3018,13 @@ export default function AdminPage() {
 
                         return (
                           <tr key={evt.id} className="hover:bg-[#14141B] transition">
-                            <td className="py-2.5">
+                            <td className="py-2.5 px-3 whitespace-nowrap">
                               <div className="font-medium text-white">{evt.device}</div>
                               <div className="text-[10px] text-[#71717A] font-mono">
                                 ID: {evt.id ? evt.id.substring(0, 14) + '...' : 'Ẩn danh'}
                               </div>
                             </td>
-                            <td className="py-2.5">
+                            <td className="py-2.5 px-3 whitespace-nowrap">
                               <span
                                 className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                                   evt.referrer?.includes('TikTok')
@@ -2998,10 +3037,10 @@ export default function AdminPage() {
                                 {evt.referrer}
                               </span>
                             </td>
-                            <td className="py-2.5 font-medium text-[#D4D4D8] truncate max-w-[140px]" title={evt.storyTitle || evt.path}>
+                            <td className="py-2.5 px-3 font-medium text-[#D4D4D8] truncate max-w-[160px] whitespace-nowrap" title={evt.storyTitle || evt.path}>
                               {evt.storyTitle || evt.path}
                             </td>
-                            <td className="py-2.5 text-right">
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
                               <div className={`text-xs font-semibold ${isRecent ? 'text-emerald-400' : 'text-[#A1A1AA]'}`}>
                                 {evt.timeAgo || 'Vừa xong'}
                               </div>
@@ -3303,67 +3342,69 @@ export default function AdminPage() {
                 <div className="divide-y divide-[#1C1C24] space-y-3 max-h-[600px] overflow-y-auto admin-table-scroll pr-1">
                   {displayList.map((item) => (
                   <div key={item.id} className="pt-3 first:pt-0 space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1A1A24] pb-2">
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         {item.type === 'content' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium whitespace-nowrap">
                             💡 Nội dung truyện
                           </span>
                         )}
                         {item.type === 'bug' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400 border border-red-500/30 font-medium">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400 border border-red-500/30 font-medium whitespace-nowrap">
                             🐛 Báo lỗi kỹ thuật
                           </span>
                         )}
                         {item.type === 'payment' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium whitespace-nowrap">
                             💳 Sự cố mở khóa / Điểm
                           </span>
                         )}
                         {item.type === 'other' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium whitespace-nowrap">
                             💬 Ý kiến khác
                           </span>
                         )}
 
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-xs font-semibold text-white truncate max-w-[160px]" title={item.userName}>
                           {item.userName || 'Độc giả ẩn danh'}
                         </span>
 
                         {item.contact && (
-                          <span className="text-[11px] font-mono text-[#A78BFA] bg-[#7C5CFC]/10 px-2 py-0.5 rounded border border-[#7C5CFC]/20">
+                          <span className="text-[11px] font-mono text-[#A78BFA] bg-[#7C5CFC]/10 px-2 py-0.5 rounded border border-[#7C5CFC]/20 truncate max-w-[180px]" title={item.contact}>
                             Liên hệ: {item.contact}
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-[#71717A]">
+                      <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                        <span className="text-[10px] text-[#71717A] font-mono whitespace-nowrap">
                           {item.createdAt && !isNaN(new Date(item.createdAt).getTime())
                             ? `${new Date(item.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(item.createdAt).toLocaleDateString('vi-VN')}`
                             : '—'}
                         </span>
 
-                        {item.status === 'new' ? (
-                          <button
-                            onClick={() => handleUpdateFeedbackStatus(item.id, 'reviewed')}
-                            className="px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/20 hover:bg-[#7C5CFC] text-[#A78BFA] hover:text-white border border-[#7C5CFC]/40 font-medium transition"
-                          >
-                            Đánh dấu đã xem
-                          </button>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-[#1C1C24] text-[#71717A] border border-[#272733]">
-                            ✓ Đã xem
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {item.status === 'new' ? (
+                            <button
+                              onClick={() => handleUpdateFeedbackStatus(item.id, 'reviewed')}
+                              className="px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/20 hover:bg-[#7C5CFC] text-[#A78BFA] hover:text-white border border-[#7C5CFC]/40 font-medium transition whitespace-nowrap"
+                            >
+                              Đánh dấu đã xem
+                            </button>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-[#1C1C24] text-[#71717A] border border-[#272733] whitespace-nowrap">
+                              ✓ Đã xem
+                            </span>
+                          )}
 
-                        <button
-                          onClick={() => handleDeleteFeedback(item.id)}
-                          className="p-1 rounded text-[#71717A] hover:text-red-400 hover:bg-red-950/30 transition text-xs"
-                          title="Xóa góp ý"
-                        >
-                          ✕
-                        </button>
+                          <button
+                            onClick={() => handleDeleteFeedback(item.id)}
+                            className="p-1 rounded text-[#71717A] hover:text-red-400 hover:bg-red-950/30 transition text-xs"
+                            title="Xóa góp ý"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
                     </div>
 
