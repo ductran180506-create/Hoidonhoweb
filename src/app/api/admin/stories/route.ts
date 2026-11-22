@@ -211,11 +211,17 @@ export async function GET(req: NextRequest) {
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
 
-      // Kết hợp đơn hàng từ cả Supabase transactions và Local DB orders
+      // Hàm kiểm tra các giao dịch nội bộ hệ thống (Điểm danh / Vòng quay) để tách riêng khỏi Sổ Chuyển Khoản
+      const isInternalNonOrderTx = (code?: string) => {
+        if (!code) return false;
+        return code.startsWith('CHECKIN_') || code.startsWith('LUCKY_') || code.startsWith('FREE_SPIN_');
+      };
+
+      // Kết hợp đơn hàng từ cả Supabase transactions và Local DB orders (CHỈ LẤY ĐƠN NẠP TIỀN / MUA VIP THẬT)
       const orderMap: Record<string, any> = {};
 
       // 1. Thêm đơn từ Local DB
-      localOrders.forEach(lo => {
+      localOrders.filter(lo => !isInternalNonOrderTx(lo.orderCode)).forEach(lo => {
         const u = mergedUserMap[lo.userId];
         orderMap[lo.orderCode] = {
           ...lo,
@@ -234,8 +240,8 @@ export async function GET(req: NextRequest) {
         } catch {}
       }
 
-      // 2. Gộp với giao dịch nạp tiền từ Supabase (loại trừ các giao dịch tặng điểm danh CHECKIN_)
-      (sbTx || []).filter(t => !t.payment_code?.startsWith('CHECKIN_')).forEach(t => {
+      // 2. Gộp với giao dịch nạp tiền từ Supabase (loại trừ các giao dịch tặng điểm danh và quay thưởng)
+      (sbTx || []).filter(t => !isInternalNonOrderTx(t.payment_code)).forEach(t => {
         const u = mergedUserMap[t.user_id];
         const existing = orderMap[t.payment_code];
         const status = (t.status === 'completed' || existing?.status === 'completed' || newlyMatched.includes(t.payment_code))
@@ -271,6 +277,66 @@ export async function GET(req: NextRequest) {
         return { ...o, status: o.status === 'processing' ? 'processing' : 'pending' };
       }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+      // TÁCH VÀ CHUYỂN HẾT TOÀN BỘ DỮ LIỆU NGƯỜI DÙNG QUAY THƯỞNG SANG MỤC VÒNG QUAY MAY MẮN
+      const localSpinLogs = db.getLuckyWheelHistory();
+      const existingSpinLogCodes = new Set(localSpinLogs.map(l => l.prizeSublabel || l.id));
+
+      const luckyTxs = (sbTx || []).filter(t => t.payment_code && (t.payment_code.startsWith('LUCKY_') || t.payment_code.startsWith('FREE_SPIN_')));
+      
+      const mappedSbSpins = luckyTxs.map(t => {
+        const u = mergedUserMap[t.user_id];
+        const code = t.payment_code || '';
+        let spinType: 'free' | 'coins' = code.startsWith('FREE_SPIN_') ? 'free' : 'coins';
+        let prizeType: 'coins' | 'vip' | 'none' = 'none';
+        let prizeLabel = 'Lượt quay thưởng';
+        let prizeIcon = '🎡';
+        let prizeValue = 0;
+        let costCoins = 0;
+
+        if (code.startsWith('LUCKY_SPIN_')) {
+          costCoins = Math.abs(Number(t.coins) || 3);
+          prizeLabel = 'Quay bằng điểm';
+          prizeIcon = '🪙';
+        } else if (code.startsWith('FREE_SPIN_')) {
+          prizeLabel = 'Lượt quay miễn phí';
+          prizeIcon = '🎁';
+        } else if (code.startsWith('LUCKY_REWARD_VIP_')) {
+          prizeType = 'vip';
+          const match = code.match(/VIP_(\d+)DAYS/);
+          prizeValue = match ? parseInt(match[1]) : 1;
+          prizeLabel = `+${prizeValue} Ngày VIP`;
+          prizeIcon = '👑';
+        } else if (code.startsWith('LUCKY_REWARD_')) {
+          prizeType = 'coins';
+          prizeValue = Math.max(0, Number(t.coins) || 0);
+          prizeLabel = `+${prizeValue} Điểm Xu`;
+          prizeIcon = '💎';
+        }
+
+        return {
+          id: t.id || `tx-${t.created_at}`,
+          userId: t.user_id,
+          userName: u?.name || u?.email || t.user_id,
+          userPhone: u?.phone || '',
+          userEmail: u?.email || '',
+          userAvatar: u?.avatar || '',
+          spinType,
+          costCoins,
+          prizeId: 0,
+          prizeLabel,
+          prizeSublabel: code,
+          prizeIcon,
+          prizeType,
+          prizeValue,
+          createdAt: t.created_at,
+        };
+      });
+
+      const allLuckySpins = [
+        ...localSpinLogs,
+        ...mappedSbSpins.filter(s => !existingSpinLogCodes.has(s.prizeSublabel) && !existingSpinLogCodes.has(s.id))
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
       const totalRevenue = orders
         .filter(o => o.status === 'completed')
         .reduce((acc, o) => acc + (Number(o.amountVnd) || 0), 0);
@@ -288,8 +354,10 @@ export async function GET(req: NextRequest) {
           expiredOrders: orders.filter(o => o.status === 'expired').length,
           totalRevenue,
           totalUsers: users.length,
+          totalLuckySpins: allLuckySpins.length,
         },
         orders,
+        luckySpins: allLuckySpins,
       });
     }
   } catch (err) {
@@ -325,6 +393,7 @@ export async function GET(req: NextRequest) {
       totalUsers: users.length,
     },
     orders: orders.slice(0, 50),
+    luckySpins: db.getLuckyWheelHistory(),
   });
 }
 

@@ -329,6 +329,41 @@ export async function POST(req: NextRequest) {
       } catch (e) {}
     }
 
+    // Ghi nhận vào sổ nhật ký vòng quay may mắn Real
+    try {
+      let uName = userId;
+      let uPhone = '';
+      let uEmail = '';
+      let uAvatar = '';
+      try {
+        const uRow = await supabaseAdmin.from('users').select('*').eq('id', userId).maybeSingle();
+        if (uRow?.data) {
+          uName = uRow.data.name || uRow.data.phone || userId;
+          uPhone = uRow.data.phone || '';
+          uEmail = uRow.data.email || '';
+          uAvatar = uRow.data.avatar || '';
+        }
+      } catch (e) {}
+
+      db.recordLuckyWheelSpin({
+        id: `spin-log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        userId,
+        userName: uName,
+        userPhone: uPhone,
+        userEmail: uEmail,
+        userAvatar: uAvatar,
+        spinType,
+        costCoins: spinType === 'coins' ? spinCost : 0,
+        prizeId: prize.id,
+        prizeLabel: prize.label,
+        prizeSublabel: prize.sublabel,
+        prizeIcon: prize.icon,
+        prizeType: prize.type,
+        prizeValue: prize.value,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (e) {}
+
     return NextResponse.json({
       success: true,
       prizeIndex: winningIndex,

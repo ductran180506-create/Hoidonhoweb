@@ -14,6 +14,24 @@ export interface LuckyWheelPrize {
   weight: number;
 }
 
+export interface LuckyWheelSpinRecord {
+  id: string;
+  userId: string;
+  userName?: string;
+  userPhone?: string;
+  userEmail?: string;
+  userAvatar?: string;
+  spinType: 'free' | 'coins';
+  costCoins: number;
+  prizeId: number;
+  prizeLabel: string;
+  prizeSublabel?: string;
+  prizeIcon: string;
+  prizeType: 'coins' | 'vip' | 'none';
+  prizeValue: number;
+  createdAt: string;
+}
+
 export interface LuckyWheelSettings {
   spinCostCoins: number;
   freeSpinDaily: boolean;
@@ -46,6 +64,7 @@ interface DatabaseSchema {
   comments?: Comment[];
   feedback?: FeedbackItem[];
   luckyWheelSettings?: LuckyWheelSettings;
+  luckyWheelHistory?: LuckyWheelSpinRecord[];
 }
 
 const IS_VERCEL = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -846,5 +865,23 @@ export const db = {
     };
     saveData(data);
     return data.luckyWheelSettings;
+  },
+
+  getLuckyWheelHistory: (): LuckyWheelSpinRecord[] => {
+    const data = ensureDataFile();
+    return data.luckyWheelHistory || [];
+  },
+
+  recordLuckyWheelSpin: (record: LuckyWheelSpinRecord): LuckyWheelSpinRecord => {
+    const data = ensureDataFile();
+    if (!data.luckyWheelHistory) {
+      data.luckyWheelHistory = [];
+    }
+    data.luckyWheelHistory.unshift(record);
+    if (data.luckyWheelHistory.length > 2000) {
+      data.luckyWheelHistory = data.luckyWheelHistory.slice(0, 2000);
+    }
+    saveData(data);
+    return record;
   }
 };

@@ -36,6 +36,7 @@ interface AdminSidebarProps {
     analytics: number;
     feedback: number;
     newFeedback: number;
+    wheelSpins?: number;
   };
   onNewStoryClick?: () => void;
   onOpenLuckyWheel?: () => void;
@@ -348,8 +349,8 @@ export default function AdminSidebar({
                       )}
                     </div>
                     {!isRail ? (
-                      <span className="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/30 rounded font-bold">
-                        Cấu hình
+                      <span className="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/30 rounded font-bold font-mono">
+                        {counts.wheelSpins ? `${counts.wheelSpins} lượt` : 'Cấu hình'}
                       </span>
                     ) : (
                       <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-500" />

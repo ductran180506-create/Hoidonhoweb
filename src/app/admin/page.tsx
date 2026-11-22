@@ -253,6 +253,10 @@ export default function AdminPage() {
   const [stories, setStories] = useState<Story[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [luckySpins, setLuckySpins] = useState<any[]>([]);
+  const [wheelSubTab, setWheelSubTab] = useState<'config' | 'history'>('config');
+  const [spinSearch, setSpinSearch] = useState('');
+  const [spinFilter, setSpinFilter] = useState<'all' | 'free' | 'paid' | 'coins' | 'vip' | 'none'>('all');
   const [loading, setLoading] = useState(false);
 
   // Form đăng truyện mới
@@ -394,6 +398,9 @@ export default function AdminPage() {
         setStats(data.stats || { totalStories: 0, totalOrders: 0, completedOrders: 0, totalRevenue: 0, totalUsers: 0 });
         setStories(Array.isArray(data.stories) ? data.stories : []);
         setOrders(Array.isArray(data.orders) ? data.orders : []);
+        if (Array.isArray(data.luckySpins)) {
+          setLuckySpins(data.luckySpins);
+        }
         if (Array.isArray(data.users)) {
           const normalized = data.users.map((u: any) => ({
             ...u,
@@ -1094,12 +1101,38 @@ export default function AdminPage() {
   const allMachines = Array.isArray(analytics?.machineList) ? analytics.machineList : [];
   const periodMachines = allMachines.filter((m: any) => checkDateMatch(m.lastActive));
   const periodFeedback = feedbackList.filter((f) => checkDateMatch(f.createdAt));
+  const periodLuckySpins = luckySpins.filter((s) => checkDateMatch(s.createdAt));
 
   // Bộ dữ liệu cơ sở đồng bộ toàn bộ giao diện theo mốc thời gian đang chọn:
   const baseUsers = dateFilterType === 'all' ? safeUsers : periodUsers;
   const baseOrders = dateFilterType === 'all' ? safeOrders : periodOrders;
   const baseMachines = dateFilterType === 'all' ? allMachines : periodMachines;
   const baseFeedback = dateFilterType === 'all' ? feedbackList : periodFeedback;
+  const baseLuckySpins = dateFilterType === 'all' ? luckySpins : periodLuckySpins;
+
+  // Lọc danh sách lượt quay may mắn
+  const filteredLuckySpins = baseLuckySpins.filter((s) => {
+    if (spinFilter === 'free' && s.spinType !== 'free') return false;
+    if (spinFilter === 'paid' && s.spinType !== 'coins') return false;
+    if (spinFilter === 'coins' && s.prizeType !== 'coins') return false;
+    if (spinFilter === 'vip' && s.prizeType !== 'vip') return false;
+    if (spinFilter === 'none' && s.prizeType !== 'none') return false;
+    if (spinSearch.trim()) {
+      const q = spinSearch.toLowerCase().trim();
+      const matchName = (s.userName || '').toLowerCase().includes(q);
+      const matchPhone = (s.userPhone || '').toLowerCase().includes(q);
+      const matchEmail = (s.userEmail || '').toLowerCase().includes(q);
+      const matchPrize = (s.prizeLabel || '').toLowerCase().includes(q);
+      const matchCode = (s.prizeSublabel || s.id || '').toLowerCase().includes(q);
+      if (!matchName && !matchPhone && !matchEmail && !matchPrize && !matchCode) return false;
+    }
+    return true;
+  });
+
+  const totalSpinsCount = baseLuckySpins.length;
+  const totalSpinsCoinsSpent = baseLuckySpins.reduce((sum, s) => sum + (s.spinType === 'coins' ? (s.costCoins || 3) : 0), 0);
+  const totalCoinsAwarded = baseLuckySpins.reduce((sum, s) => sum + (s.prizeType === 'coins' ? (s.prizeValue || 0) : 0), 0);
+  const totalVipAwarded = baseLuckySpins.filter((s) => s.prizeType === 'vip').length;
 
   // Thống kê động cho Traffic / Analytics theo mốc thời gian đang chọn:
   const displaySources = useMemo(() => {
@@ -1273,6 +1306,7 @@ export default function AdminPage() {
           customers: baseUsers.length,
           pendingOrders: baseOrders.filter(o => o.status === 'pending' || (o as any).status === 'expired').length,
           totalOrders: baseOrders.length,
+          wheelSpins: baseLuckySpins.length,
           analytics: baseMachines.length,
           feedback: baseFeedback.length,
           newFeedback: baseFeedback.filter(f => f.status === 'new').length,
@@ -1667,7 +1701,7 @@ export default function AdminPage() {
           )}
           {activeTab === 'wheel' && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold">
-              {wheelSettings?.prizes?.length || 8} giải thưởng • Real Data
+              {wheelSettings?.prizes?.length || 8} giải thưởng • {baseLuckySpins.length} lượt quay
             </span>
           )}
         </div>
@@ -3642,8 +3676,53 @@ export default function AdminPage() {
       {/* ============================================================ */}
       {activeTab === 'wheel' && (
         <div className="space-y-6 animate-fadeIn pb-12">
-          {/* Header & Thanh Thao Tác Lưu/Khôi phục */}
-          <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 sm:p-5 shadow-lg space-y-3.5">
+          {/* Sub-tab Switcher: Cấu Hình vs Sổ Nhật Ký Quay Thưởng */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111116] border border-[#1E1E26] rounded-xl p-2.5 shadow-md">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setWheelSubTab('config')}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                  wheelSubTab === 'config'
+                    ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
+                    : 'bg-[#181820] text-[#A1A1AA] hover:text-white border border-[#23232E]'
+                }`}
+              >
+                <span>⚙️</span>
+                <span>Cấu Hình Giải Thưởng & Tỉ Lệ</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-mono">
+                  {wheelSettings?.prizes?.length || 8} ô
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setWheelSubTab('history')}
+                className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                  wheelSubTab === 'history'
+                    ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
+                    : 'bg-[#181820] text-[#A1A1AA] hover:text-white border border-[#23232E]'
+                }`}
+              >
+                <span>📜</span>
+                <span>Sổ Nhật Ký & Lịch Sử Quay Thưởng</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                  {baseLuckySpins.length} lượt
+                </span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] text-[#71717A] px-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span>Dữ liệu quay tách riêng độc lập với Sổ Doanh Thu</span>
+            </div>
+          </div>
+
+          {/* TAB 1: CẤU HÌNH VÒNG QUAY */}
+          {wheelSubTab === 'config' && (
+            <>
+              {/* Header & Thanh Thao Tác Lưu/Khôi phục */}
+              <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 sm:p-5 shadow-lg space-y-3.5">
             {/* Hàng 1: Tiêu đề & Nút Lưu Real (Primary Action neo góc phải, không bao giờ bị rơi hàng lỡ cỡ) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5">
               <div className="flex items-center gap-3">
@@ -4042,6 +4121,267 @@ export default function AdminPage() {
               </div>
             </>
           )}
+        </>
+      )}
+
+      {/* TAB 2: SỔ NHẬT KÝ QUAY THƯỞNG CHI TIẾT */}
+      {wheelSubTab === 'history' && (
+        <div className="space-y-5 animate-fadeIn">
+          {/* 4 Card Đo Lường Thống Kê Hoạt Động Vòng Quay */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* 1. Tổng lượt quay */}
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-[#A1A1AA]">Tổng Lượt Đã Quay</span>
+                <span className="p-2 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/20">
+                  <Sparkles className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-2xl font-black text-white font-mono">
+                {totalSpinsCount} <span className="text-sm font-normal text-[#71717A]">lượt</span>
+              </div>
+              <div className="mt-2 text-[11px] text-[#71717A] flex items-center gap-1.5">
+                <span className="text-pink-400 font-semibold">{baseLuckySpins.filter((s: any) => s.spinType === 'free').length} miễn phí</span>
+                <span>•</span>
+                <span className="text-amber-400 font-semibold">{baseLuckySpins.filter((s: any) => s.spinType === 'coins').length} trả điểm</span>
+              </div>
+            </div>
+
+            {/* 2. Điểm khách chi */}
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-[#A1A1AA]">Điểm Độc Giả Chi Quay</span>
+                <span className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Coins className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-2xl font-black text-amber-400 font-mono">
+                -{totalSpinsCoinsSpent.toLocaleString('vi-VN')} <span className="text-sm font-normal text-[#71717A]">điểm</span>
+              </div>
+              <div className="mt-2 text-[11px] text-[#71717A]">
+                Tiêu hao 3 điểm / lượt khi quay thêm
+              </div>
+            </div>
+
+            {/* 3. Điểm nổ thưởng */}
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-[#A1A1AA]">Điểm Xu Đã Trúng Thưởng</span>
+                <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <Gift className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-2xl font-black text-emerald-400 font-mono">
+                +{totalCoinsAwarded.toLocaleString('vi-VN')} <span className="text-sm font-normal text-[#71717A]">điểm</span>
+              </div>
+              <div className="mt-2 text-[11px] text-emerald-400/80">
+                Đã cộng trực tiếp vào ví độc giả
+              </div>
+            </div>
+
+            {/* 4. Lượt trúng VIP */}
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-[#A1A1AA]">Lượt Trúng Gói VIP</span>
+                <span className="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <Crown className="w-4 h-4" />
+                </span>
+              </div>
+              <div className="text-2xl font-black text-purple-400 font-mono">
+                {totalVipAwarded} <span className="text-sm font-normal text-[#71717A]">lượt</span>
+              </div>
+              <div className="mt-2 text-[11px] text-purple-400/80">
+                Tự động kích hoạt đặc quyền VIP
+              </div>
+            </div>
+          </div>
+
+          {/* Bảng Danh Sách Lượt Quay (Audit Ledger) */}
+          <div className="bg-[#111116] border border-[#1E1E26] rounded-xl overflow-hidden shadow-lg">
+            {/* Thanh Tìm Kiếm & Lọc Nhanh */}
+            <div className="p-4 border-b border-[#1E1E26] flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#71717A]" />
+                <input
+                  type="text"
+                  placeholder="Tìm độc giả, SĐT, giải thưởng, mã giao dịch..."
+                  value={spinSearch}
+                  onChange={(e) => setSpinSearch(e.target.value)}
+                  className="w-full bg-[#0E0E12] border border-[#23232E] focus:border-[#7C5CFC] rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-[#71717A] outline-none transition"
+                />
+                {spinSearch && (
+                  <button
+                    onClick={() => setSpinSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#71717A] hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { key: 'all', label: `Tất cả (${baseLuckySpins.length})` },
+                  { key: 'coins', label: `Trúng Xu (${baseLuckySpins.filter((s: any) => s.prizeType === 'coins').length})` },
+                  { key: 'vip', label: `Trúng VIP (${baseLuckySpins.filter((s: any) => s.prizeType === 'vip').length})` },
+                  { key: 'free', label: `Miễn phí (${baseLuckySpins.filter((s: any) => s.spinType === 'free').length})` },
+                  { key: 'paid', label: `Trừ điểm (${baseLuckySpins.filter((s: any) => s.spinType === 'coins').length})` },
+                  { key: 'none', label: `May mắn (${baseLuckySpins.filter((s: any) => s.prizeType === 'none').length})` },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setSpinFilter(f.key as any)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                      spinFilter === f.key
+                        ? 'bg-[#7C5CFC]/20 text-[#C4B5FD] border border-[#7C5CFC]/50'
+                        : 'bg-[#181820] text-[#A1A1AA] hover:text-white border border-[#23232E]'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Table Data */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#1E1E26] text-[#71717A] bg-[#0E0E14]">
+                    <th className="py-3 px-3.5 font-medium text-center w-12 whitespace-nowrap">#STT</th>
+                    <th className="py-3 px-3.5 font-medium whitespace-nowrap">Độc Giả / Tài Khoản</th>
+                    <th className="py-3 px-3.5 font-medium whitespace-nowrap">Hình Thức Quay</th>
+                    <th className="py-3 px-3.5 font-medium whitespace-nowrap">Kết Quả Trúng Thưởng</th>
+                    <th className="py-3 px-3.5 font-medium whitespace-nowrap">Biến Động Ví</th>
+                    <th className="py-3 px-3.5 font-medium whitespace-nowrap">Mã Giao Dịch</th>
+                    <th className="py-3 px-3.5 font-medium text-right whitespace-nowrap">Thời Gian</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1A1A22]">
+                  {filteredLuckySpins.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-[#71717A]">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <span className="text-3xl">🎡</span>
+                          <p className="text-sm font-medium text-white">Chưa có lượt quay nào</p>
+                          <p className="text-xs text-[#71717A]">
+                            {spinSearch ? 'Không tìm thấy kết quả phù hợp với từ khóa.' : 'Dữ liệu quay thưởng thực tế của độc giả sẽ xuất hiện tại đây.'}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredLuckySpins.map((spin: any, idx: number) => {
+                      const isFree = spin.spinType === 'free';
+                      const isCoins = spin.prizeType === 'coins';
+                      const isVip = spin.prizeType === 'vip';
+                      return (
+                        <tr key={spin.id || idx} className="hover:bg-[#14141B] transition">
+                          <td className="py-3 px-3.5 text-center font-mono text-[11px] text-[#71717A]">
+                            #{idx + 1}
+                          </td>
+
+                          <td className="py-3 px-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
+                                {spin.userAvatar ? (
+                                  <img src={spin.userAvatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                ) : (
+                                  (spin.userName || 'U')[0].toUpperCase()
+                                )}
+                              </div>
+                              <div className="min-w-0 max-w-[170px]">
+                                <div className="font-semibold text-white truncate" title={spin.userName}>
+                                  {spin.userName || 'Độc giả'}
+                                </div>
+                                <div className="text-[10px] text-[#71717A] truncate font-mono">
+                                  {spin.userPhone || spin.userEmail || spin.userId}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3.5 whitespace-nowrap">
+                            {isFree ? (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-pink-500/15 text-pink-300 border border-pink-500/30">
+                                <span>🎁</span>
+                                <span>Miễn Phí</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                                <span>🪙</span>
+                                <span>Trừ {spin.costCoins || 3} điểm</span>
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3 px-3.5 whitespace-nowrap">
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-[#181824] border border-[#2B2B3E]">
+                              <span className="text-base">{spin.prizeIcon || '🎁'}</span>
+                              <span className="font-bold text-white text-xs">
+                                {spin.prizeLabel || 'Phần thưởng'}
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3.5 whitespace-nowrap">
+                            {isCoins ? (
+                              <span className="font-mono font-bold text-emerald-400">
+                                +{spin.prizeValue} Xu
+                              </span>
+                            ) : isVip ? (
+                              <span className="font-mono font-bold text-purple-400">
+                                +{spin.prizeValue} Ngày VIP
+                              </span>
+                            ) : (
+                              <span className="text-[#71717A] font-mono text-[11px]">
+                                0đ / Không đổi
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-3 px-3.5 whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(spin.prizeSublabel || spin.id);
+                                showToast('Đã sao chép mã giao dịch!');
+                              }}
+                              className="inline-flex items-center gap-1 font-mono text-[11px] text-[#A1A1AA] hover:text-white bg-[#16161E] hover:bg-[#20202A] px-2 py-0.5 rounded border border-[#262633] transition cursor-pointer"
+                              title="Bấm để sao chép"
+                            >
+                              <span>{spin.prizeSublabel || spin.id}</span>
+                              <Copy className="w-3 h-3 text-[#71717A]" />
+                            </button>
+                          </td>
+
+                          <td className="py-3 px-3.5 text-right text-[#71717A] text-[11px] whitespace-nowrap font-mono">
+                            {spin.createdAt && !isNaN(new Date(spin.createdAt).getTime())
+                              ? `${new Date(spin.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(spin.createdAt).toLocaleDateString('vi-VN')}`
+                              : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer Count */}
+            <div className="p-3 border-t border-[#1E1E26] bg-[#0E0E14] flex items-center justify-between text-xs text-[#71717A]">
+              <div>
+                Hiển thị <span className="font-bold text-white">{filteredLuckySpins.length}</span> / {baseLuckySpins.length} lượt quay
+              </div>
+              <div className="text-[11px] text-[#71717A]">
+                Tự động cập nhật thời gian thực từ Database & Supabase
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
         </div>
       )}
         </div>
