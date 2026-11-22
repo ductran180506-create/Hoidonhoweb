@@ -495,6 +495,132 @@ export default function AdminSidebar({
           )}
         </div>
       </aside>
+
+      {/* 3. THANH ĐIỀU HƯỚNG ĐÁY MÀN HÌNH DI ĐỘNG (MOBILE BOTTOM NAVIGATION DÀNH RIÊNG CHO ĐIỆN THOẠI) */}
+      <nav 
+        aria-label="Thanh điều hướng di động"
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#0C0C12]/95 backdrop-blur-xl border-t border-[#1E1E2B] px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-2xl"
+      >
+        <div className="grid grid-cols-5 gap-1 items-center max-w-md mx-auto">
+          {/* Tab 1: Kho Truyện */}
+          <button
+            type="button"
+            onClick={() => handleSelectTab('stories')}
+            className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 active:scale-90 relative ${
+              activeTab === 'stories'
+                ? 'text-[#C4B5FD] font-bold bg-[#7C5CFC]/15'
+                : 'text-[#94A3B8] hover:text-white'
+            }`}
+          >
+            <div className="relative">
+              <BookOpen className={`w-5 h-5 transition-transform ${activeTab === 'stories' ? 'scale-110 text-[#A78BFA]' : ''}`} />
+              <span className="absolute -top-1.5 -right-2 px-1 text-[9px] font-mono font-bold rounded-full bg-[#1E1E2E] text-[#C4B5FD] border border-[#2F2F45]">
+                {counts.stories}
+              </span>
+            </div>
+            <span className="text-[10px] mt-1 leading-tight tracking-tight">Truyện</span>
+            {activeTab === 'stories' && (
+              <span className="w-1 h-1 rounded-full bg-[#A78BFA] mt-0.5" />
+            )}
+          </button>
+
+          {/* Tab 2: Sổ Đơn Hàng */}
+          <button
+            type="button"
+            onClick={() => handleSelectTab('revenue')}
+            className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 active:scale-90 relative ${
+              activeTab === 'revenue'
+                ? 'text-[#FCD34D] font-bold bg-amber-500/15'
+                : 'text-[#94A3B8] hover:text-white'
+            }`}
+          >
+            <div className="relative">
+              <Receipt className={`w-5 h-5 transition-transform ${activeTab === 'revenue' ? 'scale-110 text-amber-400' : ''}`} />
+              {counts.pendingOrders > 0 ? (
+                <span className="absolute -top-1.5 -right-2 px-1 text-[9px] font-mono font-bold rounded-full bg-rose-500 text-white animate-pulse">
+                  {counts.pendingOrders}
+                </span>
+              ) : (
+                <span className="absolute -top-1.5 -right-2 px-1 text-[9px] font-mono font-bold rounded-full bg-[#1E1E2E] text-amber-300 border border-[#2F2F45]">
+                  {counts.totalOrders}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-1 leading-tight tracking-tight">Đơn Hàng</span>
+            {activeTab === 'revenue' && (
+              <span className="w-1 h-1 rounded-full bg-amber-400 mt-0.5" />
+            )}
+          </button>
+
+          {/* Tab 3: Độc Giả */}
+          <button
+            type="button"
+            onClick={() => handleSelectTab('customers')}
+            className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 active:scale-90 relative ${
+              activeTab === 'customers'
+                ? 'text-sky-300 font-bold bg-sky-500/15'
+                : 'text-[#94A3B8] hover:text-white'
+            }`}
+          >
+            <div className="relative">
+              <Users className={`w-5 h-5 transition-transform ${activeTab === 'customers' ? 'scale-110 text-sky-400' : ''}`} />
+              <span className="absolute -top-1.5 -right-2 px-1 text-[9px] font-mono font-bold rounded-full bg-[#1E1E2E] text-sky-300 border border-[#2F2F45]">
+                {counts.customers}
+              </span>
+            </div>
+            <span className="text-[10px] mt-1 leading-tight tracking-tight">Độc Giả</span>
+            {activeTab === 'customers' && (
+              <span className="w-1 h-1 rounded-full bg-sky-400 mt-0.5" />
+            )}
+          </button>
+
+          {/* Tab 4: Vòng Quay */}
+          <button
+            type="button"
+            onClick={() => handleSelectTab('wheel')}
+            className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 active:scale-90 relative ${
+              activeTab === 'wheel'
+                ? 'text-pink-300 font-bold bg-pink-500/15'
+                : 'text-[#94A3B8] hover:text-white'
+            }`}
+          >
+            <div className="relative">
+              <Sparkles className={`w-5 h-5 transition-transform ${activeTab === 'wheel' ? 'scale-110 text-pink-400' : ''}`} />
+              <span className="absolute -top-1.5 -right-2 px-1 text-[9px] font-mono font-bold rounded-full bg-[#1E1E2E] text-pink-300 border border-[#2F2F45]">
+                {counts.wheelSpins || 0}
+              </span>
+            </div>
+            <span className="text-[10px] mt-1 leading-tight tracking-tight">Vòng Quay</span>
+            {activeTab === 'wheel' && (
+              <span className="w-1 h-1 rounded-full bg-pink-400 mt-0.5" />
+            )}
+          </button>
+
+          {/* Tab 5: Menu Khác (Traffic, Góp Ý, Đăng Xuất) */}
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(true)}
+            className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 active:scale-90 relative ${
+              activeTab === 'analytics' || activeTab === 'feedback'
+                ? 'text-emerald-300 font-bold bg-emerald-500/15'
+                : 'text-[#94A3B8] hover:text-white'
+            }`}
+          >
+            <div className="relative">
+              <PanelLeft className="w-5 h-5 text-gray-300" />
+              {counts.newFeedback > 0 && (
+                <span className="absolute -top-1.5 -right-2 px-1 text-[9px] font-mono font-bold rounded-full bg-purple-500 text-white animate-pulse">
+                  {counts.newFeedback}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] mt-1 leading-tight tracking-tight">Thêm</span>
+            {(activeTab === 'analytics' || activeTab === 'feedback') && (
+              <span className="w-1 h-1 rounded-full bg-emerald-400 mt-0.5" />
+            )}
+          </button>
+        </div>
+      </nav>
     </>
   );
 }

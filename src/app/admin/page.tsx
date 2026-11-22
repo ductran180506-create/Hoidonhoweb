@@ -1378,7 +1378,7 @@ export default function AdminPage() {
         </header>
 
         {/* Nội dung trang làm việc chính */}
-        <div className="p-3.5 sm:p-6 space-y-4 sm:space-y-6 flex-1 pb-24">
+        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 flex-1 pb-28 lg:pb-12">
 
       {/* ============================================================ */}
       {/* THANH CÔNG CỤ ĐO LƯỜNG THEO NGÀY THÁNG NĂM                   */}
@@ -2680,7 +2680,128 @@ export default function AdminPage() {
             <span className="font-mono text-[#A78BFA] font-medium">{filteredUsers.length} người</span>
           </div>
 
-          <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
+          {/* DANH SÁCH ĐỘC GIẢ: BẢN THẺ CHO DI ĐỘNG (MOBILE CARDS) & BẢNG CHO MÁY TÍNH (DESKTOP TABLE) */}
+          {/* 1. Mobile Cards View (Tối ưu vuốt chạm cho điện thoại) */}
+          <div className="md:hidden divide-y divide-[#1C1C26] rounded-lg border border-[#1A1A24]/60 overflow-hidden bg-[#111116]">
+            {filteredUsers.length === 0 ? (
+              <div className="py-8 text-center text-[#52525B] text-xs">
+                Không có độc giả nào phù hợp.
+              </div>
+            ) : (
+              filteredUsers.map((u, idx) => (
+                <div key={u.id} className="p-3.5 space-y-2.5 hover:bg-[#14141E] transition">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-[#1E1E28] border border-[#2B2B3E] flex items-center justify-center font-bold text-white text-xs flex-shrink-0">
+                        {u.avatar ? (
+                          <img src={u.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          (u.name || u.phone || u.email || 'U')[0].toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-white text-xs truncate max-w-[150px]">
+                            {u.name || u.phone || u.email || u.id}
+                          </span>
+                          {u.isGoogle && (
+                            <span className="text-[9px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-1 py-0.2 rounded font-mono flex-shrink-0">
+                              Google
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-[#71717A] truncate font-mono">
+                          {u.phone || u.email || u.id}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className="text-[10px] font-mono text-[#71717A]">#{idx + 1}</span>
+                      {u.isVip ? (
+                        <span className="text-[10px] font-bold text-[#F59E0B] bg-[#F59E0B]/15 border border-[#F59E0B]/30 px-2 py-0.5 rounded-full">
+                          VIP
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-[#71717A] bg-[#181822] px-1.5 py-0.5 rounded">
+                          Thường
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3 Chỉ số mini gọn gàng */}
+                  <div className="grid grid-cols-3 gap-1.5 bg-[#0A0A0E] p-2 rounded-lg border border-[#1A1A24] text-center">
+                    <div>
+                      <div className="text-[9px] text-[#71717A]">Đã Nạp</div>
+                      <div className="text-[11px] font-bold font-mono text-emerald-400 truncate">
+                        {u.totalRechargedVnd > 0 ? `${u.totalRechargedVnd.toLocaleString('vi-VN')} đ` : '0 đ'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-[#71717A]">Số Dư Điểm</div>
+                      <div className="text-[11px] font-bold font-mono text-white truncate">
+                        {u.coins || 0} Điểm
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-[#71717A]">Tập Đã Mở</div>
+                      <div className="text-[11px] font-bold font-mono text-purple-300 truncate">
+                        {u.unlockedCount ?? (u.unlockedChapters?.length || 0)} tập
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hàng thao tác nút bấm to, thân thiện ngón tay cái */}
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[10px] text-[#71717A] font-mono">
+                      {u.createdAt && !isNaN(new Date(u.createdAt).getTime())
+                        ? `${new Date(u.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(u.createdAt).toLocaleDateString('vi-VN')}`
+                        : '—'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustCoins(u.id, 5, u.phone || u.id)}
+                        className="px-2.5 py-1.5 bg-[#1A1A24] active:bg-[#7C5CFC] text-xs font-mono font-bold text-white rounded-lg border border-[#2B2B3E] transition cursor-pointer"
+                      >
+                        +5
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAdjustCoins(u.id, 15, u.phone || u.id)}
+                        className="px-2.5 py-1.5 bg-[#1A1A24] active:bg-[#7C5CFC] text-xs font-mono font-bold text-white rounded-lg border border-[#2B2B3E] transition cursor-pointer"
+                      >
+                        +15
+                      </button>
+                      {(u.coins || 0) >= 5 && (
+                        <button
+                          type="button"
+                          onClick={() => handleAdjustCoins(u.id, -5, u.phone || u.id)}
+                          className="px-2 py-1.5 bg-[#1A1A24] active:bg-red-900 text-xs font-mono font-bold text-red-400 rounded-lg border border-[#2B2B3E] transition cursor-pointer"
+                        >
+                          -5
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleVip(u.id, u.name || u.phone || u.id, u.isVip)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                          u.isVip
+                            ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                            : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                        }`}
+                      >
+                        {u.isVip ? 'Hủy VIP' : '+VIP'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* 2. Desktop Table View (Giữ nguyên trải nghiệm bảng rộng trên máy tính) */}
+          <div className="hidden md:block w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
             <table className="w-full text-left text-xs min-w-[780px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
@@ -2945,7 +3066,80 @@ export default function AdminPage() {
             <span className="font-mono text-[#A78BFA] font-medium">{filteredOrders.length} đơn</span>
           </div>
 
-          <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
+          {/* DANH SÁCH ĐƠN HÀNG: BẢN THẺ CHO DI ĐỘNG (MOBILE CARDS) & BẢNG CHO MÁY TÍNH (DESKTOP TABLE) */}
+          {/* 1. Mobile Cards View (Tối ưu vuốt chạm cho điện thoại) */}
+          <div className="md:hidden divide-y divide-[#1C1C26] rounded-lg border border-[#1A1A24]/60 overflow-hidden bg-[#111116]">
+            {filteredOrders.length === 0 ? (
+              <div className="py-8 text-center text-[#52525B] text-xs">
+                {orderSearch ? `Không tìm thấy đơn nạp nào khớp với "${orderSearch}".` : 'Chưa có đơn nạp nào.'}
+              </div>
+            ) : (
+              filteredOrders.map((ord: any, idx: number) => (
+                <div key={ord.id} className="p-3.5 space-y-2.5 hover:bg-[#14141E] transition">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono text-[#71717A]">#{idx + 1}</span>
+                      <span className="font-mono font-bold text-white text-xs">{ord.orderCode}</span>
+                    </div>
+                    <div>
+                      {ord.status === 'completed' ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
+                          ✓ Thành công
+                        </span>
+                      ) : ord.status === 'processing' ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/50 font-semibold animate-pulse">
+                          🔄 Đang xử lý
+                        </span>
+                      ) : ord.status === 'pending' ? (
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium">
+                          Chờ quét QR
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-[#181822] text-[#71717A] border border-[#272733] font-medium">
+                          ✕ Đã hết hạn
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 pr-2">
+                      <div className="font-semibold text-white text-xs truncate">{ord.userName || ord.userId}</div>
+                      <div className="text-[10px] text-[#71717A] font-mono truncate">{ord.userEmail || ord.userPhone}</div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="font-mono font-bold text-sm text-emerald-400">
+                        {ord.amountVnd.toLocaleString('vi-VN')} đ
+                      </div>
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#1E1E28] text-[#D4D4D8] border border-[#2A2A38]">
+                        {ord.packageType}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-[#1C1C24] text-[10px] text-[#71717A] font-mono">
+                    <span>
+                      {ord.createdAt && !isNaN(new Date(ord.createdAt).getTime())
+                        ? `${new Date(ord.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(ord.createdAt).toLocaleDateString('vi-VN')}`
+                        : '—'}
+                    </span>
+                    {ord.status !== 'completed' && (
+                      <button
+                        type="button"
+                        onClick={() => handleApproveOrder(ord.orderCode)}
+                        className="px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-bold transition shadow-sm active:scale-95 cursor-pointer"
+                      >
+                        ✓ Duyệt đơn ngay
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* 2. Desktop Table View (Giữ nguyên trải nghiệm bảng rộng trên máy tính) */}
+          <div className="hidden md:block w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
             <table className="w-full text-left text-xs min-w-[760px]">
               <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
                 <tr className="border-b border-[#1E1E26] text-[#71717A]">
@@ -4130,71 +4324,79 @@ export default function AdminPage() {
       {/* TAB 2: SỔ NHẬT KÝ QUAY THƯỞNG CHI TIẾT */}
       {wheelSubTab === 'history' && (
         <div className="space-y-5 animate-fadeIn">
-          {/* 4 Card Đo Lường Thống Kê Hoạt Động Vòng Quay */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* 4 Card Đo Lường Thống Kê Hoạt Động Vòng Quay (2x2 trên mobile) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
             {/* 1. Tổng lượt quay */}
-            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-[#A1A1AA]">Tổng Lượt Đã Quay</span>
-                <span className="p-2 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/20">
-                  <Sparkles className="w-4 h-4" />
-                </span>
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <span className="text-[11px] sm:text-xs font-medium text-[#A1A1AA] truncate">Tổng Lượt Quay</span>
+                  <span className="p-1.5 sm:p-2 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/20 flex-shrink-0">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </span>
+                </div>
+                <div className="text-lg sm:text-2xl font-black text-white font-mono">
+                  {totalSpinsCount} <span className="text-xs sm:text-sm font-normal text-[#71717A]">lượt</span>
+                </div>
               </div>
-              <div className="text-2xl font-black text-white font-mono">
-                {totalSpinsCount} <span className="text-sm font-normal text-[#71717A]">lượt</span>
-              </div>
-              <div className="mt-2 text-[11px] text-[#71717A] flex items-center gap-1.5">
-                <span className="text-pink-400 font-semibold">{baseLuckySpins.filter((s: any) => s.spinType === 'free').length} miễn phí</span>
+              <div className="mt-1 sm:mt-2 text-[10px] sm:text-[11px] text-[#71717A] flex items-center gap-1 truncate">
+                <span className="text-pink-400 font-semibold">{baseLuckySpins.filter((s: any) => s.spinType === 'free').length} free</span>
                 <span>•</span>
-                <span className="text-amber-400 font-semibold">{baseLuckySpins.filter((s: any) => s.spinType === 'coins').length} trả điểm</span>
+                <span className="text-amber-400 font-semibold">{baseLuckySpins.filter((s: any) => s.spinType === 'coins').length} coin</span>
               </div>
             </div>
 
             {/* 2. Điểm khách chi */}
-            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-[#A1A1AA]">Điểm Độc Giả Chi Quay</span>
-                <span className="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                  <Coins className="w-4 h-4" />
-                </span>
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <span className="text-[11px] sm:text-xs font-medium text-[#A1A1AA] truncate">Khách Chi Quay</span>
+                  <span className="p-1.5 sm:p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 flex-shrink-0">
+                    <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </span>
+                </div>
+                <div className="text-lg sm:text-2xl font-black text-amber-400 font-mono truncate">
+                  -{totalSpinsCoinsSpent.toLocaleString('vi-VN')} <span className="text-xs sm:text-sm font-normal text-[#71717A]">đ</span>
+                </div>
               </div>
-              <div className="text-2xl font-black text-amber-400 font-mono">
-                -{totalSpinsCoinsSpent.toLocaleString('vi-VN')} <span className="text-sm font-normal text-[#71717A]">điểm</span>
-              </div>
-              <div className="mt-2 text-[11px] text-[#71717A]">
-                Tiêu hao 3 điểm / lượt khi quay thêm
+              <div className="mt-1 sm:mt-2 text-[10px] sm:text-[11px] text-[#71717A] truncate">
+                3 điểm / lượt quay thêm
               </div>
             </div>
 
             {/* 3. Điểm nổ thưởng */}
-            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-[#A1A1AA]">Điểm Xu Đã Trúng Thưởng</span>
-                <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  <Gift className="w-4 h-4" />
-                </span>
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <span className="text-[11px] sm:text-xs font-medium text-[#A1A1AA] truncate">Điểm Đã Trúng</span>
+                  <span className="p-1.5 sm:p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">
+                    <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </span>
+                </div>
+                <div className="text-lg sm:text-2xl font-black text-emerald-400 font-mono truncate">
+                  +{totalCoinsAwarded.toLocaleString('vi-VN')} <span className="text-xs sm:text-sm font-normal text-[#71717A]">đ</span>
+                </div>
               </div>
-              <div className="text-2xl font-black text-emerald-400 font-mono">
-                +{totalCoinsAwarded.toLocaleString('vi-VN')} <span className="text-sm font-normal text-[#71717A]">điểm</span>
-              </div>
-              <div className="mt-2 text-[11px] text-emerald-400/80">
-                Đã cộng trực tiếp vào ví độc giả
+              <div className="mt-1 sm:mt-2 text-[10px] sm:text-[11px] text-emerald-400/80 truncate">
+                Đã cộng trực tiếp ví
               </div>
             </div>
 
             {/* 4. Lượt trúng VIP */}
-            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 shadow-sm relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-[#A1A1AA]">Lượt Trúng Gói VIP</span>
-                <span className="p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                  <Crown className="w-4 h-4" />
-                </span>
+            <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-1 sm:mb-2">
+                  <span className="text-[11px] sm:text-xs font-medium text-[#A1A1AA] truncate">Trúng Gói VIP</span>
+                  <span className="p-1.5 sm:p-2 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 flex-shrink-0">
+                    <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </span>
+                </div>
+                <div className="text-lg sm:text-2xl font-black text-purple-400 font-mono">
+                  {totalVipAwarded} <span className="text-xs sm:text-sm font-normal text-[#71717A]">lượt</span>
+                </div>
               </div>
-              <div className="text-2xl font-black text-purple-400 font-mono">
-                {totalVipAwarded} <span className="text-sm font-normal text-[#71717A]">lượt</span>
-              </div>
-              <div className="mt-2 text-[11px] text-purple-400/80">
-                Tự động kích hoạt đặc quyền VIP
+              <div className="mt-1 sm:mt-2 text-[10px] sm:text-[11px] text-purple-400/80 truncate">
+                Tự kích hoạt đặc quyền
               </div>
             </div>
           </div>
@@ -4202,7 +4404,7 @@ export default function AdminPage() {
           {/* Bảng Danh Sách Lượt Quay (Audit Ledger) */}
           <div className="bg-[#111116] border border-[#1E1E26] rounded-xl overflow-hidden shadow-lg">
             {/* Thanh Tìm Kiếm & Lọc Nhanh */}
-            <div className="p-4 border-b border-[#1E1E26] flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="p-3 sm:p-4 border-b border-[#1E1E26] flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="relative flex-1 max-w-md">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#71717A]" />
                 <input
@@ -4222,8 +4424,8 @@ export default function AdminPage() {
                 )}
               </div>
 
-              {/* Filter Pills */}
-              <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Filter Pills: cuộn ngang mượt mà trên mobile */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
                 {[
                   { key: 'all', label: `Tất cả (${baseLuckySpins.length})` },
                   { key: 'coins', label: `Trúng Xu (${baseLuckySpins.filter((s: any) => s.prizeType === 'coins').length})` },
@@ -4236,7 +4438,7 @@ export default function AdminPage() {
                     key={f.key}
                     type="button"
                     onClick={() => setSpinFilter(f.key as any)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer flex-shrink-0 ${
                       spinFilter === f.key
                         ? 'bg-[#7C5CFC]/20 text-[#C4B5FD] border border-[#7C5CFC]/50'
                         : 'bg-[#181820] text-[#A1A1AA] hover:text-white border border-[#23232E]'
@@ -4248,8 +4450,95 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Table Data */}
-            <div className="overflow-x-auto">
+            {/* 1. Mobile Cards View cho Lượt Quay */}
+            <div className="md:hidden divide-y divide-[#1C1C26]">
+              {filteredLuckySpins.length === 0 ? (
+                <div className="py-12 text-center text-[#71717A] text-xs">
+                  <span className="text-2xl block mb-1">🎡</span>
+                  Chưa có lượt quay nào phù hợp.
+                </div>
+              ) : (
+                filteredLuckySpins.map((spin: any, idx: number) => {
+                  const isFree = spin.spinType === 'free';
+                  const isCoins = spin.prizeType === 'coins';
+                  const isVip = spin.prizeType === 'vip';
+                  return (
+                    <div key={spin.id || idx} className="p-3.5 space-y-2.5 hover:bg-[#14141E] transition">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-[10px] font-mono text-[#71717A]">#{idx + 1}</span>
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-pink-500 text-white font-bold flex items-center justify-center text-[10px] flex-shrink-0">
+                            {spin.userAvatar ? (
+                              <img src={spin.userAvatar} alt="" className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              (spin.userName || 'U')[0].toUpperCase()
+                            )}
+                          </div>
+                          <span className="font-semibold text-white text-xs truncate max-w-[130px]">
+                            {spin.userName || 'Độc giả'}
+                          </span>
+                        </div>
+                        <div className="flex-shrink-0">
+                          {isFree ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-pink-500/15 text-pink-300 border border-pink-500/30">
+                              <span>🎁</span>
+                              <span>Miễn Phí</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                              <span>🪙</span>
+                              <span>Trừ {spin.costCoins || 3}đ</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Thẻ phần thưởng to đẹp */}
+                      <div className="flex items-center justify-between bg-[#14141C] p-2.5 rounded-lg border border-[#222230]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xl flex-shrink-0">{spin.prizeIcon || '🎁'}</span>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white text-xs truncate">{spin.prizeLabel || 'Phần thưởng'}</div>
+                            <div className="text-[9px] text-[#71717A] font-mono truncate">{spin.prizeSublabel || ''}</div>
+                          </div>
+                        </div>
+                        <div className="text-right font-mono font-bold text-xs flex-shrink-0 pl-2">
+                          {isCoins ? (
+                            <span className="text-emerald-400">+{spin.prizeValue} Xu</span>
+                          ) : isVip ? (
+                            <span className="text-purple-400">+{spin.prizeValue} VIP</span>
+                          ) : (
+                            <span className="text-[#71717A]">0đ</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-[#71717A] font-mono pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(spin.prizeSublabel || spin.id);
+                            showToast('Đã sao chép mã giao dịch!');
+                          }}
+                          className="hover:text-white flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <span className="truncate max-w-[140px]">{spin.prizeSublabel || spin.id}</span>
+                          <Copy className="w-3 h-3 text-[#71717A] flex-shrink-0" />
+                        </button>
+                        <span>
+                          {spin.createdAt && !isNaN(new Date(spin.createdAt).getTime())
+                            ? `${new Date(spin.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(spin.createdAt).toLocaleDateString('vi-VN')}`
+                            : '—'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* 2. Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-[#1E1E26] text-[#71717A] bg-[#0E0E14]">
