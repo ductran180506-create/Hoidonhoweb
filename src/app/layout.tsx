@@ -2,13 +2,13 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import AppLayoutShell from '@/components/AppLayoutShell';
 import AuthModal from '@/components/AuthModal';
 import RechargeModal from '@/components/RechargeModal';
 import CheckInModal from '@/components/CheckInModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import PaymentHistoryModal from '@/components/PaymentHistoryModal';
+import LuckyWheelModal from '@/components/LuckyWheelModal';
 
 export const metadata: Metadata = {
   title: 'Hồi Đó Nhỏ - Truyện Tranh AI (@carrot.tia)',
@@ -38,16 +38,15 @@ export default function RootLayout({
     <html lang="vi" className="dark">
       <body className="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-carrot-500 selection:text-white font-sans antialiased">
         <AuthProvider>
-          <Navbar />
-          <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6 overflow-x-hidden">
+          <AppLayoutShell>
             {children}
-          </main>
-          <Footer />
+          </AppLayoutShell>
           <AuthModal />
           <RechargeModal />
           <CheckInModal />
           <PaymentHistoryModal />
           <FeedbackModal />
+          <LuckyWheelModal />
         </AuthProvider>
       </body>
     </html>

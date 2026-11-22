@@ -39,6 +39,14 @@ interface AuthContextType {
     todayStr?: string;
   } | null;
   refreshCheckIn: () => Promise<void>;
+  isLuckyWheelOpen: boolean;
+  setIsLuckyWheelOpen: (open: boolean) => void;
+  luckyWheelState: {
+    canFreeSpin: boolean;
+    timeLeftMs: number;
+    costCoins: number;
+  } | null;
+  refreshLuckyWheel: () => Promise<void>;
   isHistoryOpen: boolean;
   setIsHistoryOpen: (open: boolean) => void;
   pendingOrder: any | null;
@@ -63,6 +71,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     timeLeftMs: number;
     rewards: number[];
     todayStr?: string;
+  } | null>(null);
+  const [isLuckyWheelOpen, setIsLuckyWheelOpen] = useState<boolean>(false);
+  const [luckyWheelState, setLuckyWheelState] = useState<{
+    canFreeSpin: boolean;
+    timeLeftMs: number;
+    costCoins: number;
   } | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [pendingOrder, setPendingOrder] = useState<any | null>(null);
@@ -224,8 +238,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const fetchLuckyWheelStatus = async (userId?: string) => {
+    try {
+      const url = userId ? `/api/lucky-wheel?userId=${userId}` : '/api/lucky-wheel';
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.success) {
+        setLuckyWheelState({
+          canFreeSpin: data.canFreeSpin,
+          timeLeftMs: data.timeLeftMs,
+          costCoins: data.costCoins || 3,
+        });
+      }
+    } catch (err) {
+      console.error('Lỗi kiểm tra vòng quay may mắn:', err);
+    }
+  };
+
   useEffect(() => {
     fetchCheckInStatus(user?.id);
+    fetchLuckyWheelStatus(user?.id);
   }, [user?.id]);
 
   const loginWithGoogle = async () => {
@@ -312,6 +344,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refreshLuckyWheel = async () => {
+    await fetchLuckyWheelStatus(user?.id);
+    if (user?.id) {
+      await fetchBalance(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -333,6 +372,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsCheckInOpen,
         checkInState,
         refreshCheckIn,
+        isLuckyWheelOpen,
+        setIsLuckyWheelOpen,
+        luckyWheelState,
+        refreshLuckyWheel,
         isHistoryOpen,
         setIsHistoryOpen,
         pendingOrder,

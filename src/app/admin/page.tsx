@@ -9,10 +9,12 @@ import {
   Users, Search, Coins, ExternalLink,
   Copy, Check, ChevronLeft, ChevronRight,
   FolderPlus, AlertCircle, ArrowUpRight, RefreshCw, Pencil,
-  Maximize2, ZoomIn, Move, Calendar
+  Maximize2, ZoomIn, Move, Calendar, PanelLeft, Menu
 } from 'lucide-react';
 import { Story, Order } from '@/lib/types';
 import { compressImage, formatFileSize } from '@/lib/image-compressor';
+import AdminSidebar, { AdminTab } from '@/components/admin/AdminSidebar';
+import { useAuth } from '@/lib/auth-context';
 
 interface ChapterItem {
   title: string;
@@ -56,6 +58,30 @@ export default function AdminPage() {
 
   // 5 Phân khu chính: stories | customers | revenue | analytics | feedback
   const [activeTab, setActiveTab] = useState<'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback'>('stories');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const { setIsLuckyWheelOpen } = useAuth();
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('hdn_admin_sidebar_collapsed');
+      if (saved !== null) {
+        setIsSidebarCollapsed(saved === 'true');
+      }
+    } catch (e) {}
+  }, []);
+
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'stories': return 'Kho Truyện & Đăng Bài';
+      case 'customers': return 'Quản Lý Độc Giả & Khách Hàng';
+      case 'revenue': return 'Sổ Nhật Ký Chuyển Khoản & Doanh Thu';
+      case 'analytics': return 'Thống Kê Traffic & Khán Giả';
+      case 'feedback': return 'Hòm Thư Góp Ý & Phản Hồi';
+      default: return 'Bảng Điều Khiển';
+    }
+  };
+
   const [analytics, setAnalytics] = useState<any>(null);
   const [feedbackList, setFeedbackList] = useState<any[]>([]);
   
@@ -1086,7 +1112,7 @@ export default function AdminPage() {
 
   // 2. DASHBOARD CHUYÊN NGHIỆP KIỂU STUDIO
   return (
-    <div className="space-y-4 sm:space-y-6 pb-20 text-white max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-[#0C0C12] text-white flex flex-row w-full overflow-x-hidden relative">
       {/* Toast thông báo */}
       {toast && (
         <div className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 left-4 sm:left-auto z-50 animate-fadeIn pointer-events-none flex justify-center sm:justify-end">
@@ -1101,47 +1127,88 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Header Studio */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5 sm:pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              HỒI ĐÓ NHỎ STUDIO
-            </h1>
-            <span className="text-[10px] font-medium text-[#A1A1AA] bg-[#1E1E26] px-2 py-0.5 rounded border border-[#272733]">
-              @carrot.tia
-            </span>
+      {/* THANH ĐIỀU HƯỚNG CÁNH TRÁI CO GIÃN (SIDEBAR CHUẨN BACKOFFICE THEO HÌNH 2, 3, 4) */}
+      <AdminSidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
+        setIsMobileOpen={setIsMobileSidebarOpen}
+        counts={{
+          stories: stories.length,
+          customers: baseUsers.length,
+          pendingOrders: baseOrders.filter(o => o.status === 'pending' || (o as any).status === 'expired').length,
+          totalOrders: baseOrders.length,
+          analytics: baseMachines.length,
+          feedback: baseFeedback.length,
+          newFeedback: baseFeedback.filter(f => f.status === 'new').length,
+        }}
+        onNewStoryClick={() => {
+          setEditingStoryId(null);
+          setCode('');
+          setTitle('');
+          setGenre('Tuổi Thơ - Đời Thường');
+          setStoryStatus('completed');
+          setCoverImage('');
+          setChapters([{ title: 'Tập 1', content: '', images: [], imageLinks: '', priceCoins: 0 }]);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onOpenLuckyWheel={() => setIsLuckyWheelOpen(true)}
+        onLogout={handleAdminLogout}
+      />
+
+      {/* KHÔNG GIAN LÀM VIỆC CHÍNH (MAIN WORKSPACE CO GIÃN LINH HOẠT) */}
+      <div className={`flex-1 flex flex-col min-h-screen w-full transition-all duration-300 ease-in-out ${
+        isSidebarCollapsed ? 'lg:pl-[68px]' : 'lg:pl-64'
+      }`}>
+        {/* Topbar Workspace: Breadcrumbs & Quick Actions (Chuẩn Hình 2) */}
+        <header className="h-16 px-4 sm:px-6 border-b border-[#1E1E2B] flex items-center justify-between bg-[#111118]/90 backdrop-blur sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            {/* Nút Hamburger / PanelLeft trên Mobile */}
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 rounded-lg bg-[#181824] hover:bg-[#222232] border border-[#262638] text-[#A78BFA] transition active:scale-90 cursor-pointer"
+              title="Mở menu điều hướng"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+
+            {/* Breadcrumbs Navigation */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[#71717A] font-semibold hidden sm:inline">HỒI ĐÓ NHỎ STUDIO</span>
+              <span className="text-[#3F3F46] hidden sm:inline">/</span>
+              <span className="text-white font-bold flex items-center gap-1.5">
+                <span className="text-[#A78BFA] font-bold">{getTabTitle()}</span>
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-[#71717A] mt-0.5">
-            Không gian làm việc & điều hành nội dung truyện tranh TikTok
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            href="/"
-            className="px-2.5 sm:px-3 py-1.5 bg-[#14141B] hover:bg-[#1C1C24] border border-[#272733] rounded-lg text-xs text-[#D4D4D8] flex items-center gap-1.5 transition font-medium active:scale-95"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Xem Web Khách</span>
-          </Link>
+          {/* Quick Actions bên phải */}
+          <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              className="px-2.5 sm:px-3 py-1.5 bg-[#161622] hover:bg-[#1E1E2A] border border-[#272738] rounded-lg text-xs text-[#D4D4D8] flex items-center gap-1.5 transition font-medium active:scale-95"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-[#7C5CFC]" />
+              <span className="hidden sm:inline">Xem Web Khách</span>
+              <span className="sm:hidden">Web</span>
+            </Link>
 
-          <button
-            onClick={fetchData}
-            className="p-1.5 bg-[#14141B] hover:bg-[#1C1C24] border border-[#272733] rounded-lg text-[#71717A] hover:text-white transition active:scale-95"
-            title="Tải lại"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+            <button
+              onClick={fetchData}
+              className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[#161622] hover:bg-[#1E1E2A] border border-[#272738] rounded-lg text-[#9CA3AF] hover:text-white transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              title="Tải lại dữ liệu"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline text-xs">Làm mới</span>
+            </button>
+          </div>
+        </header>
 
-          <button
-            onClick={handleAdminLogout}
-            className="px-2.5 py-1.5 text-xs text-[#A1A1AA] hover:text-red-300 transition active:scale-95 ml-auto sm:ml-0"
-          >
-            Đăng xuất
-          </button>
-        </div>
-      </header>
+        {/* Nội dung trang làm việc chính */}
+        <div className="p-3.5 sm:p-6 space-y-4 sm:space-y-6 flex-1 pb-24">
 
       {/* ============================================================ */}
       {/* THANH CÔNG CỤ ĐO LƯỜNG THEO NGÀY THÁNG NĂM                   */}
@@ -1418,68 +1485,37 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Segmented Control Bar (Kiểu Linear / Vercel - Vuốt ngang mượt mà trên Mobile) */}
-      <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 no-scrollbar pb-1 touch-pan-x">
-        <div className="inline-flex items-center gap-1 p-1 bg-[#111116] border border-[#1E1E26] rounded-lg min-w-max">
-          <button
-            onClick={() => setActiveTab('stories')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
-              activeTab === 'stories'
-                ? 'bg-[#22222E] text-white shadow-sm'
-                : 'text-[#71717A] hover:text-white'
-            }`}
-          >
-            Kho Truyện & Đăng Bài ({stories.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('customers')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
-              activeTab === 'customers'
-                ? 'bg-[#22222E] text-white shadow-sm'
-                : 'text-[#71717A] hover:text-white'
-            }`}
-          >
-            Độc Giả & Khách Hàng ({baseUsers.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('revenue')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
-              activeTab === 'revenue'
-                ? 'bg-[#22222E] text-white shadow-sm'
-                : 'text-[#71717A] hover:text-white'
-            }`}
-          >
-            Dòng Tiền & Doanh Thu ({baseOrders.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('analytics')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap active:scale-95 ${
-              activeTab === 'analytics'
-                ? 'bg-[#22222E] text-white shadow-sm'
-                : 'text-[#71717A] hover:text-white'
-            }`}
-          >
-            📊 Thống Kê & Traffic ({baseMachines.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('feedback')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 whitespace-nowrap active:scale-95 ${
-              activeTab === 'feedback'
-                ? 'bg-[#22222E] text-white shadow-sm'
-                : 'text-[#71717A] hover:text-white'
-            }`}
-          >
-            <span>📬 Hòm Thư Góp Ý ({baseFeedback.length})</span>
-            {baseFeedback.filter(f => f.status === 'new').length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#7C5CFC] text-white font-bold animate-pulse">
-                {baseFeedback.filter(f => f.status === 'new').length}
-              </span>
-            )}
-          </button>
+      {/* TIÊU ĐỀ PHÂN KHU HIỆN TẠI (Backoffice Section Header) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[#1E1E28]">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+            <span>{getTabTitle()}</span>
+          </h2>
+          {activeTab === 'stories' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#C4B5FD] border border-[#7C5CFC]/40 font-semibold">
+              {stories.length} bộ truyện
+            </span>
+          )}
+          {activeTab === 'customers' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-semibold">
+              {baseUsers.length} độc giả
+            </span>
+          )}
+          {activeTab === 'revenue' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold">
+              {baseOrders.length} đơn hàng
+            </span>
+          )}
+          {activeTab === 'analytics' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold">
+              {baseMachines.length} thiết bị
+            </span>
+          )}
+          {activeTab === 'feedback' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-semibold">
+              {baseFeedback.length} phản hồi
+            </span>
+          )}
         </div>
       </div>
 
@@ -3446,6 +3482,8 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -7,8 +7,10 @@ import StoryCard from '@/components/StoryCard';
 import ResumeReadingBanner from '@/components/ResumeReadingBanner';
 import { trackPageView } from '@/lib/analytics';
 import { Search } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 function HomeContent() {
+  const { setIsLuckyWheelOpen } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
   const searchQuery = searchParams.get('search') || '';
@@ -124,6 +126,40 @@ function HomeContent() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Banner Vòng Quay May Mắn */}
+      <div 
+        onClick={() => setIsLuckyWheelOpen(true)}
+        className="cursor-pointer relative p-3 sm:p-3.5 bg-gradient-to-r from-amber-950/40 via-purple-950/40 to-slate-900 border border-amber-500/30 hover:border-amber-500/60 rounded-xl transition shadow-lg shadow-amber-500/5 group flex items-center justify-between gap-3 overflow-hidden select-none"
+      >
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400 via-orange-500 to-amber-600 flex items-center justify-center text-lg sm:text-xl shadow-md shadow-orange-500/30 flex-shrink-0 group-hover:scale-105 transition">
+            🎡
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-bold text-white text-xs sm:text-sm tracking-tight flex items-center gap-1">
+                <span>VÒNG QUAY MAY MẮN</span>
+                <span className="text-[10px]">✨</span>
+              </span>
+              <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold font-mono">
+                100% TRÚNG QUÀ
+              </span>
+            </div>
+            <p className="text-[11px] text-[#A1A1AA] truncate mt-0.5">
+              Cơ hội rinh Gói VIP & Điểm thưởng mỗi ngày • Thử vận may ngay!
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="flex-shrink-0 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-xs font-bold rounded-lg transition shadow-md active:scale-95 flex items-center gap-1 whitespace-nowrap"
+        >
+          <span>QUAY NGAY</span>
+          <span>→</span>
+        </button>
       </div>
 
       {/* Widget Đọc Tiếp Lịch Sử */}

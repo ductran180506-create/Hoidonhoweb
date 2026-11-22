@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Search, Coins, User as UserIcon, LogOut, Sliders, Gift, CheckCircle2 } from 'lucide-react';
+import { Search, Coins, User as UserIcon, LogOut, Sliders, Gift, CheckCircle2, Sparkles } from 'lucide-react';
 
 export default function Navbar() {
   const { 
@@ -16,7 +16,9 @@ export default function Navbar() {
     setIsHistoryOpen, 
     setPendingOrder,
     setIsCheckInOpen,
-    checkInState
+    checkInState,
+    setIsLuckyWheelOpen,
+    luckyWheelState,
   } = useAuth();
   const [searchCode, setSearchCode] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -164,6 +166,24 @@ export default function Navbar() {
                 )}
               </button>
 
+              {/* Nút Vòng Quay May Mắn */}
+              <button
+                type="button"
+                onClick={() => setIsLuckyWheelOpen(true)}
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-xs transition font-semibold active:scale-95 cursor-pointer relative bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-amber-600/20 hover:from-purple-600/30 hover:to-amber-600/30 border border-purple-500/40 text-purple-300 shadow-sm"
+                title="Vòng Quay May Mắn (100% Trúng Quà)"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">Vòng Quay</span>
+                <span className="sm:hidden text-[11px]">Quay</span>
+                {luckyWheelState?.canFreeSpin && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5 animate-ping" />
+                )}
+                {luckyWheelState?.canFreeSpin && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5" />
+                )}
+              </button>
+
               {/* Số dư Điểm Tri Ân / Nút Mời Cà Phê */}
               <button 
                 onClick={() => {
@@ -230,6 +250,15 @@ export default function Navbar() {
                 <Gift className="w-3.5 h-3.5 text-amber-400" />
                 <span className="hidden xs:inline">Điểm Danh</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 absolute -top-0.5 -right-0.5" />
+              </button>
+              <button
+                onClick={() => setIsLuckyWheelOpen(true)}
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-gradient-to-r from-purple-500/15 to-pink-500/15 hover:from-purple-500/25 hover:to-pink-500/25 border border-purple-500/30 text-purple-300 text-xs font-semibold rounded-lg transition active:scale-95 flex items-center gap-1 relative shadow-sm"
+                title="Vòng Quay May Mắn (100% Trúng Thưởng)"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden xs:inline">Vòng Quay</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5" />
               </button>
               <button
                 onClick={() => setIsRechargeOpen(true)}
