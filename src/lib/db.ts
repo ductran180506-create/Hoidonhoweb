@@ -842,7 +842,7 @@ export const db = {
     data.luckyWheelSettings = {
       spinCostCoins: typeof settings.spinCostCoins === 'number' ? settings.spinCostCoins : current.spinCostCoins,
       freeSpinDaily: typeof settings.freeSpinDaily === 'boolean' ? settings.freeSpinDaily : current.freeSpinDaily,
-      prizes: Array.isArray(settings.prizes) && settings.prizes.length === 8 ? settings.prizes : current.prizes,
+      prizes: Array.isArray(settings.prizes) && settings.prizes.length >= 2 ? settings.prizes : current.prizes,
     };
     saveData(data);
     return data.luckyWheelSettings;

@@ -486,7 +486,7 @@ export default function LuckyWheelModal() {
                   activeTab === 'prizes' ? 'text-amber-400 border-b-2 border-amber-400' : 'text-[#71717A] hover:text-white'
                 }`}
               >
-                Cơ cấu 8 giải thưởng
+                Cơ cấu {prizes.length} giải thưởng
               </button>
               <button
                 onClick={() => setActiveTab('history')}

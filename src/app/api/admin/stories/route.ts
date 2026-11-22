@@ -819,8 +819,8 @@ export async function POST(req: NextRequest) {
 
     if (action === 'update_lucky_wheel_settings') {
       const { settings } = body;
-      if (!settings || !Array.isArray(settings.prizes) || settings.prizes.length !== 8) {
-        return NextResponse.json({ success: false, message: 'Cấu hình giải thưởng không hợp lệ (phải đủ 8 giải)' }, { status: 400 });
+      if (!settings || !Array.isArray(settings.prizes) || settings.prizes.length < 2 || settings.prizes.length > 24) {
+        return NextResponse.json({ success: false, message: 'Cấu hình giải thưởng không hợp lệ (cần từ 2 đến 24 giải thưởng)' }, { status: 400 });
       }
 
       const updated = db.saveLuckyWheelSettings(settings);

@@ -138,6 +138,45 @@ export default function AdminPage() {
     setWheelSettings({ ...wheelSettings, prizes: newPrizes });
   };
 
+  const handleAddPrize = () => {
+    if (!wheelSettings?.prizes) return;
+    if (wheelSettings.prizes.length >= 24) {
+      showToast('Tối đa 24 ô phần thưởng trên một vòng quay', 'error');
+      return;
+    }
+    const PRESET_COLORS = ['#4F46E5', '#2563EB', '#059669', '#D97706', '#DB2777', '#7C3AED', '#EA580C', '#0D9488', '#E11D48', '#8B5CF6'];
+    const newId = wheelSettings.prizes.length > 0 ? Math.max(...wheelSettings.prizes.map((p: any) => Number(p.id) || 0)) + 1 : 0;
+    const randomColor = PRESET_COLORS[wheelSettings.prizes.length % PRESET_COLORS.length];
+    const newPrize = {
+      id: newId,
+      label: '+5 Điểm',
+      sublabel: 'Thưởng mới',
+      icon: '🎁',
+      color: randomColor,
+      textColor: '#FFFFFF',
+      type: 'coins',
+      value: 5,
+      weight: 10,
+    };
+    const updated = [...wheelSettings.prizes, newPrize];
+    setWheelSettings({ ...wheelSettings, prizes: updated });
+    showToast(`Đã thêm Ô giải thưởng #${updated.length} (Bấm "Cân bằng 100%" và "Lưu")`);
+  };
+
+  const handleDeletePrize = (index: number) => {
+    if (!wheelSettings?.prizes) return;
+    if (wheelSettings.prizes.length <= 2) {
+      showToast('Vòng quay cần tối thiểu 2 ô giải thưởng để chia góc', 'error');
+      return;
+    }
+    const prizeToDelete = wheelSettings.prizes[index];
+    if (confirm(`Xác nhận xóa "${prizeToDelete.label || `Ô #${index + 1}`}" khỏi vòng quay?`)) {
+      const updated = wheelSettings.prizes.filter((_: any, idx: number) => idx !== index);
+      setWheelSettings({ ...wheelSettings, prizes: updated });
+      showToast(`Đã xóa ô giải thưởng (Còn lại ${updated.length} ô)`);
+    }
+  };
+
   const handleNormalizeWheelWeights = () => {
     if (!wheelSettings?.prizes?.length) return;
     const currentTotal = wheelSettings.prizes.reduce((sum: number, p: any) => sum + (Number(p.weight) || 0), 0);
@@ -1628,7 +1667,7 @@ export default function AdminPage() {
           )}
           {activeTab === 'wheel' && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold">
-              8 giải thưởng • Real Data
+              {wheelSettings?.prizes?.length || 8} giải thưởng • Real Data
             </span>
           )}
         </div>
@@ -3635,12 +3674,23 @@ export default function AdminPage() {
                 <span>Quay Thử Ngay</span>
               </button>
 
+              {/* Nút Thêm Giải Thưởng Mới */}
+              <button
+                type="button"
+                onClick={handleAddPrize}
+                disabled={wheelSettings?.prizes?.length >= 24}
+                className="px-3.5 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm disabled:opacity-40"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Thêm Giải Thưởng</span>
+              </button>
+
               {/* Nút Cân Bằng 100% */}
               <button
                 type="button"
                 onClick={handleNormalizeWheelWeights}
                 className="px-3.5 py-2 rounded-lg bg-[#181824] hover:bg-[#202030] text-[#CBD5E1] hover:text-white border border-[#2B2B3E] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-                title="Tự động tính tỉ lệ chuẩn 100% cho 8 ô"
+                title="Tự động tính tỉ lệ chuẩn 100% cho tất cả các ô"
               >
                 <Percent className="w-3.5 h-3.5 text-blue-400" />
                 <span>Cân bằng 100%</span>
@@ -3651,7 +3701,7 @@ export default function AdminPage() {
                 type="button"
                 onClick={handleResetDefaultWheelSettings}
                 className="px-3 py-2 rounded-lg bg-[#181824] hover:bg-rose-950/30 text-[#9CA3AF] hover:text-rose-300 border border-[#2B2B3E] hover:border-rose-500/30 text-xs font-medium flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-                title="Khôi phục 8 giải mặc định"
+                title="Khôi phục danh sách giải mặc định"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Mặc định</span>
@@ -3779,7 +3829,7 @@ export default function AdminPage() {
                           })}
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-[#71717A]">
-                          <span>8 Ô phần thưởng</span>
+                          <span>{wheelSettings.prizes.length} Ô phần thưởng (Mỗi ô {(360 / wheelSettings.prizes.length).toFixed(1)}°)</span>
                           <span>{totalWeight}% trọng số</span>
                         </div>
                       </div>
@@ -3791,13 +3841,32 @@ export default function AdminPage() {
                 );
               })()}
 
-              {/* Danh Sách Chi Tiết 8 Ô Phần Thưởng */}
+              {/* Danh Sách Chi Tiết Các Ô Phần Thưởng */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#A1A1AA] flex items-center gap-2">
-                    <span>Cài Đặt Chi Tiết 8 Ô Giải Thưởng (Prizes Matrix)</span>
-                  </h3>
-                  <span className="text-[11px] text-[#71717A]">Vòng quay chia đều 8 góc 45 độ</span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#A1A1AA] flex items-center gap-2">
+                      <span>Cài Đặt Chi Tiết {wheelSettings.prizes.length} Ô Giải Thưởng (Prizes Matrix)</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-[#C4B5FD] border border-purple-500/30 lowercase font-normal">
+                        {(360 / wheelSettings.prizes.length).toFixed(1)}° / ô
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-[#71717A]">
+                      Vòng quay tự động chia đều góc theo số lượng giải (tối thiểu 2 ô, tối đa 24 ô)
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddPrize}
+                      disabled={wheelSettings.prizes.length >= 24}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-40"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Thêm Giải</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -3808,7 +3877,7 @@ export default function AdminPage() {
                     return (
                       <div
                         key={idx}
-                        className="p-4 bg-[#111116] border border-[#1E1E26] hover:border-[#2E2E3E] rounded-xl flex flex-col justify-between space-y-3.5 transition group shadow-sm"
+                        className="p-4 bg-[#111116] border border-[#1E1E26] hover:border-[#2E2E3E] rounded-xl flex flex-col justify-between space-y-3.5 transition group shadow-sm relative"
                       >
                         {/* Header Ô */}
                         <div className="flex items-center justify-between border-b border-[#1E1E24] pb-2.5">
@@ -3833,6 +3902,15 @@ export default function AdminPage() {
                               className="w-6 h-6 rounded cursor-pointer border border-[#2B2B3D] bg-transparent p-0"
                               title="Đổi màu nền nan quạt"
                             />
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePrize(idx)}
+                              disabled={wheelSettings.prizes.length <= 2}
+                              className="p-1 rounded text-[#71717A] hover:text-rose-400 hover:bg-rose-950/30 transition disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                              title={wheelSettings.prizes.length <= 2 ? 'Cần tối thiểu 2 ô giải' : 'Xóa ô giải thưởng này'}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
 
@@ -3933,6 +4011,21 @@ export default function AdminPage() {
                       </div>
                     );
                   })}
+
+                  {/* Card Thêm Ô Mới Nhanh */}
+                  {wheelSettings.prizes.length < 24 && (
+                    <button
+                      type="button"
+                      onClick={handleAddPrize}
+                      className="p-5 border-2 border-dashed border-[#2B2B3E] hover:border-[#7C5CFC] bg-[#111116]/40 hover:bg-[#7C5CFC]/5 rounded-xl flex flex-col items-center justify-center gap-2 text-[#A1A1AA] hover:text-[#C4B5FD] transition cursor-pointer min-h-[220px] group"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-[#1A1A26] border border-[#2B2B3D] group-hover:border-[#7C5CFC]/50 flex items-center justify-center text-white text-lg group-hover:scale-110 transition shadow-sm">
+                        +
+                      </div>
+                      <span className="text-xs font-bold text-white group-hover:text-purple-300">+ Thêm Giải Thưởng #{wheelSettings.prizes.length + 1}</span>
+                      <span className="text-[10px] text-[#71717A] text-center">Tự động chia đều góc vòng quay</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </>
