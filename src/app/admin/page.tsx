@@ -3643,76 +3643,34 @@ export default function AdminPage() {
       {activeTab === 'wheel' && (
         <div className="space-y-6 animate-fadeIn pb-12">
           {/* Header & Thanh Thao Tác Lưu/Khôi phục */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111116] border border-[#1E1E26] rounded-xl p-5 shadow-lg">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="p-2 rounded-lg bg-pink-500/10 text-pink-400 border border-pink-500/20">
+          <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 sm:p-5 shadow-lg space-y-3.5">
+            {/* Hàng 1: Tiêu đề & Nút Lưu Real (Primary Action neo góc phải, không bao giờ bị rơi hàng lỡ cỡ) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5">
+              <div className="flex items-center gap-3">
+                <span className="p-2.5 rounded-xl bg-pink-500/10 text-pink-400 border border-pink-500/20 flex-shrink-0">
                   <Sparkles className="w-5 h-5" />
                 </span>
                 <div>
-                  <h2 className="text-base font-bold text-white flex items-center gap-2">
-                    Cấu Hình Vòng Quay May Mắn (Dữ Liệu Real)
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base font-bold text-white">
+                      Cấu Hình Vòng Quay May Mắn (Dữ Liệu Real)
+                    </h2>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold font-mono">
                       Database Sync
                     </span>
-                  </h2>
-                  <p className="text-xs text-[#A1A1AA]">
-                    Tùy chỉnh 8 ô giải thưởng, icon, màu sắc và tỉ lệ trúng thưởng nổ quà theo thuật toán ngẫu nhiên có trọng số (Real Data).
+                  </div>
+                  <p className="text-xs text-[#A1A1AA] mt-0.5">
+                    Tùy chỉnh số lượng ô, màu sắc nan quạt và tỉ lệ trúng thưởng nổ quà theo thuật toán có trọng số (Weighted Random).
                   </p>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {/* Nút Quay Thử Demo */}
-              <button
-                type="button"
-                onClick={() => setIsLuckyWheelOpen(true)}
-                className="px-3.5 py-2 rounded-lg bg-[#181824] hover:bg-[#202030] text-[#CBD5E1] hover:text-white border border-[#2B2B3E] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-              >
-                <span>🎡</span>
-                <span>Quay Thử Ngay</span>
-              </button>
-
-              {/* Nút Thêm Giải Thưởng Mới */}
-              <button
-                type="button"
-                onClick={handleAddPrize}
-                disabled={wheelSettings?.prizes?.length >= 24}
-                className="px-3.5 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm disabled:opacity-40"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Thêm Giải Thưởng</span>
-              </button>
-
-              {/* Nút Cân Bằng 100% */}
-              <button
-                type="button"
-                onClick={handleNormalizeWheelWeights}
-                className="px-3.5 py-2 rounded-lg bg-[#181824] hover:bg-[#202030] text-[#CBD5E1] hover:text-white border border-[#2B2B3E] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
-                title="Tự động tính tỉ lệ chuẩn 100% cho tất cả các ô"
-              >
-                <Percent className="w-3.5 h-3.5 text-blue-400" />
-                <span>Cân bằng 100%</span>
-              </button>
-
-              {/* Nút Reset Mặc Định */}
-              <button
-                type="button"
-                onClick={handleResetDefaultWheelSettings}
-                className="px-3 py-2 rounded-lg bg-[#181824] hover:bg-rose-950/30 text-[#9CA3AF] hover:text-rose-300 border border-[#2B2B3E] hover:border-rose-500/30 text-xs font-medium flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-                title="Khôi phục danh sách giải mặc định"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Mặc định</span>
-              </button>
-
-              {/* Nút Lưu Cấu Hình Real */}
+              {/* Nút Lưu Cấu Hình Real - Nổi bật nhất, luôn neo chắc chắn */}
               <button
                 type="button"
                 onClick={handleSaveWheelSettings}
                 disabled={wheelSaving}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#7C5CFC] to-[#9061F9] hover:from-[#6D4AE8] hover:to-[#7E4CF0] text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-500/20 active:scale-95 transition disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#7C5CFC] to-[#9061F9] hover:from-[#6D4AE8] hover:to-[#7E4CF0] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-500/25 active:scale-95 transition disabled:opacity-50 cursor-pointer flex-shrink-0 self-start sm:self-auto"
               >
                 {wheelSaving ? (
                   <>
@@ -3726,6 +3684,60 @@ export default function AdminPage() {
                   </>
                 )}
               </button>
+            </div>
+
+            {/* Hàng 2: Thanh công cụ chức năng (Toolbar) trải dài đều trên 1 hàng chuyên nghiệp */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* 1. Nút Quay Thử Demo */}
+                <button
+                  type="button"
+                  onClick={() => setIsLuckyWheelOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-[#181824] hover:bg-[#202030] text-[#CBD5E1] hover:text-white border border-[#2B2B3E] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+                >
+                  <span>🎡</span>
+                  <span>Quay Thử Ngay</span>
+                </button>
+
+                {/* 2. Nút Thêm Giải Thưởng Mới */}
+                <button
+                  type="button"
+                  onClick={handleAddPrize}
+                  disabled={wheelSettings?.prizes?.length >= 24}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm disabled:opacity-40"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm Giải Thưởng</span>
+                </button>
+
+                {/* 3. Nút Cân Bằng 100% */}
+                <button
+                  type="button"
+                  onClick={handleNormalizeWheelWeights}
+                  className="px-3 py-1.5 rounded-lg bg-[#181824] hover:bg-[#202030] text-[#CBD5E1] hover:text-white border border-[#2B2B3E] text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm"
+                  title="Tự động tính tỉ lệ chuẩn 100% cho tất cả các ô"
+                >
+                  <Percent className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Cân Bằng 100%</span>
+                </button>
+
+                {/* 4. Nút Reset Mặc Định */}
+                <button
+                  type="button"
+                  onClick={handleResetDefaultWheelSettings}
+                  className="px-3 py-1.5 rounded-lg bg-[#181824] hover:bg-rose-950/30 text-[#9CA3AF] hover:text-rose-300 border border-[#2B2B3E] hover:border-rose-500/30 text-xs font-medium flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                  title="Khôi phục danh sách giải mặc định ban đầu"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Khôi Phục Mặc Định</span>
+                </button>
+              </div>
+
+              {/* Thông tin nhanh số lượng ô hiện tại */}
+              <div className="text-[11px] text-[#71717A] flex items-center gap-1.5 font-mono">
+                <span className="w-2 h-2 rounded-full bg-pink-400 animate-pulse" />
+                <span>Hiện có {wheelSettings?.prizes?.length || 0} ô phần thưởng</span>
+              </div>
             </div>
           </div>
 
