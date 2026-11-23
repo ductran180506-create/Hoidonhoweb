@@ -191,7 +191,7 @@ export default function PaymentHistoryModal() {
             }}
             className="py-1.5 px-3 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-[11px] font-semibold rounded-lg transition shadow flex items-center gap-1 active:scale-95"
           >
-            <span>+ Nạp Điểm</span>
+            <span>☕ Mời Cà Phê</span>
           </button>
         </div>
 

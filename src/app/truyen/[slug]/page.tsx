@@ -12,6 +12,7 @@ import {
 import ComicSlideViewer from '@/components/ComicSlideViewer';
 import ShareButton from '@/components/ShareButton';
 import CommentsSection from '@/components/CommentsSection';
+import ChapterTipBox from '@/components/ChapterTipBox';
 import { saveReadingProgress } from '@/lib/reading-history';
 import { trackPageView } from '@/lib/analytics';
 import { toCdnUrl } from '@/lib/supabase';
@@ -486,6 +487,14 @@ function ContinuousReaderContent() {
           )}
         </div>
       )}
+
+      {/* Khối Tặng Cà Phê Tác Giả Cuối Tập (Cách 3) */}
+      <ChapterTipBox
+        storyId={story.id}
+        storyTitle={story.title}
+        chapterIndex={activeChapterIndex}
+        chapterTitle={currentChapter?.title}
+      />
 
       {/* Khối Chia Sẻ & Bàn Luận Cuối Tập */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-[#111116] border border-[#1E1E26] rounded-xl text-xs">

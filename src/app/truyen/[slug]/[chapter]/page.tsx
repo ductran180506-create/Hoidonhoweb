@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Story, Chapter } from '@/lib/types';
 import { useAuth } from '@/lib/auth-context';
 import { ArrowLeft, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import ChapterTipBox from '@/components/ChapterTipBox';
 
 export default function ReaderPage() {
   const params = useParams();
@@ -266,6 +267,16 @@ export default function ReaderPage() {
           </div>
         )}
       </div>
+
+      {/* Khối Tặng Cà Phê Tác Giả Cuối Tập */}
+      {story && chapter && !isLocked && (
+        <ChapterTipBox
+          storyId={story.id}
+          storyTitle={story.title}
+          chapterIndex={chapterIndex}
+          chapterTitle={chapter.title}
+        />
+      )}
 
       {/* Điều hướng tập trước / sau */}
       <div className="flex items-center justify-between gap-3 text-xs">

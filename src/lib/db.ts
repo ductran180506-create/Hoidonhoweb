@@ -32,6 +32,18 @@ export interface LuckyWheelSpinRecord {
   createdAt: string;
 }
 
+export interface ChapterTipRecord {
+  id: string;
+  storyId: string;
+  chapterIndex: number;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  amountCoins: number;
+  message?: string;
+  createdAt: string;
+}
+
 export interface LuckyWheelSettings {
   spinCostCoins: number;
   freeSpinDaily: boolean;
@@ -65,6 +77,7 @@ interface DatabaseSchema {
   feedback?: FeedbackItem[];
   luckyWheelSettings?: LuckyWheelSettings;
   luckyWheelHistory?: LuckyWheelSpinRecord[];
+  chapterTips?: ChapterTipRecord[];
 }
 
 const IS_VERCEL = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -880,6 +893,31 @@ export const db = {
     data.luckyWheelHistory.unshift(record);
     if (data.luckyWheelHistory.length > 2000) {
       data.luckyWheelHistory = data.luckyWheelHistory.slice(0, 2000);
+    }
+    saveData(data);
+    return record;
+  },
+
+  getChapterTips: (storyId?: string, chapterIndex?: number): ChapterTipRecord[] => {
+    const data = ensureDataFile();
+    let tips = data.chapterTips || [];
+    if (storyId) {
+      tips = tips.filter(t => t.storyId === storyId);
+    }
+    if (chapterIndex !== undefined) {
+      tips = tips.filter(t => t.chapterIndex === chapterIndex);
+    }
+    return tips;
+  },
+
+  recordChapterTip: (record: ChapterTipRecord): ChapterTipRecord => {
+    const data = ensureDataFile();
+    if (!data.chapterTips) {
+      data.chapterTips = [];
+    }
+    data.chapterTips.unshift(record);
+    if (data.chapterTips.length > 2000) {
+      data.chapterTips = data.chapterTips.slice(0, 2000);
     }
     saveData(data);
     return record;
