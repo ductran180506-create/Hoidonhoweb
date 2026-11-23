@@ -235,19 +235,19 @@ export default function RechargeModal() {
       type: 'COIN_20K', 
       name: '20.000đ', 
       coins: '🥤 1 Ly Trà Sữa (20k)', 
-      note: 'Nhận 45 Điểm đọc truyện', 
+      note: 'Nhận 25 Điểm đọc truyện', 
     },
     { 
       type: 'COIN_50K', 
       name: '50.000đ', 
       coins: '🍕 Bữa Ăn Sáng (50k)', 
-      note: 'Nhận 120 Điểm đọc truyện', 
+      note: 'Nhận 60 Điểm đọc truyện', 
     },
     { 
       type: 'VIP_39K', 
       name: '39.000đ/tháng', 
       coins: '👑 Gói VIP 30 Ngày', 
-      note: 'Đọc full toàn bộ kho truyện + 50 Điểm', 
+      note: 'Đọc full toàn bộ kho truyện + 30 Điểm', 
     },
   ];
 

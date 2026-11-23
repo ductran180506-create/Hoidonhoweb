@@ -57,11 +57,11 @@ export async function GET(req: NextRequest) {
 
           const isVip = tx.payment_code?.startsWith('VIP') || tx.amount_vnd === 39000;
           const packageName = isVip
-            ? '👑 Gói Hội Viên VIP 30 Ngày (+50 Điểm)'
+            ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
             : tx.amount_vnd >= 50000
-            ? '🍕 Gói 120 Điểm (50.000đ)'
+            ? '🍕 Gói 60 Điểm (50.000đ)'
             : tx.amount_vnd >= 20000
-            ? '🥤 Gói 45 Điểm (20.000đ)'
+            ? '🥤 Gói 25 Điểm (20.000đ)'
             : '☕ Gói 15 Điểm (10.000đ)';
 
           const qrUrl = ((status === 'pending' && !isUserExpired) || (status === 'processing' && !isSystemExpired))
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
             id: tx.id,
             orderCode: tx.payment_code,
             amountVnd: tx.amount_vnd,
-            coinsReceived: tx.coins || (isVip ? 50 : 15),
+            coinsReceived: tx.coins || (isVip ? 30 : 15),
             packageType: isVip ? 'VIP_39K' : tx.amount_vnd >= 50000 ? 'COIN_50K' : tx.amount_vnd >= 20000 ? 'COIN_20K' : 'COIN_10K',
             packageName,
             status,
@@ -112,11 +112,11 @@ export async function GET(req: NextRequest) {
 
         const isVip = tx.packageType === 'VIP_39K';
         const packageName = isVip
-          ? '👑 Gói Hội Viên VIP 30 Ngày (+50 Điểm)'
+          ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
           : tx.amountVnd >= 50000
-          ? '🍕 Gói 120 Điểm (50.000đ)'
+          ? '🍕 Gói 60 Điểm (50.000đ)'
           : tx.amountVnd >= 20000
-          ? '🥤 Gói 45 Điểm (20.000đ)'
+          ? '🥤 Gói 25 Điểm (20.000đ)'
           : '☕ Gói 15 Điểm (10.000đ)';
 
         const qrUrl = ((status === 'pending' && !isUserExpired) || (status === 'processing' && !isSystemExpired))
