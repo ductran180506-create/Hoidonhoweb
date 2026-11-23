@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { Coffee, Heart, Sparkles, Send, Loader2, QrCode, Coins, CheckCircle2 } from 'lucide-react';
+import { Coffee, Heart, Sparkles, Send, Loader2, QrCode, Coins, CheckCircle2, Lock, Gift } from 'lucide-react';
 
 interface ChapterTipBoxProps {
   storyId: string;
@@ -18,6 +18,7 @@ interface TipItem {
   userAvatar?: string;
   amountCoins: number;
   message?: string;
+  isPrivate?: boolean;
   createdAt: string;
 }
 
@@ -36,10 +37,15 @@ export default function ChapterTipBox({
 }: ChapterTipBoxProps) {
   const { user, balance, refreshBalance, setIsRechargeOpen, setIsAuthModalOpen } = useAuth();
   const [selectedCoins, setSelectedCoins] = useState<number>(5);
+  const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
+  const [customAmount, setCustomAmount] = useState<string>('20');
+  const [isPrivate, setIsPrivate] = useState<boolean>(false);
   const [message, setMessage] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [recentTips, setRecentTips] = useState<TipItem[]>([]);
   const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  const effectiveCoins = isCustomMode ? (Math.max(1, parseInt(customAmount, 10) || 0)) : selectedCoins;
 
   useEffect(() => {
     fetchRecentTips();
@@ -50,7 +56,7 @@ export default function ChapterTipBox({
       const res = await fetch(`/api/tip?storyId=${storyId}&chapterIndex=${chapterIndex}`);
       const data = await res.json();
       if (data.success && Array.isArray(data.tips)) {
-        setRecentTips(data.tips.slice(0, 5));
+        setRecentTips(data.tips.slice(0, 6));
       }
     } catch (e) {}
   };
@@ -61,7 +67,12 @@ export default function ChapterTipBox({
       return;
     }
 
-    if (balance < selectedCoins) {
+    if (effectiveCoins <= 0) {
+      alert('Vui lòng nhập số điểm hợp lệ (tối thiểu 1 Điểm)');
+      return;
+    }
+
+    if (balance < effectiveCoins) {
       setIsRechargeOpen(true);
       return;
     }
@@ -75,19 +86,24 @@ export default function ChapterTipBox({
           userId: user.id,
           storyId,
           chapterIndex,
-          amountCoins: selectedCoins,
+          amountCoins: effectiveCoins,
           message,
+          isPrivate,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setSuccessToast(`🎉 ${data.message || `Cảm ơn bạn đã mời tác giả ${selectedCoins} Điểm!`}`);
+        setSuccessToast(
+          isPrivate
+            ? `🎉 Cảm ơn bạn đã tặng riêng tác giả ${effectiveCoins} Điểm và gửi lời nhắn bí mật! 🔒❤️`
+            : `🎉 ${data.message || `Cảm ơn bạn đã mời tác giả ${effectiveCoins} Điểm!`}`
+        );
         setMessage('');
         refreshBalance();
         fetchRecentTips();
         if (onTipSuccess) onTipSuccess();
-        setTimeout(() => setSuccessToast(null), 4000);
+        setTimeout(() => setSuccessToast(null), 4500);
       } else {
         if (data.needCoins) {
           setIsRechargeOpen(true);
@@ -144,18 +160,22 @@ export default function ChapterTipBox({
       {/* Các lựa chọn tặng nhanh */}
       <div className="space-y-2">
         <div className="text-[11px] text-[#A1A1AA] font-medium flex items-center justify-between">
-          <span>Chọn mức ủng hộ nhanh:</span>
+          <span>Chọn mức ủng hộ:</span>
           <span className="text-amber-400/90 text-[10px]">Tự động trừ từ ví điểm của bạn</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        {/* 4 Khung chọn mức: 3 mức có sẵn + 1 mức Tặng Riêng (Tùy chọn) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {PRESET_TIPS.map((preset) => {
-            const isSelected = selectedCoins === preset.coins;
+            const isSelected = !isCustomMode && selectedCoins === preset.coins;
             return (
               <button
                 key={preset.coins}
                 type="button"
-                onClick={() => setSelectedCoins(preset.coins)}
+                onClick={() => {
+                  setIsCustomMode(false);
+                  setSelectedCoins(preset.coins);
+                }}
                 className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${
                   isSelected
                     ? 'bg-gradient-to-b from-amber-500/20 to-orange-500/20 text-white border-amber-500/60 shadow-md shadow-amber-500/10'
@@ -172,19 +192,106 @@ export default function ChapterTipBox({
               </button>
             );
           })}
+
+          {/* Ô thứ 4: Tặng Riêng / Tự nhập số điểm */}
+          <button
+            type="button"
+            onClick={() => setIsCustomMode(true)}
+            className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${
+              isCustomMode
+                ? 'bg-gradient-to-b from-amber-500/25 to-orange-500/25 text-white border-amber-400 shadow-lg shadow-amber-500/15'
+                : 'bg-[#14141C] border-[#222230] text-[#A1A1AA] hover:text-white hover:border-[#333346]'
+            }`}
+          >
+            <span className="text-xl">🎁</span>
+            <span className="font-bold text-xs font-mono text-amber-300">
+              Tặng Riêng
+            </span>
+            <span className="text-[10px] text-[#71717A] leading-tight truncate w-full">
+              {isCustomMode && effectiveCoins > 0 ? `${effectiveCoins} Điểm` : 'Tùy chọn số điểm'}
+            </span>
+          </button>
         </div>
+
+        {/* Khung nhập số điểm tùy chọn khi chọn Tặng Riêng */}
+        {isCustomMode && (
+          <div className="p-3 bg-[#0E0E16] border border-amber-500/40 rounded-xl space-y-2 animate-fadeIn">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-amber-300 font-semibold flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Nhập số Điểm muốn tặng riêng:</span>
+              </span>
+              <span className="text-[11px] text-[#71717A]">Tối thiểu 1 Điểm</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="number"
+                  min={1}
+                  max={50000}
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  placeholder="Nhập số điểm (vd: 15, 20, 50, 100)..."
+                  className="w-full bg-[#14141E] border border-[#2B2B3D] focus:border-amber-400 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-[#52525B] outline-none transition"
+                />
+                <span className="absolute right-3 top-2.5 text-xs text-amber-300 font-semibold pointer-events-none">
+                  Điểm
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 justify-end">
+                {[15, 20, 50, 100].map((quickVal) => (
+                  <button
+                    key={quickVal}
+                    type="button"
+                    onClick={() => setCustomAmount(quickVal.toString())}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition active:scale-95 ${
+                      customAmount === quickVal.toString()
+                        ? 'bg-amber-500 text-slate-950 shadow-sm'
+                        : 'bg-[#181824] hover:bg-[#222234] text-[#A1A1AA] hover:text-white border border-[#282838]'
+                    }`}
+                  >
+                    +{quickVal}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Ô nhập lời nhắn gửi gắm */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <input
           type="text"
           maxLength={120}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Nhập lời nhắn gửi tác giả (vd: Tập này cười xỉu tác giả ơi...)"
-          className="w-full bg-[#0E0E14] border border-[#222230] focus:border-amber-500/60 rounded-xl px-3 py-2 text-xs text-white placeholder-[#71717A] outline-none transition"
+          placeholder={isPrivate ? "Nhập lời nhắn gửi riêng tác giả (chỉ tác giả thấy trong Quản Trị)..." : "Nhập lời nhắn gửi tác giả (vd: Tập này cười xỉu tác giả ơi...)"}
+          className={`w-full bg-[#0E0E14] border focus:border-amber-500/60 rounded-xl px-3 py-2 text-xs text-white placeholder-[#71717A] outline-none transition ${
+            isPrivate ? 'border-amber-500/40 bg-amber-500/5' : 'border-[#222230]'
+          }`}
         />
+
+        {/* Checkbox Tặng riêng tư cho tác giả */}
+        <div className="flex items-center justify-between gap-2 px-1">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#A1A1AA] hover:text-[#E4E4E7] transition">
+            <input
+              type="checkbox"
+              checked={isPrivate}
+              onChange={(e) => setIsPrivate(e.target.checked)}
+              className="w-4 h-4 rounded accent-amber-500 bg-[#0E0E14] border-[#2B2B3D] cursor-pointer"
+            />
+            <span className="flex items-center gap-1 font-medium">
+              <Lock className={`w-3.5 h-3.5 ${isPrivate ? 'text-amber-400' : 'text-[#71717A]'}`} />
+              <span>Gửi lời nhắn riêng tư (Chỉ tác giả thấy trong Quản Trị)</span>
+            </span>
+          </label>
+          {isPrivate && (
+            <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full hidden sm:inline">
+              Không hiện công khai lên bình luận
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Hàng nút bấm Hành Động */}
@@ -193,7 +300,7 @@ export default function ChapterTipBox({
         <button
           type="button"
           onClick={handleSendTip}
-          disabled={submitting}
+          disabled={submitting || effectiveCoins <= 0}
           className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition disabled:opacity-50 cursor-pointer"
         >
           {submitting ? (
@@ -203,8 +310,11 @@ export default function ChapterTipBox({
             </>
           ) : (
             <>
-              <Coffee className="w-4 h-4 fill-slate-950" />
-              <span>Gửi Tặng {selectedCoins} Điểm Cà Phê</span>
+              {isPrivate ? <Lock className="w-4 h-4" /> : <Coffee className="w-4 h-4 fill-slate-950" />}
+              <span>
+                {isPrivate ? 'Gửi Tặng Riêng' : 'Gửi Tặng'}{' '}
+                {effectiveCoins > 0 ? `${effectiveCoins} Điểm Cà Phê` : 'Cà Phê'}
+              </span>
             </>
           )}
         </button>
@@ -237,11 +347,15 @@ export default function ChapterTipBox({
               >
                 <span className="font-semibold text-white">{tip.userName}</span>
                 <span className="text-amber-400 font-bold font-mono">+{tip.amountCoins}đ</span>
-                {tip.message && (
+                {tip.isPrivate ? (
+                  <span className="text-amber-400/80 flex items-center gap-0.5 text-[9px] bg-amber-500/10 px-1.5 py-0.2 rounded">
+                    <Lock className="w-2.5 h-2.5" /> Tặng riêng
+                  </span>
+                ) : tip.message ? (
                   <span className="text-[#71717A] truncate max-w-[120px]">
                     "{tip.message}"
                   </span>
-                )}
+                ) : null}
               </div>
             ))}
           </div>

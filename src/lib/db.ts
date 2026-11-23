@@ -41,6 +41,7 @@ export interface ChapterTipRecord {
   userAvatar?: string;
   amountCoins: number;
   message?: string;
+  isPrivate?: boolean;
   createdAt: string;
 }
 

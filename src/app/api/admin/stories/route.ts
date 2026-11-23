@@ -358,6 +358,7 @@ export async function GET(req: NextRequest) {
         },
         orders,
         luckySpins: allLuckySpins,
+        chapterTips: db.getChapterTips(),
       });
     }
   } catch (err) {
@@ -394,6 +395,7 @@ export async function GET(req: NextRequest) {
     },
     orders: orders.slice(0, 50),
     luckySpins: db.getLuckyWheelHistory(),
+    chapterTips: db.getChapterTips(),
   });
 }
 

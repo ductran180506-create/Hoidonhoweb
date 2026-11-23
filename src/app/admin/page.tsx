@@ -10,7 +10,7 @@ import {
   Copy, Check, ChevronLeft, ChevronRight,
   FolderPlus, AlertCircle, ArrowUpRight, RefreshCw, Pencil,
   Maximize2, ZoomIn, Move, Calendar, PanelLeft, Menu,
-  Sparkles, Save, RotateCcw, CheckCircle2, AlertTriangle, Gift, Crown, Percent
+  Sparkles, Save, RotateCcw, CheckCircle2, AlertTriangle, Gift, Crown, Percent, Coffee, Heart
 } from 'lucide-react';
 import { Story, Order } from '@/lib/types';
 import { compressImage, formatFileSize } from '@/lib/image-compressor';
@@ -223,7 +223,7 @@ export default function AdminPage() {
   const [customerFilter, setCustomerFilter] = useState<'all' | 'recharged' | 'google' | 'vip' | 'has_coins'>('all');
   const [storySearch, setStorySearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
-  const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired' | 'vip'>('all');
+  const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired' | 'vip' | 'tips'>('all');
   const [feedbackTypeFilter, setFeedbackTypeFilter] = useState<'all' | 'bug' | 'content' | 'payment' | 'other'>('all');
   const [feedbackStatusFilter, setFeedbackStatusFilter] = useState<'all' | 'new' | 'reviewed'>('all');
 
@@ -254,6 +254,7 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [luckySpins, setLuckySpins] = useState<any[]>([]);
+  const [chapterTips, setChapterTips] = useState<any[]>([]);
   const [wheelSubTab, setWheelSubTab] = useState<'config' | 'history'>('config');
   const [spinSearch, setSpinSearch] = useState('');
   const [spinFilter, setSpinFilter] = useState<'all' | 'free' | 'paid' | 'coins' | 'vip' | 'none'>('all');
@@ -401,6 +402,9 @@ export default function AdminPage() {
         if (Array.isArray(data.luckySpins)) {
           setLuckySpins(data.luckySpins);
         }
+        if (Array.isArray(data.chapterTips)) {
+          setChapterTips(data.chapterTips);
+        }
         if (Array.isArray(data.users)) {
           const normalized = data.users.map((u: any) => ({
             ...u,
@@ -459,6 +463,9 @@ export default function AdminPage() {
           setOrders(Array.isArray(data.orders) ? data.orders : []);
           if (Array.isArray(data.luckySpins)) {
             setLuckySpins(data.luckySpins);
+          }
+          if (Array.isArray(data.chapterTips)) {
+            setChapterTips(data.chapterTips);
           }
           if (Array.isArray(data.users)) {
             setUsers(
@@ -1214,6 +1221,17 @@ export default function AdminPage() {
       if (!matches) return false;
     }
 
+    return true;
+  });
+
+  const filteredTips = chapterTips.filter((t: any) => {
+    if (orderSearch.trim()) {
+      const q = orderSearch.toLowerCase().trim();
+      const name = (t.userName || '').toLowerCase();
+      const msg = (t.message || '').toLowerCase();
+      const story = (t.storyId || '').toLowerCase();
+      if (!name.includes(q) && !msg.includes(q) && !story.includes(q)) return false;
+    }
     return true;
   });
 
@@ -3050,6 +3068,15 @@ export default function AdminPage() {
                     Đã hết hạn ({baseOrders.filter(o => o.status === 'expired').length})
                   </button>
                   <button
+                    onClick={() => setOrderFilter('tips')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap flex items-center gap-1 ${
+                      orderFilter === 'tips' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm' : 'text-[#71717A] hover:text-white'
+                    }`}
+                  >
+                    <span>☕ Cà Phê & Tặng Riêng</span>
+                    <span className="font-mono font-bold">({chapterTips.length})</span>
+                  </button>
+                  <button
                     onClick={handleCleanupTestData}
                     className="px-2.5 py-1 rounded text-[11px] font-medium text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/30 transition ml-1 whitespace-nowrap"
                     title="Xóa toàn bộ user test và đơn test để chuẩn bị ra mắt"
@@ -3063,10 +3090,142 @@ export default function AdminPage() {
 
           <div className="flex items-center justify-between text-[11px] text-[#71717A] px-2.5 py-1.5 bg-[#0A0A0D] rounded-lg border border-[#1E1E26] sm:hidden">
             <span>👉 Vuốt ngang xem đầy đủ các cột</span>
-            <span className="font-mono text-[#A78BFA] font-medium">{filteredOrders.length} đơn</span>
+            <span className="font-mono text-[#A78BFA] font-medium">
+              {orderFilter === 'tips' ? `${filteredTips.length} lượt` : `${filteredOrders.length} đơn`}
+            </span>
           </div>
 
-          {/* DANH SÁCH ĐƠN HÀNG: BẢN THẺ CHO DI ĐỘNG (MOBILE CARDS) & BẢNG CHO MÁY TÍNH (DESKTOP TABLE) */}
+          {orderFilter === 'tips' ? (
+            /* DANH SÁCH MỜI CÀ PHÊ & TẶNG RIÊNG */
+            <div className="space-y-4">
+              {/* 1. Mobile Cards View cho Cà Phê & Tặng Riêng */}
+              <div className="md:hidden divide-y divide-[#1C1C26] rounded-lg border border-[#1A1A24]/60 overflow-hidden bg-[#111116]">
+                {filteredTips.length === 0 ? (
+                  <div className="py-8 text-center text-[#52525B] text-xs">
+                    {orderSearch ? `Không tìm thấy lượt tặng cà phê nào khớp với "${orderSearch}".` : 'Chưa có lượt mời cà phê hoặc tặng riêng nào.'}
+                  </div>
+                ) : (
+                  filteredTips.map((tip: any, idx: number) => (
+                    <div key={tip.id || idx} className="p-3.5 space-y-2.5 hover:bg-[#14141E] transition">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-[#71717A]">#{idx + 1}</span>
+                          <span className="font-semibold text-white text-xs">{tip.userName || 'Độc giả'}</span>
+                        </div>
+                        <div>
+                          {tip.isPrivate ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/40 font-semibold flex items-center gap-1">
+                              <Lock className="w-3 h-3 text-amber-400" />
+                              <span>Tặng Riêng</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium flex items-center gap-1">
+                              <Coffee className="w-3 h-3 text-emerald-400" />
+                              <span>Mời Cà Phê</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs text-[#A1A1AA]">
+                          Tập <strong className="text-white">{tip.chapterIndex}</strong> ({tip.storyId})
+                        </div>
+                        <div className="font-mono font-bold text-sm text-amber-400">
+                          +{tip.amountCoins} Điểm
+                        </div>
+                      </div>
+
+                      {tip.message && (
+                        <div className={`p-2.5 rounded-lg text-xs leading-relaxed ${
+                          tip.isPrivate ? 'bg-amber-500/10 border border-amber-500/30 text-amber-200' : 'bg-[#0E0E14] border border-[#222230] text-[#D4D4D8]'
+                        }`}>
+                          <div className="text-[10px] font-semibold text-[#A1A1AA] flex items-center gap-1 mb-1">
+                            {tip.isPrivate ? <Lock className="w-3 h-3 text-amber-400" /> : <span>💬</span>}
+                            <span>{tip.isPrivate ? 'Lời nhắn riêng tư cho tác giả:' : 'Lời nhắn:'}</span>
+                          </div>
+                          <div>"{tip.message}"</div>
+                        </div>
+                      )}
+
+                      <div className="pt-1 border-t border-[#1C1C24] text-[10px] text-[#71717A] font-mono">
+                        {tip.createdAt && !isNaN(new Date(tip.createdAt).getTime())
+                          ? `${new Date(tip.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(tip.createdAt).toLocaleDateString('vi-VN')}`
+                          : '—'}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* 2. Desktop Table View cho Cà Phê & Tặng Riêng */}
+              <div className="hidden md:block overflow-x-auto rounded-lg border border-[#1A1A24]/60 bg-[#111116]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#161622] text-[#A1A1AA] border-b border-[#222230]">
+                    <tr>
+                      <th className="py-2.5 px-3 font-semibold">STT</th>
+                      <th className="py-2.5 px-3 font-semibold">Độc Giả</th>
+                      <th className="py-2.5 px-3 font-semibold">Tập Truyện</th>
+                      <th className="py-2.5 px-3 font-semibold text-right">Số Điểm</th>
+                      <th className="py-2.5 px-3 font-semibold">Hình Thức</th>
+                      <th className="py-2.5 px-4 font-semibold">Lời Nhắn Của Độc Giả</th>
+                      <th className="py-2.5 px-3 font-semibold text-right">Thời Gian</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#1C1C26]">
+                    {filteredTips.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-8 text-center text-[#52525B]">
+                          {orderSearch ? `Không tìm thấy lượt tặng cà phê nào khớp với "${orderSearch}".` : 'Chưa có lượt mời cà phê hoặc tặng riêng nào.'}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTips.map((tip: any, idx: number) => (
+                        <tr key={tip.id || idx} className="hover:bg-[#151522] transition">
+                          <td className="py-3 px-3 font-mono text-[#71717A]">#{idx + 1}</td>
+                          <td className="py-3 px-3 font-semibold text-white">{tip.userName || 'Độc giả'}</td>
+                          <td className="py-3 px-3 text-[#A1A1AA]">Tập {tip.chapterIndex} ({tip.storyId})</td>
+                          <td className="py-3 px-3 text-right font-mono font-bold text-amber-400">+{tip.amountCoins}đ</td>
+                          <td className="py-3 px-3 whitespace-nowrap">
+                            {tip.isPrivate ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/40 font-semibold inline-flex items-center gap-1">
+                                <Lock className="w-3 h-3 text-amber-400" />
+                                <span>Tặng Riêng</span>
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium inline-flex items-center gap-1">
+                                <Coffee className="w-3 h-3 text-emerald-400" />
+                                <span>Mời Cà Phê</span>
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 max-w-sm">
+                            {tip.message ? (
+                              <div className={`p-2 rounded text-xs leading-relaxed ${
+                                tip.isPrivate ? 'bg-amber-500/10 text-amber-200 border border-amber-500/25' : 'text-[#D4D4D8]'
+                              }`}>
+                                {tip.isPrivate && <span className="font-semibold text-amber-400 mr-1">[Riêng tư]</span>}
+                                "{tip.message}"
+                              </div>
+                            ) : (
+                              <span className="text-[#52525B] italic">Không kèm lời nhắn</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono text-[#71717A] text-[11px] whitespace-nowrap">
+                            {tip.createdAt && !isNaN(new Date(tip.createdAt).getTime())
+                              ? `${new Date(tip.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(tip.createdAt).toLocaleDateString('vi-VN')}`
+                              : '—'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            /* DANH SÁCH ĐƠN HÀNG: BẢN THẺ CHO DI ĐỘNG (MOBILE CARDS) & BẢNG CHO MÁY TÍNH (DESKTOP TABLE) */
+            <>
           {/* 1. Mobile Cards View (Tối ưu vuốt chạm cho điện thoại) */}
           <div className="md:hidden divide-y divide-[#1C1C26] rounded-lg border border-[#1A1A24]/60 overflow-hidden bg-[#111116]">
             {filteredOrders.length === 0 ? (
@@ -3254,6 +3413,8 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+          </>
+          )}
         </div>
       )}
 

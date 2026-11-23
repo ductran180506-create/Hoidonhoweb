@@ -12,7 +12,17 @@ export async function GET(req: NextRequest) {
     const chapterIndexStr = searchParams.get('chapterIndex');
     const chapterIndex = chapterIndexStr ? parseInt(chapterIndexStr, 10) : undefined;
 
-    const tips = db.getChapterTips(storyId, chapterIndex);
+    const rawTips = db.getChapterTips(storyId, chapterIndex);
+    // Ẩn nội dung lời nhắn riêng tư khi trả về danh sách công khai
+    const tips = rawTips.map(t => {
+      if (t.isPrivate) {
+        return {
+          ...t,
+          message: t.message ? '🔒 Lời nhắn gửi riêng cho tác giả' : undefined,
+        };
+      }
+      return t;
+    });
     return NextResponse.json({ success: true, tips });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message }, { status: 500 });
@@ -22,7 +32,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, storyId, chapterIndex = 1, amountCoins = 5, message = '' } = body;
+    const { userId, storyId, chapterIndex = 1, amountCoins = 5, message = '', isPrivate = false } = body;
 
     if (!userId) {
       return NextResponse.json({ success: false, message: 'Vui lòng đăng nhập để tặng cà phê' }, { status: 401 });
@@ -90,14 +100,20 @@ export async function POST(req: NextRequest) {
       userAvatar: uAvatar,
       amountCoins: coinsToDeduct,
       message: message.trim() || undefined,
+      isPrivate: Boolean(isPrivate),
       createdAt: new Date().toISOString(),
     });
 
     // 4. Tự động đăng bình luận chúc mừng vào phần comment
     try {
-      const commentContent = message.trim()
-        ? `☕ Đã mời tác giả ${coinsToDeduct} Điểm: "${message.trim()}"`
-        : `☕ Đã mời tác giả ${coinsToDeduct} Điểm ly cà phê ấm áp! ❤️`;
+      let commentContent = '';
+      if (isPrivate) {
+        commentContent = `☕ [Tặng Riêng] Đã mời tác giả ${coinsToDeduct} Điểm cà phê và gửi lời nhắn riêng tư! 🔒❤️`;
+      } else {
+        commentContent = message.trim()
+          ? `☕ Đã mời tác giả ${coinsToDeduct} Điểm: "${message.trim()}"`
+          : `☕ Đã mời tác giả ${coinsToDeduct} Điểm ly cà phê ấm áp! ❤️`;
+      }
 
       db.addComment({
         storyId,
