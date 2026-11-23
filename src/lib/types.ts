@@ -45,18 +45,24 @@ export interface UnlockedChapter {
   unlockedAt: string;
 }
 
-export type OrderPackage = 'COIN_10K' | 'COIN_20K' | 'COIN_50K' | 'VIP_39K';
+export type OrderPackage = 'COIN_10K' | 'COIN_20K' | 'COIN_50K' | 'VIP_39K' | 'TIP_COFFEE';
 
 export interface Order {
   id: string;
   orderCode: string; // Mã nạp chuyển khoản (vd: "CR10A9", "VIP39X")
   userId: string;
   packageType: OrderPackage;
-  amountVnd: number; // 10000, 20000, 50000, 39000
+  amountVnd: number; // 10000, 20000, 50000, 39000, hoặc số tiền tip
   coinsReceived: number; // 15, 35, 100, 0
   vipDaysReceived: number; // 0, 0, 0, 30
   status: 'pending' | 'processing' | 'completed' | 'cancelled' | 'expired';
   sepayTransactionId?: string;
+  tipDetails?: {
+    storyId?: string;
+    chapterIndex?: number;
+    message?: string;
+    isPrivate?: boolean;
+  };
   createdAt: string;
   completedAt?: string;
 }

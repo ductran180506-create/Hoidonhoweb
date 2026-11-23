@@ -4,22 +4,39 @@ import { generateOrderCode, generateVietQrUrl, DEFAULT_BANK_CONFIG } from '@/lib
 import { OrderPackage } from '@/lib/types';
 import { supabaseAdmin } from '@/lib/supabase';
 
-const PACKAGE_CONFIG: Record<OrderPackage, { amount: number; coins: number; vipDays: number; name: string }> = {
+const PACKAGE_CONFIG: Record<string, { amount: number; coins: number; vipDays: number; name: string }> = {
   COIN_10K: { amount: 10000, coins: 15, vipDays: 0, name: "Gói 15 Điểm (Ủng hộ 10k)" },
   COIN_20K: { amount: 20000, coins: 45, vipDays: 0, name: "Gói 45 Điểm (Ủng hộ 20k)" },
   COIN_50K: { amount: 50000, coins: 120, vipDays: 0, name: "Gói 120 Điểm (Ủng hộ 50k)" },
   VIP_39K: { amount: 39000, coins: 50, vipDays: 30, name: "Gói Hội Viên VIP 30 Ngày (+ Tặng 50 Điểm)" },
+  TIP_COFFEE: { amount: 10000, coins: 20, vipDays: 0, name: "Mời Cà Phê Tác Giả" },
 };
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, packageType } = await req.json();
+    const { userId, packageType, customAmount, tipDetails } = await req.json();
 
-    if (!userId || !packageType || !PACKAGE_CONFIG[packageType as OrderPackage]) {
+    if (!userId || !packageType || (!PACKAGE_CONFIG[packageType] && packageType !== 'TIP_COFFEE')) {
       return NextResponse.json({ success: false, message: 'Dữ liệu không hợp lệ' }, { status: 400 });
     }
 
-    const pkg = PACKAGE_CONFIG[packageType as OrderPackage];
+    let amountVnd = 10000;
+    let coinsReceived = 20;
+    let vipDaysReceived = 0;
+    let packageName = "Mời Cà Phê Tác Giả";
+
+    if (packageType === 'TIP_COFFEE') {
+      amountVnd = Math.max(5000, parseInt(customAmount, 10) || 10000);
+      coinsReceived = Math.floor(amountVnd / 500); // Thưởng xu tương ứng
+      packageName = `Mời Cà Phê Tác Giả (${amountVnd.toLocaleString('vi-VN')}đ)`;
+    } else {
+      const pkg = PACKAGE_CONFIG[packageType as OrderPackage];
+      amountVnd = pkg.amount;
+      coinsReceived = pkg.coins;
+      vipDaysReceived = pkg.vipDays;
+      packageName = pkg.name;
+    }
+
     const orderCode = generateOrderCode(packageType);
     const orderId = `ord-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const now = new Date();
@@ -35,10 +52,16 @@ export async function POST(req: NextRequest) {
       orderCode,
       userId,
       packageType: packageType as OrderPackage,
-      amountVnd: pkg.amount,
-      coinsReceived: pkg.coins,
-      vipDaysReceived: pkg.vipDays,
+      amountVnd,
+      coinsReceived,
+      vipDaysReceived,
       status: 'pending',
+      tipDetails: tipDetails ? {
+        storyId: tipDetails.storyId,
+        chapterIndex: tipDetails.chapterIndex || 1,
+        message: tipDetails.message,
+        isPrivate: Boolean(tipDetails.isPrivate),
+      } : undefined,
       createdAt,
     });
 
@@ -63,8 +86,8 @@ export async function POST(req: NextRequest) {
       await supabaseAdmin.from('transactions').insert({
         id: orderId,
         user_id: userId,
-        amount_vnd: pkg.amount,
-        coins: pkg.coins,
+        amount_vnd: amountVnd,
+        coins: coinsReceived,
         payment_code: orderCode,
         status: 'pending',
         created_at: new Date().toISOString()
@@ -85,15 +108,15 @@ export async function POST(req: NextRequest) {
         orderCode: order.orderCode,
         amountVnd: order.amountVnd,
         packageType: order.packageType,
-        packageName: pkg.name,
+        packageName,
         coinsReceived: order.coinsReceived,
         vipDaysReceived: order.vipDaysReceived,
         qrUrl,
         createdAt,
-        expiresAt, // 15 phút thực tế
-        displayExpiresAt, // 10 phút hiển thị
-        durationSeconds: 10 * 60, // 600s
-        actualDurationSeconds: 15 * 60, // 900s
+        expiresAt,
+        displayExpiresAt,
+        durationSeconds: 10 * 60,
+        actualDurationSeconds: 15 * 60,
         bankInfo: {
           bankId: DEFAULT_BANK_CONFIG.bankId,
           accountNo: DEFAULT_BANK_CONFIG.accountNo,

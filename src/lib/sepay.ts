@@ -34,7 +34,7 @@ export function generateVietQrUrl(params: {
  * Ví dụ: CR10A7 (Gói 10k), CR20B8 (Gói 20k), VIP39K (Gói VIP)
  */
 export function generateOrderCode(packageType: string): string {
-  const prefix = packageType.startsWith('VIP') ? 'VIP' : 'CR';
+  const prefix = packageType.startsWith('VIP') ? 'VIP' : packageType.startsWith('TIP') ? 'CF' : 'CR';
   const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
   const timestamp = Date.now().toString().slice(-2);
   return `${prefix}${timestamp}${randomStr}`;

@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
       userName: uName,
       userAvatar: uAvatar,
       amountCoins: coinsToDeduct,
+      amountVnd: coinsToDeduct * 2000,
       message: message.trim() || undefined,
       isPrivate: Boolean(isPrivate),
       createdAt: new Date().toISOString(),

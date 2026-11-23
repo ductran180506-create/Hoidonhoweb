@@ -3131,8 +3131,8 @@ export default function AdminPage() {
                         <div className="text-xs text-[#A1A1AA]">
                           Tập <strong className="text-white">{tip.chapterIndex}</strong> ({tip.storyId})
                         </div>
-                        <div className="font-mono font-bold text-sm text-amber-400">
-                          +{tip.amountCoins} Điểm
+                        <div className="font-mono font-bold text-sm text-emerald-400">
+                          +{tip.amountVnd ? `${tip.amountVnd.toLocaleString('vi-VN')} đ` : `${tip.amountCoins} Điểm`}
                         </div>
                       </div>
 
@@ -3166,7 +3166,7 @@ export default function AdminPage() {
                       <th className="py-2.5 px-3 font-semibold">STT</th>
                       <th className="py-2.5 px-3 font-semibold">Độc Giả</th>
                       <th className="py-2.5 px-3 font-semibold">Tập Truyện</th>
-                      <th className="py-2.5 px-3 font-semibold text-right">Số Điểm</th>
+                      <th className="py-2.5 px-3 font-semibold text-right">Tiền Ủng Hộ</th>
                       <th className="py-2.5 px-3 font-semibold">Hình Thức</th>
                       <th className="py-2.5 px-4 font-semibold">Lời Nhắn Của Độc Giả</th>
                       <th className="py-2.5 px-3 font-semibold text-right">Thời Gian</th>
@@ -3185,7 +3185,9 @@ export default function AdminPage() {
                           <td className="py-3 px-3 font-mono text-[#71717A]">#{idx + 1}</td>
                           <td className="py-3 px-3 font-semibold text-white">{tip.userName || 'Độc giả'}</td>
                           <td className="py-3 px-3 text-[#A1A1AA]">Tập {tip.chapterIndex} ({tip.storyId})</td>
-                          <td className="py-3 px-3 text-right font-mono font-bold text-amber-400">+{tip.amountCoins}đ</td>
+                          <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400">
+                            +{tip.amountVnd ? `${tip.amountVnd.toLocaleString('vi-VN')} đ` : `${tip.amountCoins} Điểm`}
+                          </td>
                           <td className="py-3 px-3 whitespace-nowrap">
                             {tip.isPrivate ? (
                               <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/40 font-semibold inline-flex items-center gap-1">

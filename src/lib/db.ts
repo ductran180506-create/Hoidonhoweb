@@ -39,9 +39,11 @@ export interface ChapterTipRecord {
   userId: string;
   userName: string;
   userAvatar?: string;
-  amountCoins: number;
+  amountCoins?: number;
+  amountVnd?: number; // Tiền thật VND (vd: 10000, 20000, 50000...)
   message?: string;
   isPrivate?: boolean;
+  orderCode?: string;
   createdAt: string;
 }
 
@@ -557,6 +559,52 @@ export const db = {
         wallet.balance += order.coinsReceived;
         wallet.updatedAt = new Date().toISOString();
       }
+    }
+
+    // Nếu đơn hàng có tipDetails (Mời Cà Phê bằng tiền thật)
+    if (order.tipDetails && order.tipDetails.storyId) {
+      if (!data.chapterTips) data.chapterTips = [];
+      const user = data.users.find(u => u.id === order.userId);
+      const uName = (user as any)?.name || (user as any)?.phone || 'Độc giả';
+      const uAvatar = (user as any)?.avatar || '';
+
+      const tipRecord: ChapterTipRecord = {
+        id: `tip-vnd-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        storyId: order.tipDetails.storyId,
+        chapterIndex: order.tipDetails.chapterIndex || 1,
+        userId: order.userId,
+        userName: uName,
+        userAvatar: uAvatar,
+        amountVnd: order.amountVnd,
+        amountCoins: order.coinsReceived || 0,
+        message: order.tipDetails.message,
+        isPrivate: order.tipDetails.isPrivate,
+        orderCode: order.orderCode,
+        createdAt: new Date().toISOString(),
+      };
+      data.chapterTips.unshift(tipRecord);
+
+      // Đăng bình luận vinh danh vào tập truyện
+      try {
+        const commentContent = order.tipDetails.isPrivate
+          ? `☕ [Mời Cà Phê] Đã ủng hộ ${order.amountVnd.toLocaleString('vi-VN')}đ tiền cà phê và gửi lời nhắn riêng tư! 🔒❤️`
+          : order.tipDetails.message
+          ? `☕ Đã mời tác giả ${order.amountVnd.toLocaleString('vi-VN')}đ ly cà phê: "${order.tipDetails.message}" ❤️`
+          : `☕ Đã mời tác giả ${order.amountVnd.toLocaleString('vi-VN')}đ ly cà phê ấm áp! ❤️`;
+
+        if (!data.comments) data.comments = [];
+        data.comments.unshift({
+          id: `cmt-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          storyId: order.tipDetails.storyId,
+          chapterIndex: order.tipDetails.chapterIndex || 1,
+          userId: order.userId,
+          userName: uName,
+          userAvatar: uAvatar,
+          content: commentContent,
+          likes: 0,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (e) {}
     }
 
     saveData(data);
