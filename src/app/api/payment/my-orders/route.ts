@@ -56,16 +56,24 @@ export async function GET(req: NextRequest) {
           }
 
           const isExVip = Boolean(tx.payment_code?.includes('EXCHANGE_VIP') || tx.payment_code?.includes('EX_VIP'));
+          const isCheckin = Boolean(tx.payment_code?.includes('CHECKIN'));
+          const isLucky = Boolean(tx.payment_code?.includes('LUCKY'));
           const isVip = tx.payment_code?.startsWith('VIP') || tx.amount_vnd === 39000;
           const packageName = isExVip
             ? '👑 Đổi 40 Điểm ➔ 7 Ngày VIP'
+            : isCheckin
+            ? '🎁 Thưởng Điểm Danh Hàng Ngày'
+            : isLucky
+            ? '🎡 Thưởng Vòng Quay May Mắn'
             : isVip
             ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
             : tx.amount_vnd >= 50000
             ? '🍕 Gói 75 Điểm (50.000đ)'
             : tx.amount_vnd >= 20000
             ? '🥤 Gói 25 Điểm (20.000đ)'
-            : '☕ Gói 15 Điểm (10.000đ)';
+            : tx.amount_vnd >= 10000
+            ? '☕ Gói 15 Điểm (10.000đ)'
+            : '🎁 Quà Tặng / Phần Thưởng';
 
           const qrUrl = ((status === 'pending' && !isUserExpired) || (status === 'processing' && !isSystemExpired))
             ? generateVietQrUrl({
@@ -78,8 +86,8 @@ export async function GET(req: NextRequest) {
             id: tx.id,
             orderCode: tx.payment_code,
             amountVnd: tx.amount_vnd,
-            coinsReceived: tx.coins || (isVip ? 30 : 15),
-            packageType: isVip ? 'VIP_39K' : tx.amount_vnd >= 50000 ? 'COIN_50K' : tx.amount_vnd >= 20000 ? 'COIN_20K' : 'COIN_10K',
+            coinsReceived: tx.coins ?? (isCheckin ? 1 : isLucky ? 2 : isVip ? 30 : tx.amount_vnd >= 50000 ? 75 : tx.amount_vnd >= 20000 ? 25 : 15),
+            packageType: isExVip ? 'EXCHANGE_VIP' : isCheckin ? 'CHECKIN' : isLucky ? 'LUCKY' : isVip ? 'VIP_39K' : tx.amount_vnd >= 50000 ? 'COIN_50K' : tx.amount_vnd >= 20000 ? 'COIN_20K' : 'COIN_10K',
             packageName,
             status,
             createdAt,
@@ -114,16 +122,24 @@ export async function GET(req: NextRequest) {
         }
 
         const isExVip = Boolean(tx.orderCode?.includes('EXCHANGE_VIP') || tx.orderCode?.includes('EX_VIP'));
+        const isCheckin = Boolean(tx.orderCode?.includes('CHECKIN'));
+        const isLucky = Boolean(tx.orderCode?.includes('LUCKY'));
         const isVip = tx.packageType === 'VIP_39K';
         const packageName = isExVip
           ? '👑 Đổi 40 Điểm ➔ 7 Ngày VIP'
+          : isCheckin
+          ? '🎁 Thưởng Điểm Danh Hàng Ngày'
+          : isLucky
+          ? '🎡 Thưởng Vòng Quay May Mắn'
           : isVip
           ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
           : tx.amountVnd >= 50000
           ? '🍕 Gói 75 Điểm (50.000đ)'
           : tx.amountVnd >= 20000
           ? '🥤 Gói 25 Điểm (20.000đ)'
-          : '☕ Gói 15 Điểm (10.000đ)';
+          : tx.amountVnd >= 10000
+          ? '☕ Gói 15 Điểm (10.000đ)'
+          : '🎁 Quà Tặng / Phần Thưởng';
 
         const qrUrl = ((status === 'pending' && !isUserExpired) || (status === 'processing' && !isSystemExpired))
           ? generateVietQrUrl({
@@ -136,8 +152,8 @@ export async function GET(req: NextRequest) {
           id: tx.id,
           orderCode: tx.orderCode,
           amountVnd: tx.amountVnd,
-          coinsReceived: tx.coinsReceived,
-          packageType: tx.packageType,
+          coinsReceived: tx.coinsReceived ?? (isCheckin ? 1 : isLucky ? 2 : isVip ? 30 : tx.amountVnd >= 50000 ? 75 : tx.amountVnd >= 20000 ? 25 : 15),
+          packageType: isExVip ? 'EXCHANGE_VIP' : isCheckin ? 'CHECKIN' : isLucky ? 'LUCKY' : isVip ? 'VIP_39K' : tx.packageType || 'COIN_10K',
           packageName,
           status,
           createdAt,

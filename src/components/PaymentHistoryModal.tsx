@@ -12,7 +12,8 @@ import {
   Coffee,
   Crown,
   Clock,
-  Sparkles
+  Sparkles,
+  Gift
 } from 'lucide-react';
 import { formatVipTimeRemaining, formatVipExpireDate } from '@/lib/vip-utils';
 
@@ -143,7 +144,7 @@ export default function PaymentHistoryModal() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/85 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-md p-5 bg-[#111116] border border-[#22222B] rounded-2xl shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-[510px] p-5 bg-[#111116] border border-[#22222B] rounded-2xl shadow-2xl space-y-3.5 max-h-[92vh] flex flex-col">
         {/* Nút đóng */}
         <button
           onClick={() => setIsHistoryOpen(false)}
@@ -153,7 +154,7 @@ export default function PaymentHistoryModal() {
         </button>
 
         {/* Tiêu đề */}
-        <div className="flex items-center gap-2.5 pr-8">
+        <div className="flex items-center gap-2.5 pr-8 flex-shrink-0">
           <div className="w-8 h-8 rounded-lg bg-[#7C5CFC]/15 border border-[#7C5CFC]/30 flex items-center justify-center text-[#7C5CFC]">
             <Receipt className="w-4 h-4" />
           </div>
@@ -165,133 +166,136 @@ export default function PaymentHistoryModal() {
           </div>
         </div>
 
-        {/* Thẻ tóm tắt thông tin người dùng */}
-        <div className="p-3.5 bg-[#161622] border border-[#222233] rounded-xl flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            {user?.avatar ? (
-              <img src={user.avatar} alt="Avatar" className="w-9 h-9 rounded-full object-cover border border-[#7C5CFC]/30" />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-[#7C5CFC]/20 text-[#7C5CFC] font-bold text-xs flex items-center justify-center border border-[#7C5CFC]/30">
-                {user?.name ? user.name[0]?.toUpperCase() : 'U'}
+        {/* KHỐI HỒ SƠ TÀI KHOẢN & VIP TẬP TRUNG (KHÔNG BỊ CO CẮT, ĐẸP SANG TRỌNG) */}
+        <div className={`p-3.5 sm:p-4 rounded-xl border flex-shrink-0 transition relative shadow-lg ${
+          user?.isVip
+            ? 'bg-gradient-to-b from-[#1C1628] via-[#161424] to-[#12121A] border-amber-500/40 shadow-amber-950/20'
+            : 'bg-gradient-to-b from-[#171722] to-[#111116] border-[#252536]'
+        }`}>
+          {/* Hàng 1: Avatar, Tên & Nút Nạp Điểm */}
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative flex-shrink-0">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="Avatar" className="w-10 h-10 rounded-full object-cover ring-2 ring-amber-500/40" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#7C5CFC] to-purple-500 text-white font-bold text-sm flex items-center justify-center ring-2 ring-amber-500/40 shadow">
+                    {user?.name ? user.name[0]?.toUpperCase() : 'U'}
+                  </div>
+                )}
+                {user?.isVip && (
+                  <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-black shadow ring-2 ring-[#12121A]">
+                    <Crown className="w-2.5 h-2.5 fill-black text-black" />
+                  </div>
+                )}
               </div>
-            )}
-            <div>
-              <div className="font-semibold text-xs text-white truncate max-w-[150px]">
-                {user?.name || user?.phone || 'Độc Giả'}
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-amber-400 font-medium">
-                <Coins className="w-3 h-3 text-[#F59E0B]" />
-                <span>Số dư: <strong className="text-white font-mono">{balance}</strong> Điểm</span>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h4 className="font-bold text-xs sm:text-sm text-white truncate max-w-[150px] sm:max-w-[200px]">
+                    {user?.name || user?.phone || 'Độc Giả'}
+                  </h4>
+                  {user?.isVip ? (
+                    <span className="flex-shrink-0 px-1.5 py-0.2 rounded text-[9px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-black shadow-xs flex items-center gap-0.5">
+                      <Crown className="w-2.5 h-2.5 fill-black" />
+                      <span>VIP</span>
+                    </span>
+                  ) : (
+                    <span className="flex-shrink-0 px-1.5 py-0.2 rounded text-[9px] font-medium bg-[#222230] text-[#A1A1AA] border border-white/5">
+                      Thường
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1 text-[11px] text-amber-400 font-medium mt-0.5">
+                  <Coins className="w-3 h-3 text-[#F59E0B]" />
+                  <span>Số dư ví: <strong className="text-white font-mono">{balance}</strong> Điểm</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-1.5">
-            {balance >= 40 && (
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
                 onClick={() => {
                   setPendingOrder(null);
                   setIsHistoryOpen(false);
                   setIsRechargeOpen(true);
                 }}
-                className="py-1.5 px-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-[11px] font-bold rounded-lg transition shadow flex items-center gap-1 active:scale-95 animate-pulse"
-                title="Dùng 40 Điểm đổi 7 Ngày VIP"
+                className="py-1.5 px-3 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-[11px] font-bold rounded-lg transition shadow flex items-center gap-1 active:scale-95 cursor-pointer"
               >
-                <span>👑 Đổi VIP 7D</span>
+                <Coins className="w-3 h-3 text-amber-300" />
+                <span>Nạp Điểm</span>
               </button>
-            )}
-            <button
-              onClick={() => {
-                setPendingOrder(null);
-                setIsHistoryOpen(false);
-                setIsRechargeOpen(true);
-              }}
-              className="py-1.5 px-3 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-[11px] font-semibold rounded-lg transition shadow flex items-center gap-1 active:scale-95"
-            >
-              <span>☕ Mời Cà Phê</span>
-            </button>
+            </div>
           </div>
-        </div>
 
-        {/* Thẻ Trạng Thái & Thời Hạn Hội Viên VIP */}
-        {user?.isVip ? (
-          <div className="p-3.5 bg-gradient-to-r from-amber-500/15 via-[#231A33] to-purple-500/15 border border-amber-500/40 rounded-xl relative overflow-hidden shadow-lg shadow-amber-950/20">
-            <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="flex items-start justify-between gap-3 relative z-10">
-              <div className="flex items-start gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 text-black flex items-center justify-center font-bold flex-shrink-0 shadow-md shadow-amber-500/20 mt-0.5">
-                  <Crown className="w-5 h-5 text-black" />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
-                      Hội Viên VIP
-                    </span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Đang Kích Hoạt
-                    </span>
-                  </div>
-
-                  <div className="text-sm font-bold text-white flex items-center gap-1.5">
+          {/* Hàng 2: Trạng thái & Thời hạn Hội Viên VIP */}
+          <div className="pt-2.5 flex items-center justify-between gap-2">
+            {user?.isVip ? (
+              <div className="flex items-center justify-between w-full bg-black/40 border border-amber-500/30 rounded-lg p-2 px-3">
+                <div className="min-w-0 pr-2">
+                  <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                    <span>Thời hạn: <span className="text-amber-300 font-extrabold">{formatVipTimeRemaining(user.vipUntil)}</span></span>
+                    <span>Thời hạn VIP: <strong className="text-white font-extrabold">{formatVipTimeRemaining(user.vipUntil)}</strong></span>
                   </div>
-
                   {user.vipUntil && (
-                    <div className="text-[11px] text-[#A1A1AA] flex items-center gap-1 font-mono">
-                      <span>Hết hạn:</span>
-                      <strong className="text-[#E4E4E7] font-semibold">{formatVipExpireDate(user.vipUntil)}</strong>
+                    <div className="text-[10px] text-[#A1A1AA] font-mono mt-0.5 truncate">
+                      Hết hạn lúc: {formatVipExpireDate(user.vipUntil)}
                     </div>
                   )}
-
-                  <div className="text-[10px] text-amber-400/80 pt-0.5 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
-                    <span>Đặc quyền: Mở khóa full tất cả các tập truyện</span>
-                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => {
                     setPendingOrder(null);
                     setIsHistoryOpen(false);
                     setIsRechargeOpen(true);
                   }}
-                  className="py-1.5 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-xs font-bold rounded-lg transition shadow-md shadow-amber-500/20 flex items-center gap-1 active:scale-95 cursor-pointer whitespace-nowrap"
+                  className="py-1 px-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-[11px] font-extrabold rounded-md transition shadow active:scale-95 flex-shrink-0 flex items-center gap-1"
                 >
-                  <Crown className="w-3.5 h-3.5" />
+                  <Crown className="w-3 h-3 fill-black" />
                   <span>Gia hạn VIP</span>
                 </button>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="p-3 bg-[#151520] border border-[#232332] rounded-xl flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#20202E] border border-[#2E2E3E] text-[#71717A] flex items-center justify-center flex-shrink-0">
-                <Crown className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-[#D4D4D8]">Chưa kích hoạt Hội Viên VIP</div>
-                <div className="text-[10px] text-[#71717A]">
-                  Đăng ký 39k/tháng hoặc đổi 40 Điểm = 7 Ngày để đọc Full truyện
+            ) : (
+              <div className="flex items-center justify-between w-full bg-[#12121A] border border-[#222230] rounded-lg p-2 px-3">
+                <div className="text-[11px] text-[#A1A1AA] pr-2">
+                  Chưa có VIP • Mở khóa trọn bộ mọi truyện
                 </div>
+                <button
+                  onClick={() => {
+                    setPendingOrder(null);
+                    setIsHistoryOpen(false);
+                    setIsRechargeOpen(true);
+                  }}
+                  className="py-1 px-2.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 text-[11px] font-bold rounded-md transition active:scale-95 flex-shrink-0"
+                >
+                  Nâng VIP 39k
+                </button>
               </div>
-            </div>
-            <button
-              onClick={() => {
-                setPendingOrder(null);
-                setIsHistoryOpen(false);
-                setIsRechargeOpen(true);
-              }}
-              className="py-1.5 px-2.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 text-[11px] font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap"
-            >
-              Nâng Cấp VIP
-            </button>
+            )}
           </div>
-        )}
+
+          {/* Hàng 3: Ưu đãi đổi 40 Điểm = 7 Ngày VIP (nếu đủ số dư) */}
+          {balance >= 40 && (
+            <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+              <span className="text-[11px] text-amber-300/90 flex items-center gap-1 font-medium truncate pr-2">
+                <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                <span>Ví đủ {balance}đ để đổi gói 7 Ngày VIP</span>
+              </span>
+              <button
+                onClick={() => {
+                  setPendingOrder(null);
+                  setIsHistoryOpen(false);
+                  setIsRechargeOpen(true);
+                }}
+                className="py-0.5 px-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-bold rounded-md transition active:scale-95 cursor-pointer flex-shrink-0"
+              >
+                Đổi ngay 40đ ➔ 7D VIP
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Cuộn nội dung danh sách */}
         <div className="flex-1 overflow-y-auto space-y-3 pr-1 -mr-1">
@@ -394,10 +398,14 @@ export default function PaymentHistoryModal() {
                           ? 'bg-amber-950/60 text-amber-400 border border-amber-600/50'
                           : 'bg-[#1C1C26] text-[#71717A]'
                       }`}>
-                        {item.packageType === 'VIP_39K' ? (
-                          <Crown className="w-4 h-4" />
+                        {item.packageType === 'VIP_39K' || item.packageType === 'EXCHANGE_VIP' ? (
+                          <Crown className="w-4 h-4 text-amber-400" />
+                        ) : item.packageType === 'CHECKIN' ? (
+                          <Gift className="w-4 h-4 text-amber-400" />
+                        ) : item.packageType === 'LUCKY' ? (
+                          <Sparkles className="w-4 h-4 text-purple-400" />
                         ) : (
-                          <Coffee className="w-4 h-4" />
+                          <Coffee className="w-4 h-4 text-emerald-400" />
                         )}
                       </div>
 
@@ -427,7 +435,11 @@ export default function PaymentHistoryModal() {
 
                     <div className="text-right shrink-0">
                       <div className={`font-mono font-bold ${canResume ? 'text-amber-300 text-sm' : 'text-white'}`}>
-                        {item.amountVnd.toLocaleString('vi-VN')} đ
+                        {item.amountVnd === 0 ? (
+                          <span className="text-emerald-400 text-xs font-semibold">Miễn phí</span>
+                        ) : (
+                          `${item.amountVnd.toLocaleString('vi-VN')} đ`
+                        )}
                       </div>
                       <div className="mt-1">
                         {isCompleted ? (
