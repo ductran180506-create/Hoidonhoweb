@@ -7,7 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 const PACKAGE_CONFIG: Record<string, { amount: number; coins: number; vipDays: number; name: string }> = {
   COIN_10K: { amount: 10000, coins: 15, vipDays: 0, name: "Gói 15 Điểm (Ủng hộ 10k)" },
   COIN_20K: { amount: 20000, coins: 25, vipDays: 0, name: "Gói 25 Điểm (Ủng hộ 20k)" },
-  COIN_50K: { amount: 50000, coins: 60, vipDays: 0, name: "Gói 60 Điểm (Ủng hộ 50k)" },
+  COIN_50K: { amount: 50000, coins: 75, vipDays: 0, name: "Gói 75 Điểm (Ủng hộ 50k)" },
   VIP_39K: { amount: 39000, coins: 30, vipDays: 30, name: "Gói Hội Viên VIP 30 Ngày (+ Tặng 30 Điểm)" },
   TIP_COFFEE: { amount: 10000, coins: 15, vipDays: 0, name: "Mời Cà Phê Tác Giả" },
 };

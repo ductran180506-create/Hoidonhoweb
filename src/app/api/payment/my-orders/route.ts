@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
           const packageName = isVip
             ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
             : tx.amount_vnd >= 50000
-            ? '🍕 Gói 60 Điểm (50.000đ)'
+            ? '🍕 Gói 75 Điểm (50.000đ)'
             : tx.amount_vnd >= 20000
             ? '🥤 Gói 25 Điểm (20.000đ)'
             : '☕ Gói 15 Điểm (10.000đ)';
@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
         const packageName = isVip
           ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
           : tx.amountVnd >= 50000
-          ? '🍕 Gói 60 Điểm (50.000đ)'
+          ? '🍕 Gói 75 Điểm (50.000đ)'
           : tx.amountVnd >= 20000
           ? '🥤 Gói 25 Điểm (20.000đ)'
           : '☕ Gói 15 Điểm (10.000đ)';

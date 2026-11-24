@@ -241,7 +241,7 @@ export default function RechargeModal() {
       type: 'COIN_50K', 
       name: '50.000đ', 
       coins: '🍕 Bữa Ăn Sáng (50k)', 
-      note: 'Nhận 60 Điểm đọc truyện', 
+      note: 'Nhận 75 Điểm đọc truyện', 
     },
     { 
       type: 'VIP_39K', 
