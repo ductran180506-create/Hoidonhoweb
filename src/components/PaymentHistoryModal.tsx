@@ -183,16 +183,31 @@ export default function PaymentHistoryModal() {
             </div>
           </div>
 
-          <button
-            onClick={() => {
-              setPendingOrder(null);
-              setIsHistoryOpen(false);
-              setIsRechargeOpen(true);
-            }}
-            className="py-1.5 px-3 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-[11px] font-semibold rounded-lg transition shadow flex items-center gap-1 active:scale-95"
-          >
-            <span>☕ Mời Cà Phê</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            {balance >= 40 && (
+              <button
+                onClick={() => {
+                  setPendingOrder(null);
+                  setIsHistoryOpen(false);
+                  setIsRechargeOpen(true);
+                }}
+                className="py-1.5 px-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-[11px] font-bold rounded-lg transition shadow flex items-center gap-1 active:scale-95 animate-pulse"
+                title="Dùng 40 Điểm đổi 7 Ngày VIP"
+              >
+                <span>👑 Đổi VIP 7D</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setPendingOrder(null);
+                setIsHistoryOpen(false);
+                setIsRechargeOpen(true);
+              }}
+              className="py-1.5 px-3 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-[11px] font-semibold rounded-lg transition shadow flex items-center gap-1 active:scale-95"
+            >
+              <span>☕ Mời Cà Phê</span>
+            </button>
+          </div>
         </div>
 
         {/* Cuộn nội dung danh sách */}

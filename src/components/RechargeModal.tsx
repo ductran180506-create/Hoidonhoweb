@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { X, Check, Loader2, Copy, QrCode, Download, Smartphone, ArrowRight, ShieldCheck, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+import { X, Check, Loader2, Copy, QrCode, Download, Smartphone, ArrowRight, ShieldCheck, Clock, AlertCircle, RefreshCw, Crown } from 'lucide-react';
 
 interface OrderResponse {
   id: string;
@@ -25,9 +25,11 @@ interface OrderResponse {
 }
 
 export default function RechargeModal() {
-  const { isRechargeOpen, setIsRechargeOpen, user, setIsAuthModalOpen, refreshBalance, loginWithGoogle, pendingOrder, setPendingOrder } = useAuth();
+  const { isRechargeOpen, setIsRechargeOpen, user, setIsAuthModalOpen, refreshBalance, loginWithGoogle, pendingOrder, setPendingOrder, balance } = useAuth();
   const [selectedPkg, setSelectedPkg] = useState<'COIN_10K' | 'COIN_20K' | 'COIN_50K' | 'VIP_39K'>('COIN_10K');
   const [loading, setLoading] = useState(false);
+  const [exchangingVip, setExchangingVip] = useState(false);
+  const [exchangeMsg, setExchangeMsg] = useState<{ success: boolean; text: string } | null>(null);
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -35,6 +37,39 @@ export default function RechargeModal() {
   const [copiedType, setCopiedType] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(600); // 10 phút đếm ngược hiển thị (600s)
+
+  const handleExchangeVip = async () => {
+    if (!user) {
+      loginWithGoogle();
+      return;
+    }
+    if (balance < 40) {
+      setExchangeMsg({ success: false, text: `Số dư hiện tại (${balance} Điểm) chưa đủ 40 Điểm để đổi VIP!` });
+      setTimeout(() => setExchangeMsg(null), 4000);
+      return;
+    }
+
+    try {
+      setExchangingVip(true);
+      setExchangeMsg(null);
+      const res = await fetch('/api/wallet/exchange-vip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setExchangeMsg({ success: true, text: data.message || 'Chúc mừng bạn đã kích hoạt 7 Ngày VIP thành công!' });
+        await refreshBalance();
+      } else {
+        setExchangeMsg({ success: false, text: data.message || 'Lỗi khi đổi điểm VIP' });
+      }
+    } catch (e: any) {
+      setExchangeMsg({ success: false, text: e.message || 'Lỗi kết nối máy chủ' });
+    } finally {
+      setExchangingVip(false);
+    }
+  };
 
   // Chỉ mở đơn hàng cụ thể khi người dùng bấm vào đơn chờ trong Lịch Sử
   useEffect(() => {
@@ -299,6 +334,83 @@ export default function RechargeModal() {
                 </button>
               </div>
             )}
+
+            {/* ĐẶC QUYỀN ĐỔI ĐIỂM: 40 Điểm = 7 Ngày VIP */}
+            <div className="p-3 bg-gradient-to-br from-amber-500/15 via-[#181624] to-purple-500/15 border border-amber-500/30 rounded-xl space-y-2 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Crown className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  <div>
+                    <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                      <span>Đổi 40 Điểm = 7 Ngày VIP</span>
+                      <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-black font-extrabold uppercase">
+                        HOT
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-[#A1A1AA] mt-0.5">
+                      {user?.isVip ? 'Đang là VIP (Đổi để cộng dồn thêm +7 ngày)' : 'Đọc không giới hạn toàn bộ kho truyện trong 7 ngày'}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-xs font-bold text-amber-300 font-mono">40 Điểm</div>
+                  {user && <div className="text-[9px] text-[#71717A]">Ví: {balance}đ</div>}
+                </div>
+              </div>
+
+              {exchangeMsg && (
+                <div className={`p-2 rounded-lg text-xs flex items-center gap-1.5 ${exchangeMsg.success ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-300' : 'bg-red-950/60 border border-red-500/40 text-red-300'}`}>
+                  {exchangeMsg.success ? <Check className="w-3.5 h-3.5 flex-shrink-0" /> : <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />}
+                  <span className="text-[11px] leading-tight">{exchangeMsg.text}</span>
+                </div>
+              )}
+
+              {user ? (
+                balance >= 40 ? (
+                  <button
+                    type="button"
+                    onClick={handleExchangeVip}
+                    disabled={exchangingVip}
+                    className="w-full py-2 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-bold rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow active:scale-98"
+                  >
+                    {exchangingVip ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Đang kích hoạt VIP...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Crown className="w-3.5 h-3.5 text-black" />
+                        <span>Đổi Ngay 7 Ngày VIP (Trừ 40 Điểm)</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div className="flex items-center justify-between text-[11px] bg-black/40 px-2.5 py-1.5 rounded-lg border border-white/5">
+                    <span className="text-[#A1A1AA]">
+                      Cần thêm <strong className="text-amber-300 font-mono">{40 - balance} Điểm</strong> nữa
+                    </span>
+                    <span className="text-[10px] text-amber-400 font-medium">
+                      Chọn gói nạp bên dưới ↓
+                    </span>
+                  </div>
+                )
+              ) : (
+                <button
+                  type="button"
+                  onClick={loginWithGoogle}
+                  className="w-full py-1.5 px-3 bg-white/10 hover:bg-white/15 text-white font-medium rounded-lg text-xs transition flex items-center justify-center gap-1"
+                >
+                  <span>Đăng nhập để đổi 40 Điểm lấy VIP</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <div className="h-px flex-1 bg-[#22222B]" />
+              <span className="text-[10px] font-mono text-[#71717A] uppercase">Hoặc Nạp Điểm Qua VietQR</span>
+              <div className="h-px flex-1 bg-[#22222B]" />
+            </div>
 
             <div className="space-y-1.5">
               {packages.map((pkg) => {

@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
 
   let balance = 0;
   let isVip = db.isVip(userId);
+  let vipUntil: string | null = null;
 
   // 1. Kiểm tra từ Supabase users
   try {
@@ -31,23 +32,28 @@ export async function GET(req: NextRequest) {
   } catch (e) {}
 
   // 2. Kiểm tra VIP từ Supabase Auth metadata nếu có
-  if (!isVip) {
-    try {
-      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
-      const vipUntil = authUser?.user?.user_metadata?.vip_until;
-      if (vipUntil && new Date(vipUntil) > new Date()) {
-        isVip = true;
-      }
-    } catch (e) {}
-  }
+  try {
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const auVip = authUser?.user?.user_metadata?.vip_until;
+    if (auVip && new Date(auVip) > new Date()) {
+      isVip = true;
+      vipUntil = auVip;
+    }
+  } catch (e) {}
 
   // 3. Kết hợp với ví Local DB
   const localWallet = db.getWallet(userId);
   balance = Math.max(balance, localWallet.balance || 0);
+  const localUser = db.getUserByPhone?.(userId);
+  if (!vipUntil && localUser?.vipUntil && new Date(localUser.vipUntil) > new Date()) {
+    isVip = true;
+    vipUntil = localUser.vipUntil;
+  }
 
   return NextResponse.json({
     success: true,
     balance,
     isVip,
+    vipUntil,
   });
 }

@@ -55,8 +55,11 @@ export async function GET(req: NextRequest) {
             status = 'expired';
           }
 
+          const isExVip = Boolean(tx.payment_code?.includes('EXCHANGE_VIP') || tx.payment_code?.includes('EX_VIP'));
           const isVip = tx.payment_code?.startsWith('VIP') || tx.amount_vnd === 39000;
-          const packageName = isVip
+          const packageName = isExVip
+            ? '👑 Đổi 40 Điểm ➔ 7 Ngày VIP'
+            : isVip
             ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
             : tx.amount_vnd >= 50000
             ? '🍕 Gói 75 Điểm (50.000đ)'
@@ -110,8 +113,11 @@ export async function GET(req: NextRequest) {
           status = 'expired';
         }
 
+        const isExVip = Boolean(tx.orderCode?.includes('EXCHANGE_VIP') || tx.orderCode?.includes('EX_VIP'));
         const isVip = tx.packageType === 'VIP_39K';
-        const packageName = isVip
+        const packageName = isExVip
+          ? '👑 Đổi 40 Điểm ➔ 7 Ngày VIP'
+          : isVip
           ? '👑 Gói Hội Viên VIP 30 Ngày (+30 Điểm)'
           : tx.amountVnd >= 50000
           ? '🍕 Gói 75 Điểm (50.000đ)'
