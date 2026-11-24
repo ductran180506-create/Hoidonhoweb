@@ -23,19 +23,25 @@ export async function GET(req: NextRequest) {
     } else if (userId) {
       conv = store.conversations.find(c => c.userId === userId) || null;
       if (!conv) {
-        conv = {
-          id: `conv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        // Trả về conversation ảo cho client để hiển thị giao diện chat
+        // TUYỆT ĐỐI KHÔNG lưu vào store cho đến khi khách thực sự nhấn GỬI tin nhắn!
+        const tempConv: SupportConversation = {
+          id: `conv-${userId.replace(/[^a-zA-Z0-9_-]/g, '')}`,
           userId,
           userName: userName || `Độc giả ${userId.slice(-4)}`,
           userContact: userContact || '',
-          lastMessage: 'Cuộc trò chuyện đã được tạo',
+          lastMessage: '',
           lastSender: 'admin',
           unreadAdmin: 0,
           unreadUser: 0,
           updatedAt: new Date().toISOString(),
         };
-        store.conversations.unshift(conv);
-        needSave = true;
+
+        return NextResponse.json({
+          success: true,
+          conversation: tempConv,
+          messages: [],
+        });
       } else {
         if (userName && conv.userName !== userName) {
           conv.userName = userName;

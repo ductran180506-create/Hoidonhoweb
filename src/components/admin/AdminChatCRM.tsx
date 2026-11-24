@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageCircle, Send, ImagePlus, Loader2, Search, 
   User, CheckCheck, RefreshCw, ExternalLink, ShieldCheck, 
-  Crown, Coins, X, Copy, Check, Sparkles, AlertCircle
+  Crown, Coins, X, Copy, Check, Sparkles, AlertCircle, Trash2
 } from 'lucide-react';
 
 interface Conversation {
@@ -143,6 +143,27 @@ export default function AdminChatCRM() {
     navigator.clipboard.writeText(text);
     setCopiedText(text);
     setTimeout(() => setCopiedText(null), 2000);
+  };
+
+  const handleDeleteConv = async (convId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này?')) return;
+    try {
+      const res = await fetch(`/api/chat/conversations?id=${encodeURIComponent(convId)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setConversations(prev => prev.filter(c => c.id !== convId));
+        if (selectedConv?.id === convId) {
+          setSelectedConv(null);
+          setMessages([]);
+        }
+      } else {
+        alert(data.message || 'Lỗi xóa cuộc trò chuyện');
+      }
+    } catch (e) {
+      alert('Lỗi kết nối khi xóa cuộc trò chuyện');
+    }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -425,6 +446,16 @@ export default function AdminChatCRM() {
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteConv(selectedConv.id)}
+                    className="p-1.5 px-2.5 rounded-lg bg-red-950/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 border border-red-800/40 transition active:scale-95 flex items-center gap-1 text-xs cursor-pointer shadow-sm"
+                    title="Xóa cuộc trò chuyện này"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Xóa đoạn chat</span>
+                  </button>
                 </div>
               </div>
 

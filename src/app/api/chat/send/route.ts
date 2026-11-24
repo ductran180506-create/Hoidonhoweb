@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       conv = store.conversations.find(c => c.userId === userId) || null;
       if (!conv) {
         conv = {
-          id: `conv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          id: conversationId || `conv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
           userId,
           userName: userName || `Độc giả ${userId.slice(-4)}`,
           userContact: userContact || '',
