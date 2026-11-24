@@ -6,7 +6,6 @@ import AppLayoutShell from '@/components/AppLayoutShell';
 import AuthModal from '@/components/AuthModal';
 import RechargeModal from '@/components/RechargeModal';
 import CheckInModal from '@/components/CheckInModal';
-import FeedbackModal from '@/components/FeedbackModal';
 import PaymentHistoryModal from '@/components/PaymentHistoryModal';
 import LuckyWheelModal from '@/components/LuckyWheelModal';
 import LiveChatWidget from '@/components/LiveChatWidget';
@@ -46,7 +45,6 @@ export default function RootLayout({
           <RechargeModal />
           <CheckInModal />
           <PaymentHistoryModal />
-          <FeedbackModal />
           <LuckyWheelModal />
           <LiveChatWidget />
         </AuthProvider>
