@@ -67,7 +67,7 @@ export async function fetchRecentSacombankEmails(force = false): Promise<Sacomba
         socket.destroy();
       } catch {}
       finish(results);
-    }, 6500);
+    }, 9500);
 
     let buffer = '';
     let step = 0;
@@ -92,7 +92,11 @@ export async function fetchRecentSacombankEmails(force = false): Promise<Sacomba
       } else if (step === 2 && buffer.includes('A2 OK')) {
         step = 3;
         buffer = '';
-        socket.write('A3 SEARCH SUBJECT "SACOMBANK THONG BAO GIAO DICH PHAT SINH"\r\n');
+        // Chỉ tìm email trong 3 ngày gần nhất để tốc độ phản hồi IMAP nhanh gấp 3 lần
+        const d = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const sinceStr = `${d.getDate()}-${months[d.getMonth()]}-${d.getFullYear()}`;
+        socket.write(`A3 SEARCH SINCE ${sinceStr} SUBJECT "SACOMBANK"\r\n`);
       } else if (step === 3 && buffer.includes('A3 OK')) {
         const match = buffer.match(/\* SEARCH ([0-9 ]+)/);
         if (!match || !match[1].trim()) {
@@ -103,7 +107,7 @@ export async function fetchRecentSacombankEmails(force = false): Promise<Sacomba
           return;
         }
         const ids = match[1].trim().split(/\s+/);
-        const recentIds = ids.slice(-6); // Lấy 6 giao dịch Sacombank mới nhất
+        const recentIds = ids.slice(-12); // Lấy 12 giao dịch Sacombank mới nhất
         step = 4;
         buffer = '';
         socket.write(`A4 FETCH ${recentIds.join(',')} (BODY.PEEK[TEXT])\r\n`);
@@ -207,12 +211,13 @@ export async function syncGmailSacombankPayments(targetOrderCode?: string, force
     if (sbPending && sbPending.length > 0) {
       pendingOrders = sbPending.map((t: any) => {
         const isVip = Boolean(t.payment_code?.startsWith('VIP') || Number(t.amount_vnd) === 39000);
+        const amt = Number(t.amount_vnd) || 10000;
         return {
           id: t.id,
           orderCode: t.payment_code,
           userId: t.user_id,
-          amountVnd: Number(t.amount_vnd) || 10000,
-          coins: Number(t.coins) || (isVip ? 50 : 15),
+          amountVnd: amt,
+          coins: Number(t.coins) || (isVip ? 30 : amt >= 50000 ? 75 : amt >= 20000 ? 25 : 15),
           isVip,
           vipDays: isVip ? 30 : 0,
           createdAt: t.created_at,
@@ -335,20 +340,24 @@ async function creditCompletedOrder(ord: {
 
     // 4. Kích hoạt VIP nếu là gói VIP
     if (ord.isVip && ord.vipDays > 0) {
-      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(ord.userId);
-      let baseDate = new Date();
-      const currentVip = authUser?.user?.user_metadata?.vip_until;
-      if (currentVip && new Date(currentVip) > baseDate) {
-        baseDate = new Date(currentVip);
+      db.addVipDays(ord.userId, ord.vipDays);
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ord.userId);
+      if (isUuid) {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(ord.userId);
+        let baseDate = new Date();
+        const currentVip = authUser?.user?.user_metadata?.vip_until;
+        if (currentVip && new Date(currentVip) > baseDate) {
+          baseDate = new Date(currentVip);
+        }
+        baseDate.setDate(baseDate.getDate() + ord.vipDays);
+        await supabaseAdmin.auth.admin.updateUserById(ord.userId, {
+          user_metadata: {
+            ...(authUser?.user?.user_metadata || {}),
+            is_vip: true,
+            vip_until: baseDate.toISOString(),
+          },
+        });
       }
-      baseDate.setDate(baseDate.getDate() + ord.vipDays);
-      await supabaseAdmin.auth.admin.updateUserById(ord.userId, {
-        user_metadata: {
-          ...(authUser?.user?.user_metadata || {}),
-          is_vip: true,
-          vip_until: baseDate.toISOString(),
-        },
-      });
     }
   } catch (e) {
     console.warn('[Gmail-Sacombank] Lỗi cộng điểm Supabase user:', e);

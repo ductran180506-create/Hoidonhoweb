@@ -259,7 +259,17 @@ export async function POST(req: NextRequest) {
           .eq('id', userId)
           .maybeSingle();
         newBalance = (userRow?.balance || 0) + prize.value;
-        await supabaseAdmin.from('users').update({ balance: newBalance, last_active: new Date().toISOString() }).eq('id', userId);
+        if (userRow) {
+          await supabaseAdmin.from('users').update({ balance: newBalance, last_active: new Date().toISOString() }).eq('id', userId);
+        } else {
+          await supabaseAdmin.from('users').insert({
+            id: userId,
+            phone: userId,
+            balance: newBalance,
+            created_at: new Date().toISOString(),
+            last_active: new Date().toISOString(),
+          });
+        }
 
         await supabaseAdmin.from('transactions').insert({
           id: `rew-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,

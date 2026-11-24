@@ -78,21 +78,8 @@ export async function POST(req: NextRequest) {
       }, { status: 403 });
     }
 
-    // 4. Kiểm tra VIP (Local DB hoặc Supabase users table hoặc Supabase Auth metadata)
+    // 4. Kiểm tra VIP (Local DB hoặc Supabase Auth metadata hoặc lịch sử giao dịch VIP)
     let isVipUser = db.isVip(effectiveUserId);
-
-    if (!isVipUser) {
-      try {
-        const { data: userRow } = await supabaseAdmin
-          .from('users')
-          .select('vip_until')
-          .eq('id', effectiveUserId)
-          .maybeSingle();
-        if (userRow?.vip_until && new Date(userRow.vip_until) > new Date()) {
-          isVipUser = true;
-        }
-      } catch (e) {}
-    }
 
     if (!isVipUser) {
       try {
@@ -101,6 +88,41 @@ export async function POST(req: NextRequest) {
           const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(effectiveUserId);
           const vipUntil = authUser?.user?.user_metadata?.vip_until;
           if (vipUntil && new Date(vipUntil) > new Date()) {
+            isVipUser = true;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!isVipUser) {
+      try {
+        const { data: vipTxs } = await supabaseAdmin
+          .from('transactions')
+          .select('payment_code, amount_vnd, created_at')
+          .eq('user_id', effectiveUserId)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: true });
+
+        if (vipTxs && vipTxs.length > 0) {
+          let calcExpireMs = 0;
+          for (const tx of vipTxs) {
+            const code = (tx.payment_code || '').toUpperCase();
+            let daysToAdd = 0;
+            if (code.startsWith('VIP') || Number(tx.amount_vnd) === 39000) {
+              daysToAdd = 30;
+            } else if (code.includes('EXCHANGE_VIP') || code.includes('EX_VIP')) {
+              daysToAdd = 7;
+            } else if (code.includes('LUCKY_REWARD_VIP_')) {
+              const m = code.match(/LUCKY_REWARD_VIP_(\d+)DAYS/);
+              daysToAdd = m ? parseInt(m[1], 10) : 1;
+            }
+            if (daysToAdd > 0) {
+              const txTime = new Date(tx.created_at).getTime();
+              const baseTime = calcExpireMs > txTime ? calcExpireMs : txTime;
+              calcExpireMs = baseTime + daysToAdd * 24 * 60 * 60 * 1000;
+            }
+          }
+          if (calcExpireMs > Date.now()) {
             isVipUser = true;
           }
         }

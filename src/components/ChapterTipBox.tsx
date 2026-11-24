@@ -39,7 +39,7 @@ export default function ChapterTipBox({
   chapterTitle,
   onTipSuccess,
 }: ChapterTipBoxProps) {
-  const { user } = useAuth();
+  const { user, refreshBalance } = useAuth();
   const [selectedAmount, setSelectedAmount] = useState<number>(10000);
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
   const [customVnd, setCustomVnd] = useState<string>('30000');
@@ -139,6 +139,7 @@ export default function ChapterTipBox({
           setIsSuccess(true);
           setSuccessToast(`🎉 Cảm ơn bạn đã mời tác giả ${effectiveAmount.toLocaleString('vi-VN')}đ tiền cà phê! ❤️`);
           fetchRecentTips();
+          refreshBalance();
           if (onTipSuccess) onTipSuccess();
           setTimeout(() => {
             setQrModalOrder(null);

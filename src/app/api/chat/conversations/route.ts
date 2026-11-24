@@ -40,13 +40,19 @@ export async function GET(req: NextRequest) {
         try {
           const { data: sbUser } = await supabaseAdmin
             .from('users')
-            .select('balance, vip_until')
+            .select('balance')
             .eq('id', c.userId)
             .maybeSingle();
 
-          if (sbUser) {
-            balance = Math.max(balance, sbUser.balance || 0);
-            if (sbUser.vip_until && new Date(sbUser.vip_until) > new Date()) {
+          if (sbUser && typeof sbUser.balance === 'number') {
+            balance = Math.max(balance, sbUser.balance);
+          }
+
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.userId);
+          if (isUuid) {
+            const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(c.userId);
+            const auVip = authUser?.user?.user_metadata?.vip_until;
+            if (auVip && new Date(auVip) > new Date()) {
               isVip = true;
             }
           }
