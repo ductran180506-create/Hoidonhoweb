@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
 import { generateUserToken } from '@/lib/user-auth';
+import { getUserBalanceAndVip } from '@/lib/vip-server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,10 +22,26 @@ export async function POST(req: NextRequest) {
 
     const cleanPhone = phone.trim().replace(/\s+/g, '');
 
-    // Hàm phụ trợ tự động gộp đơn và lượt mở khoá từ phiên khách vãng lai
-    const mergeGuestData = async (targetUserId: string) => {
+    // Hàm phụ trợ tự động gộp đơn, số dư và lượt mở khoá từ phiên khách vãng lai (hoặc mã user- cũ)
+    const mergeGuestData = async (targetUserId: string): Promise<number> => {
+      let guestBalToMerge = 0;
       try {
         if (guestUserId && guestUserId !== targetUserId) {
+          // Lấy số dư từ tài khoản guest/cũ nếu có
+          const { data: guestRow } = await supabaseAdmin
+            .from('users')
+            .select('balance')
+            .eq('id', guestUserId)
+            .maybeSingle();
+
+          if (guestRow && Number(guestRow.balance) > 0) {
+            guestBalToMerge = Number(guestRow.balance);
+            await supabaseAdmin
+              .from('users')
+              .update({ balance: 0 })
+              .eq('id', guestUserId);
+          }
+
           // Chuyển transactions
           await supabaseAdmin
             .from('transactions')
@@ -47,6 +64,7 @@ export async function POST(req: NextRequest) {
       } catch (err) {
         console.warn('Merge guest data warning:', err);
       }
+      return guestBalToMerge;
     };
 
     // 1. Kiểm tra tài khoản trên Supabase và Local DB
@@ -159,7 +177,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Mật khẩu không chính xác' }, { status: 401 });
     }
 
-    await mergeGuestData(cleanPhone);
+    const guestMergedBal = await mergeGuestData(cleanPhone);
 
     let user = localUser;
     if (!user) {
@@ -171,60 +189,31 @@ export async function POST(req: NextRequest) {
           id: cleanPhone,
           phone: cleanPhone,
           pin_code: pin,
-          balance: 0,
+          balance: guestMergedBal,
           created_at: new Date().toISOString(),
           last_active: new Date().toISOString(),
         });
       } catch (e) {}
+    } else if (guestMergedBal > 0) {
+      try {
+        const updatedBal = (Number(sbUser.balance) || 0) + guestMergedBal;
+        await supabaseAdmin
+          .from('users')
+          .update({ balance: updatedBal, last_active: new Date().toISOString() })
+          .eq('id', cleanPhone);
+        sbUser.balance = updatedBal;
+      } catch (e) {}
     }
 
+    const { balance: resolvedBal, isVip, vipUntil } = await getUserBalanceAndVip(cleanPhone);
     const wallet = db.getWallet(cleanPhone);
-    const sbBalance = sbUser?.balance || 0;
-    const balance = Math.max(wallet.balance, sbBalance);
+    const balance = Math.max(wallet.balance, resolvedBal);
     if (balance !== wallet.balance) {
       db.adjustCoins(cleanPhone, balance - wallet.balance);
     }
-
-    let isVip = db.isVip(cleanPhone);
-    let vipUntil = user.vipUntil;
-
-    try {
-      const { data: vipTxs } = await supabaseAdmin
-        .from('transactions')
-        .select('payment_code, amount_vnd, created_at')
-        .eq('user_id', cleanPhone)
-        .eq('status', 'completed')
-        .order('created_at', { ascending: true });
-
-      if (vipTxs && vipTxs.length > 0) {
-        let calcExpireMs = 0;
-        for (const tx of vipTxs) {
-          const code = (tx.payment_code || '').toUpperCase();
-          let daysToAdd = 0;
-          if (code.startsWith('VIP') || Number(tx.amount_vnd) === 39000) {
-            daysToAdd = 30;
-          } else if (code.includes('EXCHANGE_VIP') || code.includes('EX_VIP')) {
-            daysToAdd = 7;
-          } else if (code.includes('LUCKY_REWARD_VIP_')) {
-            const m = code.match(/LUCKY_REWARD_VIP_(\d+)DAYS/);
-            daysToAdd = m ? parseInt(m[1], 10) : 1;
-          }
-          if (daysToAdd > 0) {
-            const txTime = new Date(tx.created_at).getTime();
-            const baseTime = calcExpireMs > txTime ? calcExpireMs : txTime;
-            calcExpireMs = baseTime + daysToAdd * 24 * 60 * 60 * 1000;
-          }
-        }
-        if (calcExpireMs > Date.now()) {
-          isVip = true;
-          const calcIso = new Date(calcExpireMs).toISOString();
-          if (!vipUntil || new Date(calcIso) > new Date(vipUntil)) {
-            vipUntil = calcIso;
-            db.setVip(cleanPhone, calcIso);
-          }
-        }
-      }
-    } catch (e) {}
+    if (vipUntil) {
+      db.setVip(cleanPhone, vipUntil);
+    }
 
     const sessionToken = generateUserToken(cleanPhone);
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
 import { syncGmailSacombankPayments } from '@/lib/gmail-payment';
+import { getUserBalanceAndVip } from '@/lib/vip-server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -67,18 +68,7 @@ export async function GET(req: NextRequest) {
   }
 
   const effectiveUserId = userId || order?.userId || '';
-  const wallet = db.getWallet(effectiveUserId);
-  let balance = wallet.balance || 0;
-  let isVip = db.isVip(effectiveUserId);
-
-  try {
-    const { data: sbUser } = await supabaseAdmin.from('users').select('balance').eq('id', effectiveUserId).maybeSingle();
-    if (sbUser) balance = Math.max(balance, sbUser.balance || 0);
-
-    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(effectiveUserId);
-    const vipUntil = authUser?.user?.user_metadata?.vip_until;
-    if (vipUntil && new Date(vipUntil) > new Date()) isVip = true;
-  } catch (e) {}
+  const { balance, isVip, vipUntil } = await getUserBalanceAndVip(effectiveUserId);
 
   return NextResponse.json({
     success: true,
@@ -87,5 +77,6 @@ export async function GET(req: NextRequest) {
     isExpired,
     balance,
     isVip,
+    vipUntil,
   });
 }

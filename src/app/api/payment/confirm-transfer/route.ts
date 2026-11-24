@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
 import { syncGmailSacombankPayments } from '@/lib/gmail-payment';
+import { getUserBalanceAndVip } from '@/lib/vip-server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -63,19 +64,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Lấy số dư mới nhất trả về cho user
-    const wallet = db.getWallet(effectiveUserId);
-    let balance = wallet.balance || 0;
-    let isVip = db.isVip(effectiveUserId);
-
-    try {
-      const { data: sbUser } = await supabaseAdmin
-        .from('users')
-        .select('balance')
-        .eq('id', effectiveUserId)
-        .maybeSingle();
-      if (sbUser) balance = Math.max(balance, sbUser.balance || 0);
-    } catch {}
+    // 4. Lấy số dư & VIP mới nhất trả về cho user
+    const { balance, isVip, vipUntil } = await getUserBalanceAndVip(effectiveUserId);
 
     return NextResponse.json({
       success: true,
@@ -83,6 +73,7 @@ export async function POST(req: NextRequest) {
       completed: isCompleted,
       balance,
       isVip,
+      vipUntil,
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });

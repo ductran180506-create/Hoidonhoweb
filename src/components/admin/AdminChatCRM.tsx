@@ -241,17 +241,17 @@ export default function AdminChatCRM() {
   return (
     <div className="space-y-4 animate-fadeIn">
       {/* HEADER BANNER */}
-      <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+      <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
         <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span>💬 Hộp Thoại Chăm Sóc Độc Giả 1-1 (Live Chat CRM)</span>
             {conversations.filter(c => c.unreadAdmin > 0).length > 0 && (
-              <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold animate-pulse">
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-rose-100 text-rose-800 border border-rose-300 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/40 font-bold animate-pulse">
                 {conversations.filter(c => c.unreadAdmin > 0).length} độc giả nhắn mới
               </span>
             )}
           </h2>
-          <p className="text-xs text-[#71717A] mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-[#71717A] mt-0.5">
             Trò chuyện trực tiếp 2 chiều với từng độc giả. Độc giả nhắn trên web sẽ hiện ngay tại đây và ngược lại.
           </p>
         </div>
@@ -261,7 +261,7 @@ export default function AdminChatCRM() {
             href="https://zalo.me/0356382978"
             target="_blank"
             rel="noopener noreferrer"
-            className="py-1.5 px-3 bg-[#0068FF]/15 hover:bg-[#0068FF]/25 border border-[#0068FF]/40 text-[#2E8FFF] text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shadow-sm active:scale-95"
+            className="py-1.5 px-3 bg-[#0068FF]/10 hover:bg-[#0068FF]/20 border border-[#0068FF]/30 text-[#0068FF] text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shadow-xs active:scale-95"
           >
             <span>Zalo Hỗ Trợ: 0356.382.978</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -271,7 +271,7 @@ export default function AdminChatCRM() {
             type="button"
             onClick={() => fetchConversations()}
             disabled={loadingConv}
-            className="p-2 rounded-lg bg-[#181824] hover:bg-[#222232] text-[#A1A1AA] hover:text-white border border-[#2D2D3D] transition active:scale-95"
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#181824] dark:hover:bg-[#222232] dark:text-[#A1A1AA] dark:hover:text-white border border-slate-300 dark:border-[#2D2D3D] transition active:scale-95"
             title="Làm mới"
           >
             <RefreshCw className={`w-4 h-4 ${loadingConv ? 'animate-spin' : ''}`} />
@@ -280,36 +280,36 @@ export default function AdminChatCRM() {
       </div>
 
       {/* KHUNG GIAO DIỆN CHAT 2 CỘT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[650px] bg-[#111116] border border-[#1E1E26] rounded-xl overflow-hidden shadow-xl">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[650px] bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl overflow-hidden shadow-sm">
         
         {/* CỘT TRÁI (4 CỘT): DANH SÁCH CUỘC TRÒ CHUYỆN */}
-        <div className="lg:col-span-4 border-r border-[#1E1E26] flex flex-col h-full bg-[#0E0E14]">
+        <div className="lg:col-span-4 border-r border-slate-200 dark:border-[#1E1E26] flex flex-col h-full bg-slate-50 dark:bg-[#0E0E14]">
           {/* Ô tìm kiếm */}
-          <div className="p-3 border-b border-[#1E1E26] bg-[#12121A]">
+          <div className="p-3 border-b border-slate-200 dark:border-[#1E1E26] bg-white dark:bg-[#12121A]">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-3.5 h-3.5 text-slate-400 dark:text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Tìm theo tên, SĐT, User ID..."
-                className="w-full bg-[#0A0A0F] border border-[#222230] focus:border-[#7C5CFC] rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-[#52525B] outline-none transition"
+                className="w-full bg-slate-50 dark:bg-[#0A0A0F] border border-slate-300 dark:border-[#222230] focus:border-indigo-500 dark:focus:border-[#7C5CFC] rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#52525B] outline-none transition"
               />
             </div>
           </div>
 
           {/* Danh sách items */}
-          <div className="flex-1 overflow-y-auto divide-y divide-[#181822]">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-[#181822]">
             {loadingConv && conversations.length === 0 ? (
-              <div className="p-8 text-center text-[#71717A] space-y-2">
-                <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#7C5CFC]" />
+              <div className="p-8 text-center text-slate-400 dark:text-[#71717A] space-y-2">
+                <Loader2 className="w-5 h-5 animate-spin mx-auto text-indigo-600 dark:text-[#7C5CFC]" />
                 <p className="text-xs">Đang tải cuộc trò chuyện...</p>
               </div>
             ) : filteredConversations.length === 0 ? (
-              <div className="p-8 text-center text-[#71717A] space-y-2">
-                <MessageCircle className="w-8 h-8 mx-auto text-[#333344]" />
-                <p className="text-xs font-medium text-white">Chưa có tin nhắn nào</p>
-                <p className="text-[11px] text-[#71717A]">
+              <div className="p-8 text-center text-slate-500 dark:text-[#71717A] space-y-2">
+                <MessageCircle className="w-8 h-8 mx-auto text-slate-300 dark:text-[#333344]" />
+                <p className="text-xs font-semibold text-slate-800 dark:text-white">Chưa có tin nhắn nào</p>
+                <p className="text-[11px] text-slate-500 dark:text-[#71717A]">
                   Khi độc giả bấm vào bong bóng chat trên web để hỏi tình trạng riêng, cuộc trò chuyện sẽ tự động xuất hiện tại đây.
                 </p>
               </div>
@@ -324,29 +324,29 @@ export default function AdminChatCRM() {
                     onClick={() => handleSelectConv(conv)}
                     className={`p-3 transition cursor-pointer flex items-start gap-2.5 relative select-none ${
                       isSelected
-                        ? 'bg-[#181828] border-l-4 border-l-[#7C5CFC]'
+                        ? 'bg-indigo-50/80 border-l-4 border-l-indigo-600 dark:bg-[#181828] dark:border-l-[#7C5CFC]'
                         : hasUnread
-                        ? 'bg-rose-950/20 hover:bg-[#151522]'
-                        : 'hover:bg-[#13131C]'
+                        ? 'bg-rose-50/80 hover:bg-rose-100/50 dark:bg-rose-950/20 dark:hover:bg-[#151522]'
+                        : 'hover:bg-slate-100/70 dark:hover:bg-[#13131C]'
                     }`}
                   >
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#7C5CFC] to-[#4F46E5] text-white font-bold text-xs flex items-center justify-center shadow">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shadow">
                         {conv.userName ? conv.userName[0].toUpperCase() : 'U'}
                       </div>
                       {hasUnread && (
-                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-[#0E0E14] animate-pulse" />
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#0E0E14] animate-pulse" />
                       )}
                     </div>
 
                     {/* Nội dung tóm tắt */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className={`text-xs truncate font-medium ${hasUnread ? 'text-white font-bold' : 'text-[#E4E4E7]'}`}>
+                        <span className={`text-xs truncate font-semibold ${hasUnread ? 'text-slate-900 font-bold' : 'text-slate-800 dark:text-[#E4E4E7]'}`}>
                           {conv.userName}
                         </span>
-                        <span className="text-[10px] text-[#71717A] flex-shrink-0 ml-1">
+                        <span className="text-[10px] text-slate-500 dark:text-[#71717A] flex-shrink-0 ml-1">
                           {new Date(conv.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
@@ -354,22 +354,22 @@ export default function AdminChatCRM() {
                       {/* Badges nhỏ */}
                       <div className="flex items-center gap-1.5 mb-1 text-[10px]">
                         {conv.isVip ? (
-                          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30 flex items-center gap-0.5">
-                            <Crown className="w-2.5 h-2.5" /> VIP
+                          <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30 flex items-center gap-0.5">
+                            <Crown className="w-2.5 h-2.5 text-amber-600" /> VIP
                           </span>
                         ) : null}
-                        <span className="px-1.5 py-0.2 rounded bg-[#1C1C28] text-[#A1A1AA] font-mono border border-white/5">
+                        <span className="px-1.5 py-0.2 rounded bg-slate-200 text-slate-700 dark:bg-[#1C1C28] dark:text-[#A1A1AA] font-mono border border-slate-300 dark:border-white/5 font-semibold">
                           {conv.balance || 0} Điểm
                         </span>
                         {conv.userContact && (
-                          <span className="text-[#71717A] truncate font-mono text-[9px]">
+                          <span className="text-slate-500 dark:text-[#71717A] truncate font-mono text-[9px]">
                             {conv.userContact}
                           </span>
                         )}
                       </div>
 
                       {/* Tin nhắn cuối */}
-                      <p className={`text-[11px] truncate ${hasUnread ? 'text-rose-300 font-semibold' : 'text-[#71717A]'}`}>
+                      <p className={`text-[11px] truncate ${hasUnread ? 'text-rose-700 font-bold' : 'text-slate-600 dark:text-[#71717A]'}`}>
                         {conv.lastSender === 'admin' ? 'Bạn: ' : ''}
                         {conv.lastMessage || 'Đã tạo cuộc trò chuyện'}
                       </p>
@@ -389,44 +389,44 @@ export default function AdminChatCRM() {
         </div>
 
         {/* CỘT PHẢI (8 CỘT): KHUNG TRÒ CHUYỆN CHI TIẾT */}
-        <div className="lg:col-span-8 flex flex-col h-full bg-[#0A0A0F]">
+        <div className="lg:col-span-8 flex flex-col h-full bg-white dark:bg-[#0A0A0F]">
           {selectedConv ? (
             <>
               {/* HEADER CONVERSATION CHI TIẾT */}
-              <div className="p-3.5 bg-[#14141E] border-b border-[#222230] flex items-center justify-between">
+              <div className="p-3.5 bg-slate-50 dark:bg-[#14141E] border-b border-slate-200 dark:border-[#222230] flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#7C5CFC] to-[#4F46E5] text-white font-bold text-xs flex items-center justify-center shadow">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shadow">
                     {selectedConv.userName ? selectedConv.userName[0].toUpperCase() : 'U'}
                   </div>
 
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">{selectedConv.userName}</span>
+                      <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedConv.userName}</span>
                       {selectedConv.isVip ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30 flex items-center gap-1">
-                          <Crown className="w-3 h-3 text-amber-400" /> Hội Viên VIP
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30 flex items-center gap-1">
+                          <Crown className="w-3 h-3 text-amber-600" /> Hội Viên VIP
                         </span>
                       ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/25">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/25 font-medium">
                           Tài khoản thường
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 mt-0.5 text-xs text-[#A1A1AA]">
-                      <span className="flex items-center gap-1 text-amber-400 font-medium">
-                        <Coins className="w-3 h-3" /> Ví: <strong className="text-white font-mono">{selectedConv.balance || 0} Điểm</strong>
+                    <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-600 dark:text-[#A1A1AA]">
+                      <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                        <Coins className="w-3 h-3 text-amber-500" /> Ví: <strong className="text-slate-900 dark:text-white font-mono font-bold">{selectedConv.balance || 0} Điểm</strong>
                       </span>
                       <span>•</span>
-                      <span className="text-[11px] font-mono text-[#71717A] flex items-center gap-1">
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-[#71717A] flex items-center gap-1">
                         ID: {selectedConv.userId}
                         <button
                           type="button"
                           onClick={() => handleCopy(selectedConv.userId)}
-                          className="hover:text-white"
+                          className="hover:text-slate-900 dark:hover:text-white"
                           title="Sao chép ID"
                         >
-                          {copiedText === selectedConv.userId ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          {copiedText === selectedConv.userId ? <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3 h-3" />}
                         </button>
                       </span>
                     </div>
@@ -440,7 +440,7 @@ export default function AdminChatCRM() {
                       href={`https://zalo.me/${selectedConv.userContact.replace(/[^0-9]/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-1.5 px-3 bg-[#0068FF]/15 hover:bg-[#0068FF]/25 border border-[#0068FF]/40 text-[#2E8FFF] text-xs font-semibold rounded-lg transition flex items-center gap-1"
+                      className="py-1.5 px-3 bg-[#0068FF]/10 hover:bg-[#0068FF]/20 border border-[#0068FF]/30 text-[#0068FF] text-xs font-semibold rounded-lg transition flex items-center gap-1"
                     >
                       <span>Mở Zalo Khách</span>
                       <ExternalLink className="w-3 h-3" />
@@ -450,7 +450,7 @@ export default function AdminChatCRM() {
                   <button
                     type="button"
                     onClick={() => handleDeleteConv(selectedConv.id)}
-                    className="p-1.5 px-2.5 rounded-lg bg-red-950/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 border border-red-800/40 transition active:scale-95 flex items-center gap-1 text-xs cursor-pointer shadow-sm"
+                    className="p-1.5 px-2.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 dark:bg-red-950/30 dark:hover:bg-red-900/50 dark:text-red-400 dark:border-red-800/40 transition active:scale-95 flex items-center gap-1 text-xs cursor-pointer shadow-xs"
                     title="Xóa cuộc trò chuyện này"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -460,15 +460,15 @@ export default function AdminChatCRM() {
               </div>
 
               {/* KHUNG NỘI DUNG MESSAGES */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-[#09090D]">
+              <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-100/60 dark:bg-[#09090D]">
                 {loadingMessages ? (
-                  <div className="p-8 text-center text-[#71717A]">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-[#7C5CFC]" />
+                  <div className="p-8 text-center text-slate-400 dark:text-[#71717A]">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-indigo-600 dark:text-[#7C5CFC]" />
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="py-12 text-center text-[#71717A] space-y-2">
-                    <p className="text-xs">Chưa có tin nhắn trong cuộc trò chuyện này.</p>
-                    <p className="text-[11px] text-[#555566]">Hãy gửi tin nhắn đầu tiên bên dưới để bắt đầu trao đổi với độc giả.</p>
+                  <div className="py-12 text-center text-slate-500 dark:text-[#71717A] space-y-2">
+                    <p className="text-xs font-medium text-slate-700 dark:text-white">Chưa có tin nhắn trong cuộc trò chuyện này.</p>
+                    <p className="text-[11px] text-slate-500 dark:text-[#555566]">Hãy gửi tin nhắn đầu tiên bên dưới để bắt đầu trao đổi với độc giả.</p>
                   </div>
                 ) : (
                   messages.map(msg => {
@@ -480,23 +480,23 @@ export default function AdminChatCRM() {
                         className={`flex gap-2.5 ${isAdmin ? 'justify-end' : 'justify-start'}`}
                       >
                         {!isAdmin && (
-                          <div className="w-7 h-7 rounded-full bg-[#181824] border border-[#2D2D3D] text-[10px] text-white font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <div className="w-7 h-7 rounded-full bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#181824] dark:border-[#2D2D3D] text-[10px] dark:text-white font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                             {selectedConv.userName ? selectedConv.userName[0].toUpperCase() : 'U'}
                           </div>
                         )}
 
                         <div className={`max-w-[75%] space-y-1 ${isAdmin ? 'items-end' : 'items-start'}`}>
                           <div
-                            className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
+                            className={`p-3 rounded-2xl text-xs leading-relaxed shadow-xs ${
                               isAdmin
-                                ? 'bg-[#7C5CFC] text-white rounded-tr-sm'
-                                : 'bg-[#181826] border border-[#2A2A3D] text-[#E4E4E7] rounded-tl-sm'
+                                ? 'bg-indigo-600 text-white rounded-tr-sm'
+                                : 'bg-white border border-slate-200 text-slate-900 rounded-tl-sm dark:bg-[#181826] dark:border-[#2A2A3D] dark:text-[#E4E4E7]'
                             }`}
                           >
                             {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
 
                             {msg.imageUrl && (
-                              <div className="mt-2 rounded-lg overflow-hidden border border-white/10 max-h-64">
+                              <div className="mt-2 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 max-h-64">
                                 <img
                                   src={msg.imageUrl}
                                   alt="Ảnh đính kèm"
@@ -507,7 +507,7 @@ export default function AdminChatCRM() {
                             )}
                           </div>
 
-                          <div className={`text-[9px] text-[#71717A] px-1 ${isAdmin ? 'text-right' : 'text-left'}`}>
+                          <div className={`text-[9px] text-slate-500 dark:text-[#71717A] px-1 ${isAdmin ? 'text-right' : 'text-left'}`}>
                             {new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
                               hour: '2-digit',
                               minute: '2-digit',
@@ -528,14 +528,14 @@ export default function AdminChatCRM() {
               </div>
 
               {/* MẪU CÂU TRẢ LỜI NHANH */}
-              <div className="px-3 py-1.5 bg-[#101018] border-t border-[#1C1C28] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
-                <span className="text-[10px] text-[#71717A] flex-shrink-0 font-medium">💬 Mẫu nhanh:</span>
+              <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#101018] border-t border-slate-200 dark:border-[#1C1C28] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
+                <span className="text-[10px] text-slate-500 dark:text-[#71717A] flex-shrink-0 font-medium">💬 Mẫu nhanh:</span>
                 {quickReplies.map((qr, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setReplyText(qr)}
-                    className="px-2.5 py-1 rounded-full bg-[#181824] hover:bg-[#222234] border border-[#2B2B3E] hover:border-[#7C5CFC]/50 text-[#CBD5E1] hover:text-white whitespace-nowrap transition flex-shrink-0 active:scale-95 cursor-pointer"
+                    className="px-2.5 py-1 rounded-full bg-white hover:bg-slate-100 border border-slate-300 hover:border-indigo-400 text-slate-700 hover:text-slate-900 dark:bg-[#181824] dark:hover:bg-[#222234] dark:border-[#2B2B3E] dark:hover:border-[#7C5CFC]/50 dark:text-[#CBD5E1] dark:hover:text-white whitespace-nowrap transition flex-shrink-0 active:scale-95 cursor-pointer shadow-xs"
                   >
                     {qr.slice(0, 32)}...
                   </button>
@@ -544,17 +544,17 @@ export default function AdminChatCRM() {
 
               {/* PREVIEW ẢNH NẾU ADMIN CHỌN GỬI ẢNH */}
               {replyImagePreview && (
-                <div className="px-4 py-2 bg-[#12121A] border-t border-[#20202F] flex items-center justify-between">
+                <div className="px-4 py-2 bg-slate-50 dark:bg-[#12121A] border-t border-slate-200 dark:border-[#20202F] flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#7C5CFC]">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-indigo-500 dark:border-[#7C5CFC]">
                       <img src={replyImagePreview} alt="Preview" className="w-full h-full object-cover" />
                     </div>
-                    <span className="text-xs text-[#A1A1AA]">Đính kèm 1 ảnh phản hồi</span>
+                    <span className="text-xs text-slate-600 dark:text-[#A1A1AA]">Đính kèm 1 ảnh phản hồi</span>
                   </div>
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="p-1 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition"
+                    className="p-1 rounded-full bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white transition"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -562,8 +562,8 @@ export default function AdminChatCRM() {
               )}
 
               {/* FORM TRẢ LỜI CỦA ADMIN */}
-              <form onSubmit={handleSendReply} className="p-3 bg-[#12121A] border-t border-[#222230] flex items-center gap-2">
-                <label className="p-2.5 text-[#71717A] hover:text-[#7C5CFC] rounded-xl hover:bg-[#1A1A26] transition cursor-pointer flex-shrink-0" title="Đính kèm ảnh">
+              <form onSubmit={handleSendReply} className="p-3 bg-white dark:bg-[#12121A] border-t border-slate-200 dark:border-[#222230] flex items-center gap-2">
+                <label className="p-2.5 text-slate-500 hover:text-indigo-600 rounded-xl hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-[#7C5CFC] dark:hover:bg-[#1A1A26] transition cursor-pointer flex-shrink-0" title="Đính kèm ảnh">
                   <ImagePlus className="w-5 h-5" />
                   <input
                     ref={fileInputRef}
@@ -579,14 +579,14 @@ export default function AdminChatCRM() {
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
                   placeholder={`Nhắn tin trả lời độc giả ${selectedConv.userName}...`}
-                  className="flex-1 bg-[#0A0A0F] border border-[#242436] focus:border-[#7C5CFC] rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#52525B] outline-none transition"
+                  className="flex-1 bg-slate-50 dark:bg-[#0A0A0F] border border-slate-300 dark:border-[#242436] focus:border-indigo-500 dark:focus:border-[#7C5CFC] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#52525B] outline-none transition"
                   disabled={sending}
                 />
 
                 <button
                   type="submit"
                   disabled={sending || (!replyText.trim() && !replyImage)}
-                  className="py-2.5 px-4 bg-[#7C5CFC] hover:bg-[#6D4CF0] disabled:opacity-40 text-white font-semibold rounded-xl text-xs transition flex items-center gap-1.5 flex-shrink-0 shadow active:scale-95"
+                  className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#7C5CFC] dark:hover:bg-[#6D4CF0] disabled:opacity-40 text-white font-semibold rounded-xl text-xs transition flex items-center gap-1.5 flex-shrink-0 shadow active:scale-95"
                 >
                   {sending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

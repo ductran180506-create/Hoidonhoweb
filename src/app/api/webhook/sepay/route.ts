@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
+import { addUserVipDaysOnSupabase } from '@/lib/vip-server';
 
 /**
  * Endpoint tiếp nhận Webhook biến động số dư tự động từ SePay
@@ -12,14 +13,11 @@ export async function POST(req: NextRequest) {
     const authHeader = req.headers.get('authorization') || req.headers.get('x-sepay-api-key');
     const configuredSecret = process.env.SEPAY_WEBHOOK_SECRET || 'sepay_sec_2026_hoidonho';
 
-    console.log('[SePay Webhook Triggered]');
-    console.log(' - Auth Header:', authHeader);
-
-    // Nếu SePay gửi Authorization header, kiểm tra chữ ký xác thực
-    if (authHeader && configuredSecret) {
-      const cleanToken = authHeader.replace(/^(Apikey|Bearer)\s+/i, '').trim();
-      if (cleanToken !== configuredSecret && cleanToken !== 'sepay_sec_2026_hoidonho') {
-        console.warn(' - [CẢNH BÁO] Chữ ký Webhook không khớp:', cleanToken, 'so với cấu hình:', configuredSecret);
+    // Bắt buộc phải có chữ ký xác thực hợp lệ từ SePay (chống giả mạo request cộng tiền)
+    if (configuredSecret) {
+      const cleanToken = (authHeader || '').replace(/^(Apikey|Bearer)\s+/i, '').trim();
+      if (!cleanToken || (cleanToken !== configuredSecret && cleanToken !== 'sepay_sec_2026_hoidonho')) {
+        console.warn(' - [CẢNH BÁO] Chữ ký Webhook thiếu hoặc không khớp:', cleanToken);
         return NextResponse.json(
           { success: false, message: 'Chữ ký Webhook không hợp lệ' },
           { status: 401 }
@@ -63,20 +61,21 @@ export async function POST(req: NextRequest) {
       const { data: pendingTxs } = await supabaseAdmin
         .from('transactions')
         .select('*')
-        .eq('status', 'pending');
+        .in('status', ['pending', 'processing']);
 
       const matchedTx = (pendingTxs || []).find((t: any) =>
         t.payment_code && upperContent.includes(t.payment_code.toUpperCase())
       );
 
       if (matchedTx) {
-        const isVip = matchedTx.payment_code.startsWith('VIP');
+        const isVip = Boolean(matchedTx.payment_code?.startsWith('VIP') || Number(matchedTx.amount_vnd) === 39000);
+        const amt = Number(matchedTx.amount_vnd) || 10000;
         orderToComplete = {
           id: matchedTx.id,
           orderCode: matchedTx.payment_code,
           userId: matchedTx.user_id,
-          amountVnd: matchedTx.amount_vnd,
-          coins: matchedTx.coins || (isVip ? 50 : 20),
+          amountVnd: amt,
+          coins: Number(matchedTx.coins) || (isVip ? 30 : amt >= 50000 ? 75 : amt >= 20000 ? 25 : 15),
           isVip,
           vipDays: isVip ? 30 : 0,
           createdAt: matchedTx.created_at,
@@ -90,7 +89,7 @@ export async function POST(req: NextRequest) {
     if (!orderToComplete) {
       const allOrders = db.getAllOrders();
       const localMatched = allOrders.find(o =>
-        o.status === 'pending' && upperContent.includes(o.orderCode.toUpperCase())
+        (o.status === 'pending' || o.status === 'processing') && upperContent.includes(o.orderCode.toUpperCase())
       );
       if (localMatched) {
         const isVip = localMatched.packageType === 'VIP_39K' || (localMatched.vipDaysReceived || 0) > 0;
@@ -159,14 +158,23 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // 7. CẬP NHẬT TRẠNG THÁI TRANSACTION & CỘNG ĐIỂM NGƯỜI DÙNG TRÊN SUPABASE (100% SUPABASE-FIRST)
+    // 7. CẬP NHẬT TRẠNG THÁI TRANSACTION & CỘNG ĐIỂM NGƯỜI DÙNG TRÊN SUPABASE (CHỐNG CỘNG TRÙNG 100%)
     let newBalance = 0;
     try {
-      // Đánh dấu transaction thành công
-      await supabaseAdmin
+      // Đánh dấu transaction thành công (Chỉ update nếu vẫn đang pending/processing)
+      const { data: updatedRows, error: updateErr } = await supabaseAdmin
         .from('transactions')
         .update({ status: 'completed' })
-        .eq('payment_code', orderToComplete.orderCode);
+        .eq('payment_code', orderToComplete.orderCode)
+        .in('status', ['pending', 'processing'])
+        .select('id');
+
+      if (!updateErr && (!updatedRows || updatedRows.length === 0)) {
+        return NextResponse.json({
+          success: true,
+          message: 'Đơn hàng đã được xử lý bởi tiến trình khác (Chống cộng trùng OK)',
+        });
+      }
 
       // Lấy số dư hiện tại của user trong Supabase
       const { data: user } = await supabaseAdmin
@@ -194,29 +202,9 @@ export async function POST(req: NextRequest) {
           });
       }
 
-      // Kích hoạt VIP trên Supabase Auth nếu là gói VIP
+      // Kích hoạt VIP cho mọi loại user (cả Google lẫn Tên/SĐT)
       if (orderToComplete.isVip) {
-        try {
-          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(orderToComplete.userId);
-          if (authUser?.user) {
-            const currentVipUntil = authUser.user.user_metadata?.vip_until;
-            const now = new Date();
-            let exp = now;
-            if (currentVipUntil && new Date(currentVipUntil) > now) {
-              exp = new Date(currentVipUntil);
-            }
-            exp.setDate(exp.getDate() + (orderToComplete.vipDays || 30));
-
-            await supabaseAdmin.auth.admin.updateUserById(orderToComplete.userId, {
-              user_metadata: {
-                ...(authUser.user.user_metadata || {}),
-                vip_until: exp.toISOString(),
-              },
-            });
-          }
-        } catch (authErr) {
-          console.warn('Lỗi update VIP Supabase Auth:', authErr);
-        }
+        await addUserVipDaysOnSupabase(orderToComplete.userId, orderToComplete.vipDays || 30);
       }
     } catch (sbErr) {
       console.error('Lỗi sync webhook sang Supabase:', sbErr);
@@ -253,8 +241,8 @@ export async function GET(req: NextRequest) {
 
   const host = req.headers.get('host') || '';
   const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
-  const isAdmin = isAuthorizedAdmin(req);
-  const isMasterKey = secretKey === (process.env.ADMIN_SECRET_KEY || 'hdn_sec_token_99a8b7c6d5e4f3a2b1');
+  const isAdmin = await isAuthorizedAdmin(req);
+  const isMasterKey = Boolean(secretKey && secretKey === (process.env.ADMIN_SECRET_KEY || 'hdn_sec_token_99a8b7c6d5e4f3a2b1'));
   const isDev = process.env.NODE_ENV !== 'production';
 
   if (!isLocalhost && !isAdmin && !isMasterKey && !isDev) {

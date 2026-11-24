@@ -143,37 +143,37 @@ export default function PaymentHistoryModal() {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/85 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-[510px] p-5 bg-[#111116] border border-[#22222B] rounded-2xl shadow-2xl space-y-3.5 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/80 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-[510px] p-5 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#22222B] rounded-2xl shadow-2xl space-y-3.5 max-h-[92vh] flex flex-col text-slate-800 dark:text-white">
         {/* Nút đóng */}
         <button
           onClick={() => setIsHistoryOpen(false)}
-          className="absolute top-4 right-4 p-1.5 text-[#71717A] hover:text-white hover:bg-[#1C1C26] rounded-lg transition"
+          className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-[#1C1C26] rounded-lg transition"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Tiêu đề */}
         <div className="flex items-center gap-2.5 pr-8 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-[#7C5CFC]/15 border border-[#7C5CFC]/30 flex items-center justify-center text-[#7C5CFC]">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-[#7C5CFC]/15 border border-indigo-200 dark:border-[#7C5CFC]/30 flex items-center justify-center text-indigo-600 dark:text-[#7C5CFC]">
             <Receipt className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-semibold text-base text-white">Tài Khoản & Lịch Sử Nạp</h3>
-            <p className="text-[11px] text-[#71717A]">
+            <h3 className="font-semibold text-base text-slate-900 dark:text-white">Tài Khoản & Lịch Sử Nạp</h3>
+            <p className="text-[11px] text-slate-500 dark:text-[#71717A]">
               Thông tin hội viên, thời hạn VIP và biến động điểm nạp
             </p>
           </div>
         </div>
 
         {/* KHỐI HỒ SƠ TÀI KHOẢN & VIP TẬP TRUNG (KHÔNG BỊ CO CẮT, ĐẸP SANG TRỌNG) */}
-        <div className={`p-3.5 sm:p-4 rounded-xl border flex-shrink-0 transition relative shadow-lg ${
+        <div className={`p-3.5 sm:p-4 rounded-xl border flex-shrink-0 transition relative shadow-sm ${
           user?.isVip
-            ? 'bg-gradient-to-b from-[#1C1628] via-[#161424] to-[#12121A] border-amber-500/40 shadow-amber-950/20'
-            : 'bg-gradient-to-b from-[#171722] to-[#111116] border-[#252536]'
+            ? 'bg-gradient-to-b from-amber-50 to-amber-100/40 dark:from-[#1C1628] dark:via-[#161424] dark:to-[#12121A] border-amber-300 dark:border-amber-500/40 shadow-amber-950/20'
+            : 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-[#171722] dark:to-[#111116] border-slate-200 dark:border-[#252536]'
         }`}>
           {/* Hàng 1: Avatar, Tên & Nút Nạp Điểm */}
-          <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/5">
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-white/5">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative flex-shrink-0">
                 {user?.avatar ? (
@@ -184,7 +184,7 @@ export default function PaymentHistoryModal() {
                   </div>
                 )}
                 {user?.isVip && (
-                  <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-black shadow ring-2 ring-[#12121A]">
+                  <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-black shadow ring-2 ring-white dark:ring-[#12121A]">
                     <Crown className="w-2.5 h-2.5 fill-black text-black" />
                   </div>
                 )}
@@ -192,7 +192,7 @@ export default function PaymentHistoryModal() {
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h4 className="font-bold text-xs sm:text-sm text-white truncate max-w-[150px] sm:max-w-[200px]">
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate max-w-[150px] sm:max-w-[200px]">
                     {user?.name || user?.phone || 'Độc Giả'}
                   </h4>
                   {user?.isVip ? (
@@ -201,15 +201,15 @@ export default function PaymentHistoryModal() {
                       <span>VIP</span>
                     </span>
                   ) : (
-                    <span className="flex-shrink-0 px-1.5 py-0.2 rounded text-[9px] font-medium bg-[#222230] text-[#A1A1AA] border border-white/5">
+                    <span className="flex-shrink-0 px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-200 dark:bg-[#222230] text-slate-700 dark:text-[#A1A1AA] border border-slate-300 dark:border-white/5">
                       Thường
                     </span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1 text-[11px] text-amber-400 font-medium mt-0.5">
+                <div className="flex items-center gap-1 text-[11px] text-slate-700 dark:text-amber-400 font-medium mt-0.5">
                   <Coins className="w-3 h-3 text-[#F59E0B]" />
-                  <span>Số dư ví: <strong className="text-white font-mono">{balance}</strong> Điểm</span>
+                  <span>Số dư ví: <strong className="text-amber-600 dark:text-white font-mono font-bold">{balance}</strong> Điểm</span>
                 </div>
               </div>
             </div>
@@ -232,14 +232,14 @@ export default function PaymentHistoryModal() {
           {/* Hàng 2: Trạng thái & Thời hạn Hội Viên VIP */}
           <div className="pt-2.5 flex items-center justify-between gap-2">
             {user?.isVip ? (
-              <div className="flex items-center justify-between w-full bg-black/40 border border-amber-500/30 rounded-lg p-2 px-3">
+              <div className="flex items-center justify-between w-full bg-amber-100/50 dark:bg-black/40 border border-amber-300 dark:border-amber-500/30 rounded-lg p-2 px-3">
                 <div className="min-w-0 pr-2">
-                  <div className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                    <span>Thời hạn VIP: <strong className="text-white font-extrabold">{formatVipTimeRemaining(user.vipUntil)}</strong></span>
+                  <div className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />
+                    <span>Thời hạn VIP: <strong className="text-amber-900 dark:text-white font-extrabold">{formatVipTimeRemaining(user.vipUntil)}</strong></span>
                   </div>
                   {user.vipUntil && (
-                    <div className="text-[10px] text-[#A1A1AA] font-mono mt-0.5 truncate">
+                    <div className="text-[10px] text-slate-600 dark:text-[#A1A1AA] font-mono mt-0.5 truncate">
                       Hết hạn lúc: {formatVipExpireDate(user.vipUntil)}
                     </div>
                   )}
@@ -258,8 +258,8 @@ export default function PaymentHistoryModal() {
                 </button>
               </div>
             ) : (
-              <div className="flex items-center justify-between w-full bg-[#12121A] border border-[#222230] rounded-lg p-2 px-3">
-                <div className="text-[11px] text-[#A1A1AA] pr-2">
+              <div className="flex items-center justify-between w-full bg-white dark:bg-[#12121A] border border-slate-200 dark:border-[#222230] rounded-lg p-2 px-3">
+                <div className="text-[11px] text-slate-600 dark:text-[#A1A1AA] pr-2">
                   Chưa có VIP • Mở khóa trọn bộ mọi truyện
                 </div>
                 <button
@@ -268,7 +268,7 @@ export default function PaymentHistoryModal() {
                     setIsHistoryOpen(false);
                     setIsRechargeOpen(true);
                   }}
-                  className="py-1 px-2.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 text-[11px] font-bold rounded-md transition active:scale-95 flex-shrink-0"
+                  className="py-1 px-2.5 bg-amber-500 hover:bg-amber-600 dark:bg-gradient-to-r dark:from-amber-500/20 dark:to-orange-500/20 dark:hover:from-amber-500/30 dark:hover:to-orange-500/30 border border-amber-500/40 text-white dark:text-amber-300 text-[11px] font-bold rounded-md transition active:scale-95 flex-shrink-0 shadow-xs"
                 >
                   Nâng VIP 39k
                 </button>
@@ -278,9 +278,9 @@ export default function PaymentHistoryModal() {
 
           {/* Hàng 3: Ưu đãi đổi 40 Điểm = 7 Ngày VIP (nếu đủ số dư) */}
           {balance >= 40 && (
-            <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-              <span className="text-[11px] text-amber-300/90 flex items-center gap-1 font-medium truncate pr-2">
-                <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+            <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-white/5 flex items-center justify-between text-xs">
+              <span className="text-[11px] text-amber-800 dark:text-amber-300/90 flex items-center gap-1 font-medium truncate pr-2">
+                <Sparkles className="w-3 h-3 text-amber-500 dark:text-amber-400 flex-shrink-0" />
                 <span>Ví đủ {balance}đ để đổi gói 7 Ngày VIP</span>
               </span>
               <button
@@ -289,7 +289,7 @@ export default function PaymentHistoryModal() {
                   setIsHistoryOpen(false);
                   setIsRechargeOpen(true);
                 }}
-                className="py-0.5 px-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-bold rounded-md transition active:scale-95 cursor-pointer flex-shrink-0"
+                className="py-0.5 px-2 bg-amber-500 hover:bg-amber-600 dark:bg-gradient-to-r dark:from-amber-500/20 dark:to-orange-500/20 dark:hover:from-amber-500/30 dark:hover:to-orange-500/30 border border-amber-400 dark:border-amber-500/40 text-white dark:text-amber-300 text-[10px] font-bold rounded-md transition active:scale-95 cursor-pointer flex-shrink-0 shadow-xs"
               >
                 Đổi ngay 40đ ➔ 7D VIP
               </button>
@@ -300,14 +300,14 @@ export default function PaymentHistoryModal() {
         {/* Cuộn nội dung danh sách */}
         <div className="flex-1 overflow-y-auto space-y-3 pr-1 -mr-1">
           {/* Bộ lọc tabs */}
-          <div className="flex items-center justify-between border-b border-[#1C1C26] pb-2">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#1C1C26] pb-2">
+            <div className="flex items-center gap-1 flex-wrap">
               <button
                 onClick={() => setFilter('all')}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
                   filter === 'all'
-                    ? 'bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-indigo-600 text-white font-bold shadow-xs dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border dark:border-[#7C5CFC]/40'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                 }`}
               >
                 Tất cả ({orders.length})
@@ -316,8 +316,8 @@ export default function PaymentHistoryModal() {
                 onClick={() => setFilter('completed')}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
                   filter === 'completed'
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-emerald-600 text-white font-bold shadow-xs dark:bg-emerald-500/15 dark:text-emerald-400 dark:border dark:border-emerald-500/30'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                 }`}
               >
                 Thành công ({orders.filter(o => o.status === 'completed').length})
@@ -326,8 +326,8 @@ export default function PaymentHistoryModal() {
                 onClick={() => setFilter('pending')}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
                   filter === 'pending'
-                    ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-amber-600 text-white font-bold shadow-xs dark:bg-amber-500/15 dark:text-amber-400 dark:border dark:border-amber-500/30'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                 }`}
               >
                 Đang chờ ({orders.filter(o => o.status === 'pending' || o.status === 'processing').length})
@@ -336,8 +336,8 @@ export default function PaymentHistoryModal() {
                 onClick={() => setFilter('expired')}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
                   filter === 'expired'
-                    ? 'bg-zinc-800/80 text-zinc-300 border border-zinc-700/80'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-slate-700 text-white font-bold shadow-xs dark:bg-zinc-800/80 dark:text-zinc-300 dark:border dark:border-zinc-700/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                 }`}
               >
                 Đã hết hạn ({orders.filter(o => o.status === 'expired').length})
@@ -347,17 +347,17 @@ export default function PaymentHistoryModal() {
             <button
               onClick={fetchOrders}
               disabled={loading}
-              className="p-1 text-[#71717A] hover:text-white rounded transition"
+              className="p-1 text-slate-500 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white rounded transition"
               title="Làm mới"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#7C5CFC]' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-indigo-600 dark:text-[#7C5CFC]' : ''}`} />
             </button>
           </div>
 
           {/* Danh sách các đơn (Đơn đang chờ / đang xử lý hiện ngay tại đây, click vào mở lại) */}
           <div className="space-y-2">
             {filteredOrders.length === 0 ? (
-              <div className="py-8 text-center text-[#71717A] text-xs">
+              <div className="py-8 text-center text-slate-500 dark:text-[#71717A] text-xs">
                 {loading ? 'Đang tải lịch sử giao dịch...' : 'Chưa có giao dịch nào trong mục này.'}
               </div>
             ) : (
@@ -382,51 +382,51 @@ export default function PaymentHistoryModal() {
                     onClick={() => canResume && handleResume(item)}
                     className={`p-3 rounded-xl flex items-center justify-between text-xs transition ${
                       isProcessing
-                        ? 'bg-[#161528] border-2 border-[#7C5CFC]/70 hover:border-[#A78BFA] cursor-pointer shadow-md'
+                        ? 'bg-indigo-50/70 dark:bg-[#161528] border-2 border-indigo-500 dark:border-[#7C5CFC]/70 hover:border-indigo-600 cursor-pointer shadow-md'
                         : canResume
-                        ? 'bg-[#181520] border-2 border-amber-500/60 hover:border-amber-400 hover:bg-[#201B2B] cursor-pointer shadow-md'
-                        : 'bg-[#0E0E14] border border-[#1E1E28] hover:border-[#2C2C3C]'
+                        ? 'bg-amber-50/70 dark:bg-[#181520] border-2 border-amber-500 dark:border-amber-500/60 hover:border-amber-600 hover:bg-amber-100/50 cursor-pointer shadow-md'
+                        : 'bg-white dark:bg-[#0E0E14] border border-slate-200 dark:border-[#1E1E28] hover:border-slate-300 dark:hover:border-[#2C2C3C] shadow-xs'
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                         isCompleted
-                          ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/40'
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40'
                           : isProcessing
-                          ? 'bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40'
+                          ? 'bg-indigo-100 text-indigo-700 border border-indigo-300 dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border-[#7C5CFC]/40'
                           : canResume
-                          ? 'bg-amber-950/60 text-amber-400 border border-amber-600/50'
-                          : 'bg-[#1C1C26] text-[#71717A]'
+                          ? 'bg-amber-100 text-amber-700 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-600/50'
+                          : 'bg-slate-100 text-slate-600 dark:bg-[#1C1C26] dark:text-[#71717A]'
                       }`}>
                         {item.packageType === 'VIP_39K' || item.packageType === 'EXCHANGE_VIP' ? (
-                          <Crown className="w-4 h-4 text-amber-400" />
+                          <Crown className="w-4 h-4 text-amber-500" />
                         ) : item.packageType === 'CHECKIN' ? (
-                          <Gift className="w-4 h-4 text-amber-400" />
+                          <Gift className="w-4 h-4 text-amber-500" />
                         ) : item.packageType === 'LUCKY' ? (
-                          <Sparkles className="w-4 h-4 text-purple-400" />
+                          <Sparkles className="w-4 h-4 text-purple-500" />
                         ) : (
-                          <Coffee className="w-4 h-4 text-emerald-400" />
+                          <Coffee className="w-4 h-4 text-emerald-500" />
                         )}
                       </div>
 
                       <div>
-                        <div className="font-semibold text-white text-xs flex items-center gap-1.5">
+                        <div className="font-semibold text-slate-900 dark:text-white text-xs flex items-center gap-1.5">
                           <span>{item.packageName}</span>
-                          <span className="font-mono text-emerald-400">+{item.coinsReceived} Điểm</span>
+                          <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">+{item.coinsReceived} Điểm</span>
                         </div>
-                        <div className="text-[10px] text-[#71717A] mt-0.5 flex items-center gap-2">
-                          <span>Mã: <strong className="font-mono text-[#D4D4D8]">{item.orderCode}</strong></span>
+                        <div className="text-[10px] text-slate-500 dark:text-[#71717A] mt-0.5 flex items-center gap-2">
+                          <span>Mã: <strong className="font-mono text-slate-700 dark:text-[#D4D4D8]">{item.orderCode}</strong></span>
                           <span>•</span>
                           <span>{dateStr}</span>
                         </div>
                         {isProcessing ? (
-                          <div className="text-[10px] text-[#A78BFA] font-semibold mt-1 flex items-center gap-1">
-                            <RefreshCw className="w-3 h-3 animate-spin text-[#A78BFA]" />
+                          <div className="text-[10px] text-indigo-600 dark:text-[#A78BFA] font-semibold mt-1 flex items-center gap-1">
+                            <RefreshCw className="w-3 h-3 animate-spin text-indigo-600 dark:text-[#A78BFA]" />
                             <span>Đang đối chiếu Gmail Sacombank để cộng điểm ↗</span>
                           </div>
                         ) : canResume ? (
-                          <div className="text-[10px] text-amber-300 font-semibold mt-1 flex items-center gap-1">
-                            <QrCode className="w-3 h-3 text-amber-400" />
+                          <div className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold mt-1 flex items-center gap-1">
+                            <QrCode className="w-3 h-3 text-amber-500 dark:text-amber-400" />
                             <span>Bấm vào đây để mở lại mã QR thanh toán ↗</span>
                           </div>
                         ) : null}
@@ -434,30 +434,30 @@ export default function PaymentHistoryModal() {
                     </div>
 
                     <div className="text-right shrink-0">
-                      <div className={`font-mono font-bold ${canResume ? 'text-amber-300 text-sm' : 'text-white'}`}>
+                      <div className={`font-mono font-bold ${canResume ? 'text-amber-600 dark:text-amber-300 text-sm' : 'text-slate-900 dark:text-white'}`}>
                         {item.amountVnd === 0 ? (
-                          <span className="text-emerald-400 text-xs font-semibold">Miễn phí</span>
+                          <span className="text-emerald-600 dark:text-emerald-400 text-xs font-semibold">Miễn phí</span>
                         ) : (
                           `${item.amountVnd.toLocaleString('vi-VN')} đ`
                         )}
                       </div>
                       <div className="mt-1">
                         {isCompleted ? (
-                          <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/40 px-2 py-0.5 rounded">
                             Thành công ✅
                           </span>
                         ) : isProcessing ? (
-                          <span className="text-[10px] font-bold text-[#A78BFA] bg-[#7C5CFC]/20 border border-[#7C5CFC]/40 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
-                            <RefreshCw className="w-2.5 h-2.5 animate-spin text-[#A78BFA]" />
+                          <span className="text-[10px] font-bold text-indigo-700 dark:text-[#A78BFA] bg-indigo-100 dark:bg-[#7C5CFC]/20 border border-indigo-300 dark:border-[#7C5CFC]/40 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                            <RefreshCw className="w-2.5 h-2.5 animate-spin text-indigo-600 dark:text-[#A78BFA]" />
                             <span>Đang xử lý...</span>
                           </span>
                         ) : canResume ? (
-                          <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm animate-pulse">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-500/40 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm animate-pulse">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                             <span>Đang chờ ({formatCountdown(item.remainingSec)})</span>
                           </span>
                         ) : (
-                          <span className="text-[10px] text-[#71717A] bg-[#181822] px-1.5 py-0.5 rounded">
+                          <span className="text-[10px] text-slate-500 dark:text-[#71717A] bg-slate-100 dark:bg-[#181822] px-1.5 py-0.5 rounded">
                             Đã hết hạn
                           </span>
                         )}
@@ -471,13 +471,13 @@ export default function PaymentHistoryModal() {
         </div>
 
         {/* Chân modal */}
-        <div className="pt-2 border-t border-[#1C1C26] flex items-center justify-between text-[11px] text-[#71717A]">
+        <div className="pt-2 border-t border-slate-200 dark:border-[#1C1C26] flex items-center justify-between text-[11px] text-slate-500 dark:text-[#71717A]">
           <span>Gặp sự cố chuyển tiền?</span>
           <a
             href="https://www.tiktok.com/@carrot.tia"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#7C5CFC] hover:underline"
+            className="text-indigo-600 dark:text-[#7C5CFC] hover:underline font-medium"
           >
             Nhắn hỗ trợ TikTok @carrot.tia ↗
           </a>

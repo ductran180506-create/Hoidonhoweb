@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { db } from '@/lib/db';
+import { addUserVipDaysOnSupabase } from '@/lib/vip-server';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -285,10 +286,6 @@ export async function POST(req: NextRequest) {
       }
     } else if (prize.type === 'vip' && prize.value > 0) {
       isVip = true;
-      const nowMs = Date.now();
-      const addMs = prize.value * 24 * 60 * 60 * 1000;
-
-      let currentVipExpire = 0;
       try {
         const { data: userRow } = await supabaseAdmin
           .from('users')
@@ -296,25 +293,20 @@ export async function POST(req: NextRequest) {
           .eq('id', userId)
           .maybeSingle();
         newBalance = userRow?.balance || 0;
-      } catch (e) {}
-
-      // Lấy vip_until hiện tại nếu có
-      try {
-        const authRes = await supabaseAdmin.auth.admin.getUserById(userId);
-        const auVip = authRes.data?.user?.user_metadata?.vip_until;
-        if (auVip && new Date(auVip).getTime() > nowMs) {
-          currentVipExpire = new Date(auVip).getTime();
+        if (!userRow) {
+          await supabaseAdmin.from('users').insert({
+            id: userId,
+            phone: userId,
+            balance: 0,
+            created_at: new Date().toISOString(),
+            last_active: new Date().toISOString(),
+          });
         }
       } catch (e) {}
 
-      const newVipTime = currentVipExpire > nowMs ? currentVipExpire + addMs : nowMs + addMs;
-      vipUntil = new Date(newVipTime).toISOString();
+      vipUntil = await addUserVipDaysOnSupabase(userId, prize.value);
 
       try {
-        await supabaseAdmin.auth.admin.updateUserById(userId, {
-          user_metadata: { vip_until: vipUntil },
-        });
-
         await supabaseAdmin.from('transactions').insert({
           id: `vip-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
           user_id: userId,

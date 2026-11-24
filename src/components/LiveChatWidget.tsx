@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { 
   MessageCircle, X, Send, ImagePlus, Loader2, 
@@ -25,6 +26,8 @@ interface Conversation {
 }
 
 export default function LiveChatWidget() {
+  const pathname = usePathname();
+  const isHiddenRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/maintenance');
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -85,8 +88,9 @@ export default function LiveChatWidget() {
     }
   };
 
-  // Khởi tạo & Polling tin nhắn mới
+  // Khởi tạo & Polling tin nhắn mới (Không chạy ở trang Admin/Bảo trì)
   useEffect(() => {
+    if (isHiddenRoute) return;
     fetchMessages();
 
     // Polling mỗi 3.5 giây khi mở chat, hoặc 15 giây khi đóng chat
@@ -96,7 +100,7 @@ export default function LiveChatWidget() {
     }, intervalTime);
 
     return () => clearInterval(interval);
-  }, [isOpen, user?.id]);
+  }, [isOpen, user?.id, isHiddenRoute]);
 
   useEffect(() => {
     if (isOpen) {
@@ -168,6 +172,8 @@ export default function LiveChatWidget() {
     }
   };
 
+  if (isHiddenRoute) return null;
+
   return (
     <>
       {/* 1. NÚT BONG BÓNG NỔI GÓC PHẢI MÀN HÌNH */}
@@ -202,28 +208,28 @@ export default function LiveChatWidget() {
 
       {/* 2. CỬA SỔ HỘP CHAT 1-1 */}
       {isOpen && (
-        <div className="fixed bottom-16 right-3 sm:bottom-24 sm:right-6 z-50 w-[calc(100vw-24px)] sm:w-[380px] h-[520px] max-h-[82vh] bg-[#101017] border border-[#262638] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn">
+        <div className="fixed bottom-16 right-3 sm:bottom-24 sm:right-6 z-50 w-[calc(100vw-24px)] sm:w-[380px] h-[520px] max-h-[82vh] bg-white dark:bg-[#101017] border border-slate-200 dark:border-[#262638] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-slate-800 dark:text-white">
           
           {/* HEADER CHAT */}
-          <div className="bg-[#161624] border-b border-[#242436] p-3.5 flex items-center justify-between">
+          <div className="bg-slate-50 dark:bg-[#161624] border-b border-slate-200 dark:border-[#242436] p-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="relative">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-purple-600 p-0.5 flex items-center justify-center shadow">
-                  <div className="w-full h-full bg-[#111118] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-full h-full bg-white dark:bg-[#111118] rounded-full flex items-center justify-center text-xs font-bold">
                     🥕
                   </div>
                 </div>
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#161624]" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-50 dark:border-[#161624]" />
               </div>
 
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-white">Tác Giả @carrot.tia</span>
-                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">Tác Giả @carrot.tia</span>
+                  <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 font-bold border border-amber-300 dark:border-amber-500/30">
                     Admin
                   </span>
                 </div>
-                <div className="text-[10px] text-emerald-400 flex items-center gap-1">
+                <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
                   <span>Trực tuyến</span> • <span>Hỗ trợ 1-1</span>
                 </div>
               </div>
@@ -232,7 +238,7 @@ export default function LiveChatWidget() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 text-[#71717A] hover:text-white rounded-lg transition"
+                className="p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-[#1E1E2A] rounded-lg transition cursor-pointer"
                 title="Thu nhỏ"
               >
                 <X className="w-4 h-4" />
@@ -241,14 +247,14 @@ export default function LiveChatWidget() {
           </div>
 
           {/* THANH KẾT NỐI NHANH (ZALO & TIKTOK) */}
-          <div className="bg-[#12121C] px-3 py-2 border-b border-[#1E1E2E] flex items-center justify-between gap-2 text-xs">
+          <div className="bg-slate-100/70 dark:bg-[#12121C] px-3 py-2 border-b border-slate-200 dark:border-[#1E1E2E] flex items-center justify-between gap-2 text-xs">
             <a
               href="https://zalo.me/0356382978"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 py-1.5 px-2 bg-[#0068FF]/15 hover:bg-[#0068FF]/25 border border-[#0068FF]/40 text-[#2E8FFF] rounded-lg transition flex items-center justify-center gap-1.5 font-medium text-[11px] active:scale-95"
+              className="flex-1 py-1.5 px-2 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 dark:bg-[#0068FF]/15 dark:hover:bg-[#0068FF]/25 dark:border-[#0068FF]/40 dark:text-[#2E8FFF] rounded-lg transition flex items-center justify-center gap-1.5 font-bold text-[11px] active:scale-95 shadow-xs"
             >
-              <span className="font-bold">Zalo:</span> <span>0356.382.978</span>
+              <span>Zalo:</span> <span>0356.382.978</span>
               <ExternalLink className="w-3 h-3" />
             </a>
 
@@ -256,30 +262,30 @@ export default function LiveChatWidget() {
               href="https://www.tiktok.com/@carrot.tia"
               target="_blank"
               rel="noopener noreferrer"
-              className="py-1.5 px-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-lg transition flex items-center gap-1 text-[11px] font-medium active:scale-95"
+              className="py-1.5 px-2.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 dark:bg-white/5 dark:hover:bg-white/10 dark:border-white/10 dark:text-white rounded-lg transition flex items-center gap-1 text-[11px] font-semibold active:scale-95 shadow-xs"
             >
               <span>TikTok</span>
-              <ExternalLink className="w-3 h-3 text-[#71717A]" />
+              <ExternalLink className="w-3 h-3 text-slate-400 dark:text-[#71717A]" />
             </a>
           </div>
 
           {/* KHUNG NỘI DUNG TIN NHẮN */}
-          <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-[#0A0A0F]">
+          <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-slate-50 dark:bg-[#0A0A0F]">
             {/* Tin nhắn chào mừng mặc định */}
             <div className="flex gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#181824] border border-[#2D2D3D] text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+              <div className="w-7 h-7 rounded-full bg-white dark:bg-[#181824] border border-slate-200 dark:border-[#2D2D3D] text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
                 🥕
               </div>
               <div className="max-w-[82%] space-y-1">
-                <div className="p-3 bg-[#181826] border border-[#29293D] rounded-2xl rounded-tl-sm text-xs text-[#E4E4E7] leading-relaxed shadow-sm">
-                  <p className="font-semibold text-amber-300 mb-1 flex items-center gap-1">
+                <div className="p-3 bg-white dark:bg-[#181826] border border-slate-200 dark:border-[#29293D] rounded-2xl rounded-tl-sm text-xs text-slate-800 dark:text-[#E4E4E7] leading-relaxed shadow-sm">
+                  <p className="font-bold text-amber-600 dark:text-amber-300 mb-1 flex items-center gap-1">
                     <span>Xin chào bạn!</span>
                   </p>
                   <p>
                     Mình là Tác giả <strong>@carrot.tia</strong> 👋. Nếu bạn có tình trạng riêng (cần hỗ trợ nạp điểm, kích hoạt VIP, lỗi mở truyện hay muốn trao đổi công việc), cứ nhắn trực tiếp tại đây nhé!
                   </p>
                 </div>
-                <div className="text-[9px] text-[#71717A] px-1">Tự động trả lời</div>
+                <div className="text-[9px] text-slate-400 dark:text-[#71717A] px-1 font-medium">Tự động trả lời</div>
               </div>
             </div>
 
@@ -293,7 +299,7 @@ export default function LiveChatWidget() {
                   className={`flex gap-2 ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
                   {!isUser && (
-                    <div className="w-7 h-7 rounded-full bg-[#181824] border border-[#2D2D3D] text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded-full bg-white dark:bg-[#181824] border border-slate-200 dark:border-[#2D2D3D] text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-xs">
                       🥕
                     </div>
                   )}
@@ -302,14 +308,14 @@ export default function LiveChatWidget() {
                     <div
                       className={`p-3 rounded-2xl text-xs leading-relaxed shadow-sm ${
                         isUser
-                          ? 'bg-[#7C5CFC] text-white rounded-tr-sm'
-                          : 'bg-[#181826] border border-[#29293D] text-[#E4E4E7] rounded-tl-sm'
+                          ? 'bg-indigo-600 text-white rounded-tr-sm shadow-indigo-500/20 font-medium'
+                          : 'bg-white dark:bg-[#181826] border border-slate-200 dark:border-[#29293D] text-slate-800 dark:text-[#E4E4E7] rounded-tl-sm'
                       }`}
                     >
                       {msg.content && <p className="whitespace-pre-wrap break-words">{msg.content}</p>}
 
                       {msg.imageUrl && (
-                        <div className="mt-2 rounded-lg overflow-hidden border border-white/10 max-h-48">
+                        <div className="mt-2 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 max-h-48">
                           <img
                             src={msg.imageUrl}
                             alt="Ảnh đính kèm"
@@ -321,7 +327,7 @@ export default function LiveChatWidget() {
                     </div>
 
                     <div
-                      className={`text-[9px] text-[#71717A] px-1 ${
+                      className={`text-[9px] text-slate-400 dark:text-[#71717A] px-1 font-mono ${
                         isUser ? 'text-right' : 'text-left'
                       }`}
                     >
@@ -340,17 +346,17 @@ export default function LiveChatWidget() {
 
           {/* PREVIEW ẢNH NẾU ĐANG CHỌN */}
           {imagePreview && (
-            <div className="px-3 pt-2 bg-[#12121A] border-t border-[#20202F] flex items-center justify-between">
+            <div className="px-3 pt-2 bg-white dark:bg-[#12121A] border-t border-slate-200 dark:border-[#20202F] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg overflow-hidden border border-[#7C5CFC]">
+                <div className="w-10 h-10 rounded-lg overflow-hidden border border-indigo-500 dark:border-[#7C5CFC]">
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                 </div>
-                <span className="text-[11px] text-[#A1A1AA]">Đã chọn 1 ảnh</span>
+                <span className="text-[11px] text-slate-600 dark:text-[#A1A1AA] font-medium">Đã chọn 1 ảnh</span>
               </div>
               <button
                 type="button"
                 onClick={handleRemoveImage}
-                className="p-1 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition"
+                className="p-1 rounded-full bg-red-100 text-red-600 hover:bg-red-500 hover:text-white dark:bg-red-500/20 dark:text-red-400 transition"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -358,8 +364,8 @@ export default function LiveChatWidget() {
           )}
 
           {/* FORM NHẬP TIN NHẮN */}
-          <form onSubmit={handleSendMessage} className="p-2.5 bg-[#12121A] border-t border-[#222233] flex items-center gap-1.5">
-            <label className="p-2 text-[#71717A] hover:text-[#7C5CFC] rounded-lg hover:bg-[#1A1A26] transition cursor-pointer flex-shrink-0" title="Gửi ảnh">
+          <form onSubmit={handleSendMessage} className="p-2.5 bg-white dark:bg-[#12121A] border-t border-slate-200 dark:border-[#222233] flex items-center gap-1.5">
+            <label className="p-2 text-slate-500 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-[#7C5CFC] dark:hover:bg-[#1A1A26] transition cursor-pointer flex-shrink-0" title="Gửi ảnh">
               <ImagePlus className="w-4 h-4" />
               <input
                 ref={fileInputRef}
@@ -375,14 +381,14 @@ export default function LiveChatWidget() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Nhập tin nhắn với tác giả..."
-              className="flex-1 bg-[#0A0A0F] border border-[#242436] focus:border-[#7C5CFC] rounded-xl px-3 py-2 text-xs text-white placeholder-[#52525B] outline-none transition"
+              className="flex-1 bg-slate-50 dark:bg-[#0A0A0F] border border-slate-300 dark:border-[#242436] focus:border-indigo-500 dark:focus:border-[#7C5CFC] rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#52525B] outline-none transition"
               disabled={sending}
             />
 
             <button
               type="submit"
               disabled={sending || (!inputText.trim() && !selectedImage)}
-              className="p-2 bg-[#7C5CFC] hover:bg-[#6D4CF0] disabled:opacity-40 text-white rounded-xl transition flex-shrink-0 active:scale-95"
+              className="p-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#7C5CFC] dark:hover:bg-[#6D4CF0] disabled:opacity-40 text-white rounded-xl transition flex-shrink-0 active:scale-95 shadow-xs cursor-pointer"
             >
               {sending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

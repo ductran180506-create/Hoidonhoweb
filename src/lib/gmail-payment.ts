@@ -1,6 +1,7 @@
 import tls from 'tls';
 import { db } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase';
+import { addUserVipDaysOnSupabase } from '@/lib/vip-server';
 
 export interface SacombankEmailTx {
   uid: string;
@@ -338,26 +339,9 @@ async function creditCompletedOrder(ord: {
       });
     }
 
-    // 4. Kích hoạt VIP nếu là gói VIP
+    // 4. Kích hoạt VIP nếu là gói VIP (hỗ trợ cả tài khoản Google lẫn tài khoản Tên/SĐT)
     if (ord.isVip && ord.vipDays > 0) {
-      db.addVipDays(ord.userId, ord.vipDays);
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ord.userId);
-      if (isUuid) {
-        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(ord.userId);
-        let baseDate = new Date();
-        const currentVip = authUser?.user?.user_metadata?.vip_until;
-        if (currentVip && new Date(currentVip) > baseDate) {
-          baseDate = new Date(currentVip);
-        }
-        baseDate.setDate(baseDate.getDate() + ord.vipDays);
-        await supabaseAdmin.auth.admin.updateUserById(ord.userId, {
-          user_metadata: {
-            ...(authUser?.user?.user_metadata || {}),
-            is_vip: true,
-            vip_until: baseDate.toISOString(),
-          },
-        });
-      }
+      await addUserVipDaysOnSupabase(ord.userId, ord.vipDays);
     }
   } catch (e) {
     console.warn('[Gmail-Sacombank] Lỗi cộng điểm Supabase user:', e);

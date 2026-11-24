@@ -45,10 +45,10 @@ h1, h2, h3, h4, h5, h6, .font-headline {
   user-select: none;
 }
 
-/* Scrollbar tối giản theo tông MangaVerse */
+/* Scrollbar tối giản theo tông MangaVerse mặc định (Dark Mode) */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 /* Tối ưu trải nghiệm chạm trên điện thoại (Mobile Touch Experience) */
@@ -69,9 +69,17 @@ button, a, input, select {
   border-radius: 9999px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: #8B5CF6;
+}
+
 /* Ẩn thanh cuộn cho Slider lướt ngang */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Ngăn trình duyệt đổi màu xanh nhạt khi autofill */
@@ -83,16 +91,8 @@ input:-webkit-autofill:active {
   -webkit-text-fill-color: #FFFFFF !important;
   transition: background-color 5000s ease-in-out 0s;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
-::-webkit-scrollbar-thumb:hover {
-  background: #8B5CF6;
-}
-
-/* Thanh trượt rõ ràng cho danh sách ảnh slide trang Admin */
+/* Thanh trượt rõ ràng cho danh sách ảnh slide trang Admin (Dark Mode) */
 .admin-slider-scroll::-webkit-scrollbar {
   height: 10px !important;
   display: block !important;
@@ -116,9 +116,10 @@ input:-webkit-autofill:active {
   scrollbar-color: #7C5CFC #12121A !important;
 }
 
-/* Thanh cuộn dọc thẩm mỹ cho bảng dữ liệu trang Admin */
+/* Thanh cuộn dọc/ngang cho bảng dữ liệu trang Admin (Dark Mode) */
 .admin-table-scroll::-webkit-scrollbar {
   width: 6px !important;
+  height: 6px !important;
   display: block !important;
 }
 .admin-table-scroll::-webkit-scrollbar-track {
@@ -135,4 +136,338 @@ input:-webkit-autofill:active {
 .admin-table-scroll {
   scrollbar-width: thin !important;
   scrollbar-color: #2E2E42 #0B0B10 !important;
+}
+
+/* ========================================================================= */
+/* MASTER LIGHT MODE SYSTEM (ÁP DỤNG KHI HTML CÓ CLASS "light")              */
+/* ========================================================================= */
+
+html.light {
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --border-color: #E2E8F0;
+  --text-main: #0F172A;
+  --text-muted: #475569;
+  background-color: #F8FAFC !important;
+}
+
+html.light body {
+  color: #0F172A !important;
+  background-color: #F8FAFC !important;
+}
+
+/* 1. TOÀN BỘ NỀN CONTAINER TỐI CHUYỂN SANG TRẮNG / XÁM TRANG NHÃ */
+html.light .bg-\[\#0B0F19\],
+html.light .bg-\[\#0B0B10\],
+html.light .bg-\[\#0C0C12\],
+html.light .bg-\[\#0B0B0E\],
+html.light .bg-slate-950 {
+  background-color: #F8FAFC !important;
+}
+
+html.light .bg-\[\#121826\],
+html.light .bg-\[\#111116\],
+html.light .bg-\[\#0E0E14\],
+html.light .bg-\[\#121118\],
+html.light .bg-\[\#121218\],
+html.light .bg-\[\#14141D\],
+html.light .bg-\[\#0A0A0D\],
+html.light .bg-\[\#0A0A0E\],
+html.light .bg-\[\#111118\] {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-\[\#161622\],
+html.light .bg-\[\#181820\],
+html.light .bg-\[\#181824\],
+html.light .bg-\[\#1A1A24\],
+html.light .bg-\[\#1A1A26\],
+html.light .bg-\[\#1C1C26\],
+html.light .bg-\[\#1F1F2C\],
+html.light .bg-\[\#171722\],
+html.light .bg-\[\#222230\],
+html.light .bg-\[\#222232\],
+html.light .bg-\[\#201B2B\],
+html.light .bg-\[\#14141B\],
+html.light .bg-\[\#14141E\],
+html.light .bg-\[\#161528\],
+html.light .bg-\[\#181520\] {
+  background-color: #F8FAFC !important;
+}
+
+/* 2. VIỀN ĐEN/TỐI CHUYỂN SANG XÁM BẢNG SLATE-200 DỊU MẮT */
+html.light .border-\[\#1F293D\],
+html.light .border-\[\#1E1E26\],
+html.light .border-\[\#1E1E28\],
+html.light .border-\[\#1E1E2B\],
+html.light .border-\[\#22222B\],
+html.light .border-\[\#22222E\],
+html.light .border-\[\#232330\],
+html.light .border-\[\#232332\],
+html.light .border-\[\#252536\],
+html.light .border-\[\#262636\],
+html.light .border-\[\#272733\],
+html.light .border-\[\#272738\],
+html.light .border-\[\#282836\],
+html.light .border-\[\#2A2A3A\],
+html.light .border-\[\#2B2B38\],
+html.light .border-\[\#2B2B3E\],
+html.light .border-\[\#2C2C3C\],
+html.light .border-\[\#2C2C3D\],
+html.light .border-\[\#2E2E3C\],
+html.light .border-\[\#2E2E42\],
+html.light .border-\[\#2F2F45\],
+html.light .border-\[\#383848\],
+html.light .border-\[\#1A1A24\]\/60,
+html.light .border-white\/5,
+html.light .border-white\/10,
+html.light .divide-\[\#1C1C24\],
+html.light .divide-\[\#1C1C26\] {
+  border-color: #E2E8F0 !important;
+}
+
+/* 3. ĐẦU BẢNG & HÀNG TRONG BẢNG DỮ LIỆU ADMIN */
+html.light thead.bg-\[\#111116\],
+html.light th.bg-\[\#111116\],
+html.light thead,
+html.light th {
+  background-color: #F8FAFC !important;
+  color: #334155 !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light tr.hover\:bg-\[\#14141B\]:hover,
+html.light tr:hover {
+  background-color: #F1F5F9 !important;
+}
+
+/* 4. CHỮ VÀ TIÊU ĐỀ RÕ NÉT TRÊN NỀN SÁNG */
+html.light .text-white {
+  color: #0F172A !important;
+}
+
+/* Không ép màu chữ than cho các nút có nền màu đậm (primary buttons) */
+html.light .bg-indigo-600 .text-white,
+html.light .bg-indigo-500 .text-white,
+html.light .bg-\[\#7C5CFC\] .text-white,
+html.light .bg-emerald-600 .text-white,
+html.light .bg-rose-500 .text-white,
+html.light .bg-red-500 .text-white,
+html.light .bg-purple-600 .text-white,
+html.light button.bg-\[\#7C5CFC\],
+html.light button.bg-indigo-600,
+html.light button.bg-emerald-600 {
+  color: #FFFFFF !important;
+}
+
+html.light .text-\[\#71717A\],
+html.light .text-\[\#A1A1AA\],
+html.light .text-\[\#94A3B8\],
+html.light .text-\[\#9CA3AF\],
+html.light .text-\[\#64748B\],
+html.light .text-\[\#9E9EA8\],
+html.light .text-\[\#52525B\] {
+  color: #475569 !important;
+}
+
+html.light .text-\[\#D4D4D8\],
+html.light .text-\[\#E4E4E7\],
+html.light .text-\[\#CBD5E1\] {
+  color: #1E293B !important;
+}
+
+/* 5. CÁC Ô INPUT, TEXTAREA & SELECT */
+html.light input,
+html.light select,
+html.light textarea {
+  color: #0F172A !important;
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Ngăn autofill làm xám ô input trên nền sáng */
+html.light input:-webkit-autofill,
+html.light input:-webkit-autofill:hover, 
+html.light input:-webkit-autofill:focus, 
+html.light input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 40px #FFFFFF inset !important;
+  -webkit-text-fill-color: #0F172A !important;
+}
+
+/* 6. SIDEBAR ADMIN (Thanh điều hướng) */
+html.light aside {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light aside div,
+html.light aside header,
+html.light aside nav {
+  border-color: #E2E8F0 !important;
+}
+
+html.light aside button {
+  color: #334155 !important;
+}
+
+html.light aside button:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+/* 7. BADGE / PILL TRONG SIDEBAR & BẢNG DỮ LIỆU ĐẢM BẢO TƯƠNG PHẢN CAO */
+html.light aside .bg-\[\#222232\],
+html.light aside span.font-mono.rounded-full,
+html.light nav[aria-label="Thanh điều hướng di động"] span.font-mono {
+  background-color: #F1F5F9 !important;
+  color: #1E293B !important;
+  border: 1px solid #CBD5E1 !important;
+}
+
+/* Badge Màu Hồng (Wheel, Lượt quay...) */
+html.light .text-pink-300,
+html.light .text-pink-400 {
+  color: #BE185D !important; /* Pink-700 đậm đà */
+}
+html.light .bg-pink-500\/10,
+html.light .bg-pink-500\/15,
+html.light .bg-pink-500\/20,
+html.light .bg-pink-500\/30 {
+  background-color: #FCE7F3 !important;
+  color: #9D174D !important;
+  border-color: #F472B6 !important;
+}
+
+/* Badge Màu Tím (Feedback, Thông báo...) */
+html.light .text-purple-300,
+html.light .text-purple-400,
+html.light .text-\[\#C4B5FD\],
+html.light .text-\[\#A78BFA\] {
+  color: #6D28D9 !important; /* Purple-700 */
+}
+html.light .bg-purple-500\/10,
+html.light .bg-purple-500\/15,
+html.light .bg-purple-500\/20,
+html.light .bg-purple-500\/30 {
+  background-color: #F3E8FF !important;
+  color: #581C87 !important;
+  border-color: #C084FC !important;
+}
+
+/* Badge Màu Vàng/Cam (Chờ duyệt, Điểm, Cảnh báo...) */
+html.light .text-amber-300,
+html.light .text-amber-400 {
+  color: #B45309 !important; /* Amber-700 */
+}
+html.light .bg-amber-500\/10,
+html.light .bg-amber-500\/15,
+html.light .bg-amber-500\/20,
+html.light .bg-amber-500\/30 {
+  background-color: #FEF3C7 !important;
+  color: #92400E !important;
+  border-color: #FCD34D !important;
+}
+
+/* Badge Màu Xanh Lá (Thành công, Doanh thu, Đã nạp...) */
+html.light .text-emerald-400,
+html.light .text-emerald-300 {
+  color: #047857 !important; /* Emerald-700 */
+}
+html.light .bg-emerald-500\/10,
+html.light .bg-emerald-500\/15,
+html.light .bg-emerald-500\/20,
+html.light .bg-emerald-500\/30,
+html.light .bg-emerald-950\/40,
+html.light .bg-emerald-950\/60,
+html.light .bg-emerald-950\/70 {
+  background-color: #D1FAE5 !important;
+  color: #065F46 !important;
+  border-color: #6EE7B7 !important;
+}
+
+/* 8. FOOTER VÀ BANNERS TRANG CHỦ & ĐỌC TRUYỆN */
+html.light footer {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+html.light footer .text-white {
+  color: #0F172A !important;
+}
+html.light footer .text-\[\#A1A1AA\],
+html.light footer .text-\[\#71717A\] {
+  color: #475569 !important;
+}
+
+/* StoryCard Badges (#code & số tập) */
+html.light .story-code-tag,
+html.light .story-chaps-badge,
+html.light .bg-black\/85 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+/* Banners trang chủ */
+html.light .lucky-wheel-banner,
+html.light .resume-reading-banner {
+  background-image: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 50%, #FAF5FF 100%) !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* 9. SCROLLBARS TRÊN TOÀN BỘ TRANG VÀ BẢNG ADMIN (TRIỆT TIÊU THANH CUỘN ĐEN) */
+html.light,
+html:not(.dark),
+html.light *,
+html:not(.dark) *,
+html.light ::-webkit-scrollbar,
+html:not(.dark) ::-webkit-scrollbar {
+  scrollbar-color: #CBD5E1 #F1F5F9 !important;
+}
+
+html.light ::-webkit-scrollbar-track,
+html:not(.dark) ::-webkit-scrollbar-track,
+html.light *::-webkit-scrollbar-track,
+html:not(.dark) *::-webkit-scrollbar-track,
+html.light .admin-table-scroll::-webkit-scrollbar-track,
+html:not(.dark) .admin-table-scroll::-webkit-scrollbar-track,
+html.light .admin-slider-scroll::-webkit-scrollbar-track,
+html:not(.dark) .admin-slider-scroll::-webkit-scrollbar-track {
+  background: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light ::-webkit-scrollbar-thumb,
+html:not(.dark) ::-webkit-scrollbar-thumb,
+html.light *::-webkit-scrollbar-thumb,
+html:not(.dark) *::-webkit-scrollbar-thumb,
+html.light .admin-table-scroll::-webkit-scrollbar-thumb,
+html:not(.dark) .admin-table-scroll::-webkit-scrollbar-thumb,
+html.light .admin-slider-scroll::-webkit-scrollbar-thumb,
+html:not(.dark) .admin-slider-scroll::-webkit-scrollbar-thumb {
+  background: #CBD5E1 !important;
+  border-radius: 9999px !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover,
+html:not(.dark) ::-webkit-scrollbar-thumb:hover,
+html.light *::-webkit-scrollbar-thumb:hover,
+html:not(.dark) *::-webkit-scrollbar-thumb:hover,
+html.light .admin-table-scroll::-webkit-scrollbar-thumb:hover,
+html:not(.dark) .admin-table-scroll::-webkit-scrollbar-thumb:hover,
+html.light .admin-slider-scroll::-webkit-scrollbar-thumb:hover,
+html:not(.dark) .admin-slider-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8 !important;
+}
+
+html.light .admin-table-scroll,
+html:not(.dark) .admin-table-scroll,
+html.light .admin-slider-scroll,
+html:not(.dark) .admin-slider-scroll {
+  scrollbar-color: #CBD5E1 #F1F5F9 !important;
 }

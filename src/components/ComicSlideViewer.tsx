@@ -211,14 +211,14 @@ export default function ComicSlideViewer({
     <div className="space-y-2.5">
       {/* THANH CHỌN CHẾ ĐỘ ĐỌC: LƯỚT SLIDE HOẶC CUỘN DỌC */}
       <div className="flex items-center justify-between px-1 text-xs">
-        <div className="inline-flex items-center bg-[#14141B] p-0.5 rounded-lg border border-[#22222E]">
+        <div className="inline-flex items-center bg-slate-100 dark:bg-[#14141B] p-0.5 rounded-lg border border-slate-200 dark:border-[#22222E]">
           <button
             type="button"
             onClick={() => setViewMode('slide')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
               viewMode === 'slide'
-                ? 'bg-[#7C5CFC] text-white shadow-sm'
-                : 'text-[#A1A1AA] hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-xs dark:bg-[#7C5CFC]'
+                : 'text-slate-600 hover:text-slate-900 dark:text-[#A1A1AA] dark:hover:text-white'
             }`}
           >
             <Columns className="w-3 h-3" />
@@ -227,10 +227,10 @@ export default function ComicSlideViewer({
           <button
             type="button"
             onClick={() => setViewMode('scroll')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer ${
               viewMode === 'scroll'
-                ? 'bg-[#7C5CFC] text-white shadow-sm'
-                : 'text-[#A1A1AA] hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-xs dark:bg-[#7C5CFC]'
+                : 'text-slate-600 hover:text-slate-900 dark:text-[#A1A1AA] dark:hover:text-white'
             }`}
           >
             <Rows className="w-3 h-3" />
@@ -239,16 +239,16 @@ export default function ComicSlideViewer({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-[#71717A] hidden sm:inline">
+          <span className="text-[11px] text-slate-500 dark:text-[#71717A] hidden sm:inline font-medium">
             100% Ảnh Đầy Đủ (Không Cắt)
           </span>
           <button
             onClick={() => setIsFullscreen(true)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-[#14141B] hover:bg-[#1E1E28] border border-[#22222E] rounded-lg text-[11px] text-[#D4D4D8] hover:text-white transition active:scale-95"
+            className="flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 dark:bg-[#14141B] dark:hover:bg-[#1E1E28] dark:border-[#22222E] rounded-lg text-[11px] dark:text-[#D4D4D8] dark:hover:text-white transition active:scale-95 cursor-pointer shadow-xs font-semibold"
             title="Xem tràn toàn màn hình (Phím F)"
           >
-            <Maximize2 className="w-3 h-3 text-[#F59E0B]" />
-            <span className="font-medium">Toàn Màn Hình</span>
+            <Maximize2 className="w-3 h-3 text-amber-500" />
+            <span>Toàn Màn Hình</span>
           </button>
         </div>
       </div>
@@ -256,7 +256,7 @@ export default function ComicSlideViewer({
       {/* CHẾ ĐỘ 1: LƯỚT SLIDE (CAROUSEL PHONG CÁCH TIKTOK) */}
       {viewMode === 'slide' && (
         <div
-          className="relative w-full max-w-xl sm:max-w-2xl mx-auto bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl select-none group border border-[#1F293D] touch-pan-y"
+          className="relative w-full max-w-xl sm:max-w-2xl mx-auto bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl select-none group border border-slate-300 dark:border-[#1F293D] touch-pan-y"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -445,7 +445,7 @@ export default function ComicSlideViewer({
 
       {/* CHẾ ĐỘ 2: CUỘN DỌC LIÊN TỤC (WEBTOON / MANHWA CONTINUOUS SCROLL) */}
       {viewMode === 'scroll' && (
-        <div className="w-full max-w-xl sm:max-w-2xl mx-auto space-y-2 bg-[#0A0A0D] rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 border border-[#1F293D] shadow-2xl">
+        <div className="w-full max-w-xl sm:max-w-2xl mx-auto space-y-2 bg-slate-100 dark:bg-[#0A0A0D] rounded-xl sm:rounded-2xl p-1.5 sm:p-2.5 border border-slate-300 dark:border-[#1F293D] shadow-2xl">
           {images.map((imgUrl, idx) => (
             <div 
               key={idx} 

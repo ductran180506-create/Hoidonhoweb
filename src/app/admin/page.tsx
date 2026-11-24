@@ -16,6 +16,7 @@ import { Story, Order } from '@/lib/types';
 import { compressImage, formatFileSize } from '@/lib/image-compressor';
 import AdminSidebar, { AdminTab } from '@/components/admin/AdminSidebar';
 import AdminChatCRM from '@/components/admin/AdminChatCRM';
+import ThemeToggle from '@/components/ThemeToggle';
 import { useAuth } from '@/lib/auth-context';
 
 interface ChapterItem {
@@ -242,7 +243,9 @@ export default function AdminPage() {
   
   // Bộ lọc
   const [customerSearch, setCustomerSearch] = useState('');
-  const [customerFilter, setCustomerFilter] = useState<'all' | 'recharged' | 'google' | 'vip' | 'has_coins'>('all');
+  const [customerFilter, setCustomerFilter] = useState<'all' | 'recharged' | 'google' | 'phone' | 'vip' | 'has_coins'>('all');
+  const [customerSort, setCustomerSort] = useState<'newest' | 'oldest' | 'top_paid' | 'top_coins' | 'top_unlocked'>('newest');
+  const [compensating, setCompensating] = useState(false);
   const [storySearch, setStorySearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
   const [orderFilter, setOrderFilter] = useState<'all' | 'completed' | 'pending' | 'expired' | 'vip' | 'tips'>('all');
@@ -556,6 +559,58 @@ export default function AdminPage() {
     } catch (e: any) {
       showToast(e.message, 'error');
     }
+  };
+
+  const handleCustomAdjustCoins = async (userId: string, userPhone: string) => {
+    const raw = prompt(`Nhập số Điểm muốn cộng hoặc trừ cho "${userPhone}" (Ví dụ: 30, 75, hoặc -10):`, '15');
+    if (!raw) return;
+    const amount = parseInt(raw.trim(), 10);
+    if (isNaN(amount) || amount === 0) {
+      showToast('Số điểm không hợp lệ', 'error');
+      return;
+    }
+    await handleAdjustCoins(userId, amount, userPhone);
+  };
+
+  const handleCompensateAllUsers = async () => {
+    const raw = prompt('🎁 PHÁT QUÀ ĐỀN BÙ TOÀN SERVER\nNhập số Điểm muốn cộng tặng cho tất cả độc giả (Ví dụ: 5 hoặc 10):', '5');
+    if (!raw) return;
+    const amount = parseInt(raw.trim(), 10);
+    if (isNaN(amount) || amount <= 0 || amount > 500) {
+      showToast('Vui lòng nhập số điểm hợp lệ từ 1 đến 500', 'error');
+      return;
+    }
+    if (!confirm(`XÁC NHẬN: Bạn muốn phát quà đền bù +${amount} Điểm cho TOÀN BỘ độc giả (${safeUsers.length} người) trên hệ thống?`)) {
+      return;
+    }
+    setCompensating(true);
+    try {
+      const res = await fetch('/api/admin/stories', {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ action: 'compensate_all_users', amount, target: 'all' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || `Đã phát quà +${amount} Điểm cho ${data.count} độc giả!`);
+        fetchData();
+      } else {
+        showToast(data.message || 'Lỗi phát quà đền bù', 'error');
+      }
+    } catch (e: any) {
+      showToast(e.message, 'error');
+    }
+    setCompensating(false);
+  };
+
+  const formatVipRemainingShort = (vipUntil: string | null | undefined): string => {
+    if (!vipUntil) return '';
+    const diffMs = new Date(vipUntil).getTime() - Date.now();
+    if (diffMs <= 0) return 'Hết hạn';
+    const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    if (days > 0) return `Còn ${days}d ${hours}h`;
+    return `Còn ${hours}h`;
   };
 
   const handleToggleVip = async (userId: string, userName: string, currentVip: boolean) => {
@@ -1102,22 +1157,22 @@ export default function AdminPage() {
 
     if (diffMin < 2) {
       return (
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/40 animate-pulse">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
           Vừa xong
         </span>
       );
     }
     if (diffMin < 60) {
       return (
-        <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-emerald-950/60 text-emerald-400 border border-emerald-800/40 font-mono">
+        <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/40 font-mono">
           {diffMin}m trước
         </span>
       );
     }
     if (diffHour < 24) {
       return (
-        <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-[#1F1F2C] text-[#A1A1AA] font-mono">
+        <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 dark:bg-[#1F1F2C] text-slate-700 dark:text-[#A1A1AA] border border-slate-200 dark:border-transparent font-mono">
           {diffHour}h trước
         </span>
       );
@@ -1200,21 +1255,40 @@ export default function AdminPage() {
     return Object.values(stMap).sort((a, b) => b.count - a.count).slice(0, 5);
   }, [dateFilterType, analytics?.topStories, periodMachines]);
 
-  const filteredUsers = (customerFilter === 'vip' ? safeUsers : baseUsers).filter((u) => {
-    const q = customerSearch.trim().toLowerCase();
-    const matchSearch = !q || 
-      (u.name || '').toLowerCase().includes(q) ||
-      (u.email || '').toLowerCase().includes(q) ||
-      (u.phone || '').toLowerCase().includes(q) ||
-      (u.id || '').toLowerCase().includes(q);
-    
-    if (!matchSearch) return false;
-    if (customerFilter === 'vip') return u.isVip;
-    if (customerFilter === 'recharged') return Boolean(u.hasRecharged || (u.totalRechargedVnd || 0) > 0);
-    if (customerFilter === 'google') return Boolean(u.isGoogle);
-    if (customerFilter === 'has_coins') return (u.coins || 0) > 0;
-    return true;
-  });
+  const filteredUsers = baseUsers
+    .filter((u) => {
+      const q = customerSearch.trim().toLowerCase();
+      const matchSearch =
+        !q ||
+        (u.name || '').toLowerCase().includes(q) ||
+        (u.email || '').toLowerCase().includes(q) ||
+        (u.phone || '').toLowerCase().includes(q) ||
+        (u.id || '').toLowerCase().includes(q);
+
+      if (!matchSearch) return false;
+      if (customerFilter === 'vip') return Boolean(u.isVip);
+      if (customerFilter === 'recharged') return Boolean(u.hasRecharged || (u.totalRechargedVnd || 0) > 0);
+      if (customerFilter === 'google') return Boolean(u.isGoogle);
+      if (customerFilter === 'phone') return !u.isGoogle;
+      if (customerFilter === 'has_coins') return (u.coins || 0) > 0;
+      return true;
+    })
+    .sort((a, b) => {
+      if (customerSort === 'oldest') {
+        return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      }
+      if (customerSort === 'top_paid') {
+        return (b.totalRechargedVnd || 0) - (a.totalRechargedVnd || 0);
+      }
+      if (customerSort === 'top_coins') {
+        return (b.coins || 0) - (a.coins || 0);
+      }
+      if (customerSort === 'top_unlocked') {
+        return (b.unlockedCount || 0) - (a.unlockedCount || 0);
+      }
+      // Mặc định: newest (Mới nhất lên đầu)
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    });
 
   const filteredStories = safeStories.filter((s) => {
     if (!storySearch.trim()) return true;
@@ -1374,13 +1448,13 @@ export default function AdminPage() {
         isSidebarCollapsed ? 'lg:pl-[68px]' : 'lg:pl-64'
       }`}>
         {/* Topbar Workspace: Breadcrumbs & Quick Actions (Chuẩn Hình 2) */}
-        <header className="h-16 px-4 sm:px-6 border-b border-[#1E1E2B] flex items-center justify-between bg-[#111118]/90 backdrop-blur sticky top-0 z-20">
+        <header className="h-16 px-4 sm:px-6 border-b border-slate-200 dark:border-[#1E1E2B] flex items-center justify-between bg-white/95 dark:bg-[#111118]/90 backdrop-blur sticky top-0 z-20">
           <div className="flex items-center gap-3">
             {/* Nút Hamburger / PanelLeft trên Mobile */}
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg bg-[#181824] hover:bg-[#222232] border border-[#262638] text-[#A78BFA] transition active:scale-90 cursor-pointer"
+              className="lg:hidden p-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-300 text-indigo-600 dark:bg-[#181824] dark:hover:bg-[#222232] dark:border-[#262638] dark:text-[#A78BFA] transition active:scale-90 cursor-pointer"
               title="Mở menu điều hướng"
             >
               <PanelLeft className="w-4 h-4" />
@@ -1388,28 +1462,31 @@ export default function AdminPage() {
 
             {/* Breadcrumbs Navigation */}
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-[#71717A] font-semibold hidden sm:inline">HỒI ĐÓ NHỎ STUDIO</span>
-              <span className="text-[#3F3F46] hidden sm:inline">/</span>
-              <span className="text-white font-bold flex items-center gap-1.5">
-                <span className="text-[#A78BFA] font-bold">{getTabTitle()}</span>
+              <span className="text-slate-500 dark:text-[#71717A] font-semibold hidden sm:inline">HỒI ĐÓ NHỎ STUDIO</span>
+              <span className="text-slate-400 dark:text-[#3F3F46] hidden sm:inline">/</span>
+              <span className="text-slate-900 dark:text-white font-bold flex items-center gap-1.5">
+                <span className="text-indigo-600 dark:text-[#A78BFA] font-bold">{getTabTitle()}</span>
               </span>
             </div>
           </div>
 
           {/* Quick Actions bên phải */}
           <div className="flex items-center gap-2">
+            {/* Nút Chuyển Giao Diện Sáng / Tối */}
+            <ThemeToggle />
+
             <Link
               href="/"
-              className="px-2.5 sm:px-3 py-1.5 bg-[#161622] hover:bg-[#1E1E2A] border border-[#272738] rounded-lg text-xs text-[#D4D4D8] flex items-center gap-1.5 transition font-medium active:scale-95"
+              className="px-2.5 sm:px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 hover:text-slate-900 dark:bg-[#161622] dark:hover:bg-[#1E1E2A] dark:border-[#272738] dark:text-[#D4D4D8] rounded-lg text-xs flex items-center gap-1.5 transition font-semibold active:scale-95 shadow-xs"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#7C5CFC]" />
+              <ArrowLeft className="w-3.5 h-3.5 text-indigo-600 dark:text-[#7C5CFC]" />
               <span className="hidden sm:inline">Xem Web Khách</span>
               <span className="sm:hidden">Web</span>
             </Link>
 
             <button
               onClick={fetchData}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 bg-[#161622] hover:bg-[#1E1E2A] border border-[#272738] rounded-lg text-[#9CA3AF] hover:text-white transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              className="p-1.5 sm:px-2.5 sm:py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 hover:text-slate-900 dark:bg-[#161622] dark:hover:bg-[#1E1E2A] dark:border-[#272738] dark:text-[#9CA3AF] dark:hover:text-white rounded-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
               title="Tải lại dữ liệu"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -1419,16 +1496,16 @@ export default function AdminPage() {
         </header>
 
         {/* Nội dung trang làm việc chính */}
-        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 flex-1 pb-28 lg:pb-12">
+        <div className="p-3 sm:p-5 space-y-3 sm:space-y-4 flex-1 pb-28 lg:pb-10">
 
       {/* ============================================================ */}
       {/* THANH CÔNG CỤ ĐO LƯỜNG THEO NGÀY THÁNG NĂM                   */}
       {/* ============================================================ */}
-      <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3 sm:p-4 space-y-3">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+      <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-2.5 sm:p-3.5 space-y-2.5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-[#181824] rounded-lg border border-[#272738] text-[#A78BFA] flex-shrink-0">
-              <Calendar className="w-4 h-4 text-[#A78BFA]" />
+            <div className="p-1.5 bg-[#181824] rounded-lg border border-[#272738] text-[#A78BFA] flex-shrink-0">
+              <Calendar className="w-3.5 h-3.5 text-[#A78BFA]" />
             </div>
             <div>
               <div className="text-xs sm:text-sm font-semibold text-white flex flex-wrap items-center gap-2">
@@ -1439,9 +1516,6 @@ export default function AdminPage() {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-[#71717A] mt-0.5">
-                Bấm các mốc thời gian bên dưới hoặc nhập ngày/tháng/năm tùy ý để đo lường kết quả
-              </p>
             </div>
           </div>
 
@@ -1475,16 +1549,16 @@ export default function AdminPage() {
         </div>
 
         {/* Các nút preset thời gian + Ô chọn ngày tùy ý */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pt-2 border-t border-[#1C1C24]">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pt-2 border-t border-slate-200 dark:border-[#1C1C24]">
           <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
-            <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-1 rounded-lg border border-[#242434] text-xs min-w-max">
+            <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-[#0A0A0D] p-1 rounded-lg border border-slate-200 dark:border-[#242434] text-xs min-w-max">
               <button
                 type="button"
                 onClick={() => setDateFilterType('all')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition ${
                   dateFilterType === 'all'
-                    ? 'bg-[#22222E] text-white shadow-sm font-semibold'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-white text-slate-900 shadow-sm font-bold dark:bg-[#22222E] dark:text-white'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                 }`}
               >
                 Toàn bộ
@@ -1494,8 +1568,8 @@ export default function AdminPage() {
                 onClick={() => setDateFilterType('today')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
                   dateFilterType === 'today'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm font-semibold'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm font-bold dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                 }`}
               >
                 <span>Hôm nay</span>
@@ -1505,8 +1579,8 @@ export default function AdminPage() {
                 onClick={() => setDateFilterType('last7')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
                   dateFilterType === 'last7'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm font-semibold'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-purple-100 text-purple-800 border border-purple-300 shadow-sm font-bold dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/40'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                 }`}
               >
                 <span>7 ngày qua</span>
@@ -1516,8 +1590,8 @@ export default function AdminPage() {
                 onClick={() => setDateFilterType('last30')}
                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition flex items-center gap-1.5 ${
                   dateFilterType === 'last30'
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 shadow-sm font-semibold'
-                    : 'text-[#71717A] hover:text-white'
+                    ? 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm font-bold dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/40'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                 }`}
               >
                 <span>30 ngày qua</span>
@@ -1526,7 +1600,7 @@ export default function AdminPage() {
           </div>
 
           {/* Ô chọn ngày cụ thể hoặc khoảng ngày: Tự co giãn 100% mượt mà trên Mobile */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 text-xs bg-[#0A0A0D] p-1.5 rounded-lg border border-[#242434] w-full lg:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-1.5 text-xs bg-slate-100 dark:bg-[#0A0A0D] p-1.5 rounded-lg border border-slate-200 dark:border-[#242434] w-full lg:w-auto">
             {/* Menu Chọn Nhanh 1 Ngày (1 Click là xong) */}
             <select
               value={customStartDate && customStartDate === customEndDate ? customStartDate : ''}
@@ -1537,7 +1611,7 @@ export default function AdminPage() {
                   setDateFilterType('custom');
                 }
               }}
-              className="bg-[#14141C] border border-[#2B2B3D] text-[#D4D4D8] text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer w-full sm:w-auto"
+              className="bg-white dark:bg-[#14141C] border border-slate-300 dark:border-[#2B2B3D] text-slate-800 dark:text-[#D4D4D8] text-xs px-2.5 py-1.5 rounded focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC] cursor-pointer w-full sm:w-auto"
               title="Bấm chọn nhanh một ngày cụ thể"
             >
               <option value="">⚡ Chọn nhanh ngày...</option>
@@ -1566,7 +1640,7 @@ export default function AdminPage() {
                   }
                   setDateFilterType('custom');
                 }}
-                className="bg-[#14141C] border border-[#2B2B3D] text-white text-[11px] sm:text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer flex-1 sm:w-28 min-w-0"
+                className="bg-white dark:bg-[#14141C] border border-slate-300 dark:border-[#2B2B3D] text-slate-900 dark:text-white text-[11px] sm:text-xs px-2 py-1.5 rounded focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC] cursor-pointer flex-1 sm:w-28 min-w-0"
                 title="Bấm vào để mở lịch chọn ngày bắt đầu"
               />
               <span className="text-[#52525B] flex-shrink-0">→</span>
@@ -1580,7 +1654,7 @@ export default function AdminPage() {
                   setCustomEndDate(e.target.value);
                   setDateFilterType('custom');
                 }}
-                className="bg-[#14141C] border border-[#2B2B3D] text-white text-[11px] sm:text-xs px-2 py-1.5 rounded focus:outline-none focus:border-[#7C5CFC] cursor-pointer flex-1 sm:w-28 min-w-0"
+                className="bg-white dark:bg-[#14141C] border border-slate-300 dark:border-[#2B2B3D] text-slate-900 dark:text-white text-[11px] sm:text-xs px-2 py-1.5 rounded focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC] cursor-pointer flex-1 sm:w-28 min-w-0"
                 title="Bấm vào để mở lịch chọn ngày kết thúc"
               />
 
@@ -1608,10 +1682,10 @@ export default function AdminPage() {
       </div>
 
       {/* Bảng Chỉ Số Thực Nhận (Flat Ledger Metrics - Đo lường động theo ngày chọn) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
         <div 
           onClick={() => setActiveTab('revenue')}
-          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[92px] sm:min-h-[105px] ${
+          className={`p-2.5 sm:p-3 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[76px] sm:min-h-[84px] ${
             activeTab === 'revenue' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
@@ -1624,42 +1698,42 @@ export default function AdminPage() {
                 </span>
               )}
             </div>
-            <div className="text-base sm:text-xl font-bold text-white mt-1 truncate font-mono">
+            <div className="text-base sm:text-lg font-bold text-white mt-0.5 truncate font-mono">
               {(dateFilterType === 'all' ? (stats?.totalRevenue || 0) : periodRevenue).toLocaleString('vi-VN')} đ
             </div>
           </div>
-          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate font-mono">
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-0.5 truncate font-mono">
             {dateFilterType === 'all' ? (stats?.completedOrders || 0) : periodCompletedOrders.length} đơn thành công
           </div>
         </div>
 
         <div 
           onClick={() => setActiveTab('customers')}
-          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[92px] sm:min-h-[105px] ${
+          className={`p-2.5 sm:p-3 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[76px] sm:min-h-[84px] ${
             activeTab === 'customers' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
           <div>
             <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A] flex items-center justify-between gap-1">
-              <span className="truncate">👥 Độc giả mới</span>
+              <span className="truncate">👥 Độc giả</span>
               {dateFilterType !== 'all' && (
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-semibold flex-shrink-0">
                   {getDateFilterShortLabel()}
                 </span>
               )}
             </div>
-            <div className="text-base sm:text-xl font-bold text-white mt-1 truncate font-mono">
+            <div className="text-base sm:text-lg font-bold text-white mt-0.5 truncate font-mono">
               {dateFilterType === 'all' ? safeUsers.length : periodUsers.length} người
             </div>
           </div>
-          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate font-mono">
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-0.5 truncate font-mono">
             {dateFilterType === 'all' ? `${totalVipUsers} VIP • ${totalCirculatingCoins} Điểm` : `Đăng ký trong kỳ`}
           </div>
         </div>
 
         <div 
           onClick={() => setActiveTab('analytics')}
-          className={`p-3 sm:p-4 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[92px] sm:min-h-[105px] ${
+          className={`p-2.5 sm:p-3 bg-[#111116] border rounded-xl cursor-pointer transition flex flex-col justify-between min-h-[76px] sm:min-h-[84px] ${
             activeTab === 'analytics' ? 'border-[#7C5CFC] bg-[#14141E]' : 'border-[#1E1E26] hover:border-[#2E2E3C]'
           }`}
         >
@@ -1672,38 +1746,38 @@ export default function AdminPage() {
                 </span>
               )}
             </div>
-            <div className="text-base sm:text-xl font-bold text-white mt-1 truncate font-mono">
+            <div className="text-base sm:text-lg font-bold text-white mt-0.5 truncate font-mono">
               {dateFilterType === 'all' ? (analytics?.totalMachines || analytics?.totalViews || 0) : periodMachines.length} máy
             </div>
           </div>
-          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-1 truncate font-mono">
+          <div className="text-[9px] sm:text-[10px] text-[#A1A1AA] mt-0.5 truncate font-mono">
             {dateFilterType === 'all' ? `Hôm nay: ${analytics?.todayActiveMachines || analytics?.todayViews || 0} máy` : `Truy cập trong kỳ`}
           </div>
         </div>
 
-        <div className="p-3 sm:p-4 bg-[#111116] border border-[#1E1E26] rounded-xl flex flex-col justify-between min-h-[92px] sm:min-h-[105px]">
+        <div className="p-2.5 sm:p-3 bg-[#111116] border border-[#1E1E26] rounded-xl flex flex-col justify-between min-h-[76px] sm:min-h-[84px]">
           <div>
             <div className="text-[10px] sm:text-[11px] font-medium text-[#71717A] flex items-center justify-between gap-1">
               <span className="truncate">{dateFilterType === 'all' ? 'Sacombank tự động' : '🎯 Hiệu quả kỳ này'}</span>
             </div>
             {dateFilterType === 'all' ? (
               <>
-                <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1.5 flex items-center gap-1 truncate font-mono">
+                <div className="text-[11px] sm:text-xs font-semibold text-emerald-400 mt-1 flex items-center gap-1 truncate font-mono">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
                   <span className="truncate">Đã liên kết (040121635056)</span>
                 </div>
-                <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate font-mono">
+                <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-0.5 truncate font-mono">
                   congducc2k6@gmail.com • 24/7
                 </div>
               </>
             ) : (
               <>
-                <div className="text-base sm:text-xl font-bold text-emerald-400 mt-1 truncate font-mono flex items-center gap-1.5">
+                <div className="text-base sm:text-lg font-bold text-emerald-400 mt-0.5 truncate font-mono flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
                   <span>{periodMachines.length > 0 ? ((periodCompletedOrders.length / periodMachines.length) * 100).toFixed(1) : '0'}%</span>
                   <span className="text-[10px] font-normal text-[#A1A1AA]">chuyển đổi</span>
                 </div>
-                <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-1 truncate font-mono">
+                <div className="text-[9px] sm:text-[10px] text-[#71717A] mt-0.5 truncate font-mono">
                   {periodCompletedOrders.length} đơn nạp / {periodMachines.length} khách vào
                 </div>
               </>
@@ -1712,50 +1786,42 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* TIÊU ĐỀ PHÂN KHU HIỆN TẠI (Backoffice Section Header) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[#1E1E28]">
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
-            <span>{getTabTitle()}</span>
-          </h2>
-          {activeTab === 'stories' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#C4B5FD] border border-[#7C5CFC]/40 font-semibold">
-              {stories.length} bộ truyện
-            </span>
-          )}
-          {activeTab === 'customers' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-semibold">
-              {baseUsers.length} độc giả
-            </span>
-          )}
-          {activeTab === 'revenue' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold">
-              {baseOrders.length} đơn hàng
-            </span>
-          )}
-          {activeTab === 'analytics' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold">
-              {baseMachines.length} thiết bị
-            </span>
-          )}
-          {activeTab === 'feedback' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-semibold">
-              {baseFeedback.length} phản hồi
-            </span>
-          )}
-          {activeTab === 'wheel' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold">
-              {wheelSettings?.prizes?.length || 8} giải thưởng • {baseLuckySpins.length} lượt quay
-            </span>
-          )}
-          {activeTab === 'chat' && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold flex items-center gap-1">
-              <span>Hộp thoại 1-1</span>
-              {unreadChatCount > 0 && <span className="text-rose-400 font-bold">• {unreadChatCount} tin mới</span>}
-            </span>
-          )}
+      {/* TIÊU ĐỀ PHÂN KHU HIỆN TẠI (Ẩn đi ở tab Độc giả & Doanh thu vì bên trong khung đã có tiêu đề lớn tránh lặp 2 lần) */}
+      {activeTab !== 'customers' && activeTab !== 'revenue' && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1 border-b border-[#1E1E28]">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+              <span>{getTabTitle()}</span>
+            </h2>
+            {activeTab === 'stories' && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#C4B5FD] border border-[#7C5CFC]/40 font-semibold">
+                {stories.length} bộ truyện
+              </span>
+            )}
+            {activeTab === 'analytics' && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-semibold">
+                {baseMachines.length} thiết bị
+              </span>
+            )}
+            {activeTab === 'feedback' && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-semibold">
+                {baseFeedback.length} phản hồi
+              </span>
+            )}
+            {activeTab === 'wheel' && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold">
+                {wheelSettings?.prizes?.length || 8} giải thưởng • {baseLuckySpins.length} lượt quay
+              </span>
+            )}
+            {activeTab === 'chat' && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold flex items-center gap-1">
+                <span>Hộp thoại 1-1</span>
+                {unreadChatCount > 0 && <span className="text-rose-400 font-bold">• {unreadChatCount} tin mới</span>}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ============================================================ */}
       {/* 1. KHO TRUYỆN & ĐĂNG BÀI                                      */}
@@ -1763,13 +1829,13 @@ export default function AdminPage() {
       {activeTab === 'stories' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
           {/* Cột Trái: Soạn thảo & Đăng bộ truyện mới (7 cột) */}
-          <div className="lg:col-span-7 bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#1E1E26] pb-3">
+          <div className="lg:col-span-7 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-200 dark:border-[#1E1E26] pb-3">
               <div>
-                <h2 className="text-sm font-semibold text-white">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
                   {editingStoryId ? `Chỉnh Sửa Bộ Truyện #${code}` : 'Soạn Thảo Bộ Truyện Mới'}
                 </h2>
-                <p className="text-[11px] text-[#71717A]">
+                <p className="text-[11px] text-slate-500 dark:text-[#71717A]">
                   {editingStoryId ? 'Thêm tập mới, thay ảnh và cập nhật nội dung' : 'Ảnh tự động nén WebP trước khi lưu'}
                 </p>
               </div>
@@ -1778,7 +1844,7 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-xs font-medium rounded-lg text-zinc-300 transition"
+                    className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-medium rounded-lg text-slate-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 dark:border-transparent transition"
                   >
                     Hủy sửa
                   </button>
@@ -1786,7 +1852,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={handleAddChapter}
-                  className="px-2.5 py-1 bg-[#1A1A22] hover:bg-[#252530] border border-[#272733] text-xs font-medium rounded-lg transition text-[#D4D4D8] flex items-center gap-1"
+                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 hover:text-slate-900 dark:bg-[#1A1A22] dark:hover:bg-[#252530] dark:border-[#272733] dark:text-[#D4D4D8] text-xs font-semibold rounded-lg transition flex items-center gap-1 shadow-xs"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Thêm Tập</span>
@@ -1797,19 +1863,19 @@ export default function AdminPage() {
             <form onSubmit={handleCreateStory} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[#9E9EA8] font-medium mb-1">Mã TikTok (vd: 04, 05)</label>
+                  <label className="block text-slate-700 dark:text-[#9E9EA8] font-medium mb-1">Mã TikTok (vd: 04, 05)</label>
                   <input
                     type="text"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="04"
-                    className="w-full px-3 py-2 bg-[#0A0A0D] border border-[#272733] rounded-lg text-white focus:outline-none focus:border-[#7C5CFC]"
+                    className="w-full px-3 py-2 bg-white dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[#9E9EA8] font-medium">Thể loại / Chủ đề</label>
+                    <label className="text-slate-700 dark:text-[#9E9EA8] font-medium">Thể loại / Chủ đề</label>
                     <button
                       type="button"
                       onClick={() => {
@@ -1819,7 +1885,7 @@ export default function AdminPage() {
                           setGenre(PRESET_GENRES[0]);
                         }
                       }}
-                      className="text-[10px] text-[#A78BFA] hover:text-white transition underline"
+                      className="text-[10px] text-indigo-600 dark:text-[#A78BFA] hover:text-indigo-900 dark:hover:text-white transition underline"
                     >
                       {isCustomGenre ? '← Chọn danh sách' : '✏️ Tự đặt tên'}
                     </button>
@@ -1832,7 +1898,7 @@ export default function AdminPage() {
                         value={genre}
                         onChange={(e) => setGenre(e.target.value)}
                         placeholder="Nhập tên chủ đề tùy ý (vd: Trinh Thám, Làng Quê...)"
-                        className="w-full px-3 py-2 bg-[#0A0A0D] border border-[#7C5CFC] rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-[#7C5CFC]"
+                        className="w-full px-3 py-2 bg-white dark:bg-[#0A0A0D] border border-indigo-500 dark:border-[#7C5CFC] rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-[#7C5CFC]"
                         autoFocus
                       />
                     </div>
@@ -1847,7 +1913,7 @@ export default function AdminPage() {
                           setGenre(e.target.value);
                         }
                       }}
-                      className="w-full px-3 py-2 bg-[#0A0A0D] border border-[#272733] rounded-lg text-white focus:outline-none focus:border-[#7C5CFC]"
+                      className="w-full px-3 py-2 bg-white dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
                     >
                       {PRESET_GENRES.map((g) => (
                         <option key={g} value={g}>{g}</option>
@@ -1859,23 +1925,23 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-[#9E9EA8] font-medium mb-1">Tiêu đề truyện</label>
+                <label className="block text-slate-700 dark:text-[#9E9EA8] font-medium mb-1">Tiêu đề truyện</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Chiếc xe Dream cọc cạch của bố..."
-                  className="w-full px-3 py-2 bg-[#0A0A0D] border border-[#272733] rounded-lg text-white focus:outline-none focus:border-[#7C5CFC]"
+                  className="w-full px-3 py-2 bg-white dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
                 />
               </div>
 
               {/* Trạng thái series: Còn tiếp / Sắp ra mắt / Full trọn bộ */}
-              <div className="p-3 bg-[#0A0A0D] border border-[#22222E] rounded-lg space-y-2">
+              <div className="p-3 bg-slate-50 dark:bg-[#0A0A0D] border border-slate-200 dark:border-[#22222E] rounded-lg space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <label className="text-[#9E9EA8] font-medium flex items-center gap-1.5">
+                  <label className="text-slate-700 dark:text-[#9E9EA8] font-medium flex items-center gap-1.5">
                     <span>Trạng thái series (khán giả sẽ thấy trên trang chủ & tập truyện):</span>
                   </label>
-                  <span className="text-[11px] text-[#A1A1AA]">
+                  <span className="text-[11px] text-slate-500 dark:text-[#A1A1AA]">
                     {storyStatus === 'ongoing' ? '⏳ Đang ra tiếp các tập mới' : storyStatus === 'upcoming' ? '🚀 Chuẩn bị ra mắt khán giả' : '👑 Đã trọn bộ đầy đủ tập'}
                   </span>
                 </div>
@@ -1886,8 +1952,8 @@ export default function AdminPage() {
                     onClick={() => setStoryStatus('ongoing')}
                     className={`py-2 px-3 rounded-lg font-medium text-xs border transition flex items-center justify-center gap-1.5 active:scale-95 ${
                       storyStatus === 'ongoing'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-300 ring-1 ring-amber-500/50 shadow-md shadow-amber-500/10 font-bold'
-                        : 'bg-[#121218] border-[#222230] text-[#71717A] hover:text-white hover:border-[#383848]'
+                        ? 'bg-amber-100 text-amber-800 border-amber-400 font-bold dark:bg-amber-500/20 dark:border-amber-500 dark:text-amber-300 shadow-sm'
+                        : 'bg-white dark:bg-[#121218] border-slate-300 dark:border-[#222230] text-slate-700 dark:text-[#71717A] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#181822]'
                     }`}
                   >
                     <span>⏳</span>
@@ -1899,8 +1965,8 @@ export default function AdminPage() {
                     onClick={() => setStoryStatus('upcoming')}
                     className={`py-2 px-3 rounded-lg font-medium text-xs border transition flex items-center justify-center gap-1.5 active:scale-95 ${
                       storyStatus === 'upcoming'
-                        ? 'bg-purple-500/20 border-purple-500 text-purple-300 ring-1 ring-purple-500/50 shadow-md shadow-purple-500/10 font-bold'
-                        : 'bg-[#121218] border-[#222230] text-[#71717A] hover:text-white hover:border-[#383848]'
+                        ? 'bg-purple-100 text-purple-800 border-purple-400 font-bold dark:bg-purple-500/20 dark:border-purple-500 dark:text-purple-300 shadow-sm'
+                        : 'bg-white dark:bg-[#121218] border-slate-300 dark:border-[#222230] text-slate-700 dark:text-[#71717A] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#181822]'
                     }`}
                   >
                     <span>🚀</span>
@@ -1912,8 +1978,8 @@ export default function AdminPage() {
                     onClick={() => setStoryStatus('completed')}
                     className={`py-2 px-3 rounded-lg font-medium text-xs border transition flex items-center justify-center gap-1.5 active:scale-95 ${
                       storyStatus === 'completed'
-                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500/50 shadow-md shadow-emerald-500/10 font-bold'
-                        : 'bg-[#121218] border-[#222230] text-[#71717A] hover:text-white hover:border-[#383848]'
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-400 font-bold dark:bg-emerald-500/20 dark:border-emerald-500 dark:text-emerald-300 shadow-sm'
+                        : 'bg-white dark:bg-[#121218] border-slate-300 dark:border-[#222230] text-slate-700 dark:text-[#71717A] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#181822]'
                     }`}
                   >
                     <span>👑</span>
@@ -1923,18 +1989,18 @@ export default function AdminPage() {
               </div>
 
               {/* Ảnh bìa */}
-              <div className="p-3 bg-[#0A0A0D] border border-[#22222E] rounded-lg space-y-2">
+              <div className="p-3 bg-slate-50 dark:bg-[#0A0A0D] border border-slate-200 dark:border-[#22222E] rounded-lg space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-[#9E9EA8]">Ảnh bìa (3:4 hoặc 9:16)</span>
+                  <span className="font-medium text-slate-700 dark:text-[#9E9EA8]">Ảnh bìa (3:4 hoặc 9:16)</span>
                   {coverStats && (
-                    <span className="text-[10px] text-emerald-400">
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                       Đã nén -{coverStats.reduction}% ({formatFileSize(coverStats.compressed)})
                     </span>
                   )}
                 </div>
 
                 {coverImage && (
-                  <div className="relative w-24 aspect-[9/16] rounded-lg overflow-hidden border border-[#2E2E3C] group">
+                  <div className="relative w-24 aspect-[9/16] rounded-lg overflow-hidden border border-slate-300 dark:border-[#2E2E3C] group">
                     <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
                     <button
                       type="button"
@@ -1958,12 +2024,12 @@ export default function AdminPage() {
                     type="button"
                     onClick={() => coverInputRef.current?.click()}
                     disabled={coverUploading}
-                    className="px-3 py-1.5 bg-[#1C1C26] hover:bg-[#252533] border border-[#2A2A38] text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition"
+                    className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#1C1C26] dark:hover:bg-[#252533] dark:border-[#2A2A38] dark:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-xs"
                   >
                     {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
                     <span>{coverUploading ? 'Đang nén WebP...' : 'Chọn ảnh bìa từ máy'}</span>
                   </button>
-                  <span className="text-[11px] text-[#52525B]">hoặc dán URL</span>
+                  <span className="text-[11px] text-slate-500 dark:text-[#52525B]">hoặc dán URL</span>
                 </div>
 
                 <input
@@ -1971,18 +2037,18 @@ export default function AdminPage() {
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
                   placeholder="https://... hoặc /uploads/..."
-                  className="w-full px-2.5 py-1.5 bg-[#14141B] border border-[#22222E] rounded-md text-white text-xs focus:outline-none focus:border-[#7C5CFC]"
+                  className="w-full px-2.5 py-1.5 bg-white dark:bg-[#14141B] border border-slate-300 dark:border-[#22222E] rounded-md text-slate-900 dark:text-white text-xs focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
                 />
               </div>
 
               <div>
-                <label className="block text-[#9E9EA8] font-medium mb-1">Tóm tắt nội dung</label>
+                <label className="block text-slate-700 dark:text-[#9E9EA8] font-medium mb-1">Tóm tắt nội dung</label>
                 <textarea
                   rows={2}
                   value={summary}
                   onChange={(e) => setSummary(e.target.value)}
                   placeholder="Đoạn văn ngắn giới thiệu bối cảnh câu chuyện..."
-                  className="w-full px-3 py-2 bg-[#0A0A0D] border border-[#272733] rounded-lg text-white focus:outline-none focus:border-[#7C5CFC]"
+                  className="w-full px-3 py-2 bg-white dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
                 />
               </div>
 
@@ -2010,37 +2076,37 @@ export default function AdminPage() {
                   </div>
 
                   {/* Thanh cấu hình Khóa Full Bộ nhanh */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#121218] border border-[#232330] rounded-lg text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-100 dark:bg-[#121218] border border-slate-200 dark:border-[#232330] rounded-lg text-xs">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[11px] font-medium text-white flex items-center gap-1">
+                      <span className="text-[11px] font-semibold text-slate-800 dark:text-white flex items-center gap-1">
                         <span>🔒 Khóa full bộ:</span>
                       </span>
 
                       {/* Tự đặt mức xu */}
-                      <div className="flex items-center gap-1 bg-[#1A1A24] border border-[#2E2E3E] rounded px-2 py-0.5">
-                        <span className="text-[10px] text-[#A1A1AA]">Mức khóa:</span>
+                      <div className="flex items-center gap-1 bg-white dark:bg-[#1A1A24] border border-slate-300 dark:border-[#2E2E3E] rounded px-2 py-0.5">
+                        <span className="text-[10px] text-slate-500 dark:text-[#A1A1AA]">Mức khóa:</span>
                         <input
                           type="number"
                           min={0}
                           max={1000}
                           value={defaultLockPrice}
                           onChange={(e) => setDefaultLockPrice(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-10 bg-transparent text-center font-bold text-[#F59E0B] focus:outline-none"
+                          className="w-10 bg-transparent text-center font-bold text-amber-600 dark:text-[#F59E0B] focus:outline-none"
                           title="Tự đặt số xu/điểm để mở khóa full bộ"
                         />
-                        <span className="text-[10px] text-[#A1A1AA]">Điểm</span>
+                        <span className="text-[10px] text-slate-500 dark:text-[#A1A1AA]">Điểm</span>
                       </div>
 
                       {/* Khóa từ tập nào */}
-                      <div className="flex items-center gap-1 bg-[#1A1A24] border border-[#2E2E3E] rounded px-2 py-0.5">
-                        <span className="text-[10px] text-[#A1A1AA]">Từ tập:</span>
+                      <div className="flex items-center gap-1 bg-white dark:bg-[#1A1A24] border border-slate-300 dark:border-[#2E2E3E] rounded px-2 py-0.5">
+                        <span className="text-[10px] text-slate-500 dark:text-[#A1A1AA]">Từ tập:</span>
                         <input
                           type="number"
                           min={1}
                           max={Math.max(1, chapters.length)}
                           value={defaultLockFrom}
                           onChange={(e) => setDefaultLockFrom(Math.max(1, parseInt(e.target.value) || 1))}
-                          className="w-8 bg-transparent text-center font-bold text-white focus:outline-none"
+                          className="w-8 bg-transparent text-center font-bold text-slate-900 dark:text-white focus:outline-none"
                           title="Tập bắt đầu áp dụng khóa (các tập trước sẽ Free)"
                         />
                       </div>
@@ -2084,10 +2150,10 @@ export default function AdminPage() {
                 </div>
 
                 {chapters.map((chap, idx) => (
-                  <div key={idx} className="p-3 bg-[#0A0A0D] border border-[#22222E] rounded-lg space-y-2.5">
+                  <div key={idx} className="p-3 bg-slate-50 dark:bg-[#0A0A0D] border border-slate-200 dark:border-[#22222E] rounded-lg space-y-2.5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                       <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <span className="text-[11px] font-mono text-[#71717A] flex-shrink-0">{idx + 1}.</span>
+                        <span className="text-[11px] font-mono text-slate-500 dark:text-[#71717A] flex-shrink-0">{idx + 1}.</span>
                         <input
                           type="text"
                           value={chap.title}
@@ -2096,13 +2162,13 @@ export default function AdminPage() {
                             updated[idx].title = e.target.value;
                             setChapters(updated);
                           }}
-                          className="bg-transparent font-medium text-white focus:outline-none border-b border-transparent focus:border-[#7C5CFC] flex-1 sm:flex-initial"
+                          className="bg-transparent font-medium text-slate-900 dark:text-white focus:outline-none border-b border-transparent focus:border-indigo-500 dark:focus:border-[#7C5CFC] flex-1 sm:flex-initial"
                         />
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                         {/* Nhập/chọn số điểm của tập này */}
-                        <div className="flex items-center gap-1 bg-[#14141B] border border-[#272733] rounded px-1.5 py-0.5">
+                        <div className="flex items-center gap-1 bg-white dark:bg-[#14141B] border border-slate-300 dark:border-[#272733] rounded px-1.5 py-0.5">
                           <input
                             type="number"
                             min={0}
@@ -2114,10 +2180,10 @@ export default function AdminPage() {
                               updated[idx].priceCoins = val;
                               setChapters(updated);
                             }}
-                            className="w-10 bg-transparent text-center font-bold text-[#F59E0B] text-xs focus:outline-none"
+                            className="w-10 bg-transparent text-center font-bold text-amber-600 dark:text-[#F59E0B] text-xs focus:outline-none"
                             title="Số Điểm mở khóa tập này (0 = Free)"
                           />
-                          <span className="text-[10px] text-[#A1A1AA]">{chap.priceCoins === 0 ? 'Free' : 'Điểm'}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-[#A1A1AA]">{chap.priceCoins === 0 ? 'Free' : 'Điểm'}</span>
                         </div>
 
                         {/* Nút bấm nhanh Khóa tất cả các tập sau */}
@@ -2136,7 +2202,7 @@ export default function AdminPage() {
                             setDefaultLockFrom(idx + 1);
                             showToast(`Đã tự động khóa ${targetPrice} Điểm từ Tập ${idx + 1} đến hết (cả tập mới tải lên)`);
                           }}
-                          className="px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/15 hover:bg-[#7C5CFC]/30 text-[#A78BFA] border border-[#7C5CFC]/30 transition font-medium whitespace-nowrap"
+                          className="px-2 py-0.5 rounded text-[10px] bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 dark:bg-[#7C5CFC]/15 dark:hover:bg-[#7C5CFC]/30 dark:text-[#A78BFA] dark:border-[#7C5CFC]/30 transition font-medium whitespace-nowrap"
                           title="Tự động khóa mức xu này cho tập này và tất cả các tập sau"
                         >
                           🔒 Khóa full ({chap.priceCoins > 0 ? chap.priceCoins : (defaultLockPrice || 5)}đ)
@@ -2146,7 +2212,7 @@ export default function AdminPage() {
                           <button
                             type="button"
                             onClick={() => handleRemoveChapter(idx)}
-                            className="text-[#52525B] hover:text-red-400 transition p-1"
+                            className="text-slate-400 hover:text-red-500 dark:text-[#52525B] dark:hover:text-red-400 transition p-1"
                             title="Xóa tập này"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2156,9 +2222,9 @@ export default function AdminPage() {
                     </div>
 
                     {/* Khung tải nhiều ảnh slide chuẩn Studio */}
-                    <div className="p-3 bg-[#111116] border border-[#1E1E26] rounded-lg space-y-3">
+                    <div className="p-3 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-lg space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-medium text-[#A1A1AA]">
+                        <span className="text-[11px] font-medium text-slate-600 dark:text-[#A1A1AA]">
                           {chap.images?.length || 0} ảnh slide trong tập
                         </span>
 
@@ -2168,7 +2234,7 @@ export default function AdminPage() {
                               <button
                                 type="button"
                                 onClick={() => handleClearAllImagesInChapter(idx)}
-                                className="text-[11px] text-red-400 hover:underline mr-1"
+                                className="text-[11px] text-red-500 hover:underline mr-1 font-medium"
                               >
                                 Xóa hết
                               </button>
@@ -2176,7 +2242,7 @@ export default function AdminPage() {
                                 type="button"
                                 onClick={() => chapterInputRefs.current[idx]?.click()}
                                 disabled={chap.uploading}
-                                className="px-3 py-1 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white rounded text-[11px] font-medium transition flex items-center gap-1.5"
+                                className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[11px] font-medium transition flex items-center gap-1.5"
                               >
                                 <Upload className="w-3 h-3" />
                                 <span>{chap.uploading ? 'Đang nén...' : '+ Thêm tiếp ảnh'}</span>
@@ -2195,8 +2261,8 @@ export default function AdminPage() {
                           onClick={() => chapterInputRefs.current[idx]?.click()}
                           className={`py-8 px-4 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-center cursor-pointer transition ${
                             draggingIdx === idx
-                              ? 'border-[#7C5CFC] bg-[#7C5CFC]/15 scale-[1.01]'
-                              : 'border-[#2D2D3D] hover:border-[#7C5CFC]/60 bg-[#0A0A0D]'
+                              ? 'border-indigo-500 bg-indigo-50/60 dark:border-[#7C5CFC] dark:bg-[#7C5CFC]/15 scale-[1.01]'
+                              : 'border-slate-300 hover:border-indigo-400 bg-slate-50/50 dark:border-[#2D2D3D] dark:hover:border-[#7C5CFC]/60 dark:bg-[#0A0A0D]'
                           }`}
                         >
                           <input
@@ -2208,16 +2274,16 @@ export default function AdminPage() {
                             onChange={(e) => handleChapterUpload(idx, e)}
                             className="hidden"
                           />
-                          <div className="w-11 h-11 rounded-full bg-[#181824] text-[#7C5CFC] flex items-center justify-center mb-2.5">
+                          <div className="w-11 h-11 rounded-full bg-indigo-50 text-indigo-600 dark:bg-[#181824] dark:text-[#7C5CFC] flex items-center justify-center mb-2.5">
                             <Upload className="w-5 h-5" />
                           </div>
-                          <div className="text-xs font-semibold text-white">
+                          <div className="text-xs font-semibold text-slate-900 dark:text-white">
                             KÉO THẢ TOÀN BỘ ẢNH CỦA TẬP NÀY VÀO ĐÂY
                           </div>
-                          <p className="text-[11px] text-[#71717A] mt-1">
-                            hoặc click vào đây để chọn (Giữ <span className="text-[#F59E0B] font-mono">Ctrl</span> hoặc bấm <span className="text-[#F59E0B] font-mono">Ctrl + A</span> để chọn hàng loạt)
+                          <p className="text-[11px] text-slate-500 dark:text-[#71717A] mt-1">
+                            hoặc click vào đây để chọn (Giữ <span className="text-amber-600 dark:text-[#F59E0B] font-mono font-bold">Ctrl</span> hoặc bấm <span className="text-amber-600 dark:text-[#F59E0B] font-mono font-bold">Ctrl + A</span> để chọn hàng loạt)
                           </p>
-                          <div className="mt-2 text-[10px] text-[#52525B]">
+                          <div className="mt-2 text-[10px] text-slate-400 dark:text-[#52525B]">
                             Tự động xếp đúng số thứ tự 1, 2, ... 10 và nén WebP tốc độ cao
                           </div>
                         </div>
@@ -2240,7 +2306,7 @@ export default function AdminPage() {
                               });
                               showToast(`Đã gán ảnh bìa làm preview cho ${chap.title || `Tập ${idx + 1}`}`);
                             }}
-                            className="px-3 py-1.5 bg-[#171722] hover:bg-[#222232] border border-[#2E2E42] hover:border-[#7C5CFC] text-[#A78BFA] hover:text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition shadow-sm"
+                            className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 hover:border-purple-300 text-purple-700 hover:text-purple-900 dark:bg-[#171722] dark:hover:bg-[#222232] dark:border-[#2E2E42] dark:hover:border-[#7C5CFC] dark:text-[#A78BFA] dark:hover:text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
                           >
                             <span>🖼️ Dùng ảnh bìa làm xem trước (Tập sắp ra mắt)</span>
                           </button>
@@ -2516,17 +2582,17 @@ export default function AdminPage() {
           </div>
 
           {/* Cột Phải: Kho truyện hiện có (5 cột) */}
-          <div className="lg:col-span-5 bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-3.5">
-            <div className="flex items-center justify-between border-b border-[#1E1E26] pb-3 gap-2">
-              <h2 className="text-sm font-semibold text-white whitespace-nowrap">Kho Truyện ({stories.length})</h2>
+          <div className="lg:col-span-5 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-3.5 shadow-xs">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#1E1E26] pb-3 gap-2">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white whitespace-nowrap">Kho Truyện ({stories.length})</h2>
               <div className="relative w-40 sm:w-44">
-                <Search className="w-3 h-3 text-[#52525B] absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-3 h-3 text-slate-400 dark:text-[#52525B] absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={storySearch}
                   onChange={(e) => setStorySearch(e.target.value)}
                   placeholder="Lọc mã hoặc tên..."
-                  className="w-full pl-7 pr-2.5 py-1 bg-[#0A0A0D] border border-[#272733] rounded-md text-[11px] text-white focus:outline-none focus:border-[#7C5CFC]"
+                  className="w-full pl-7 pr-2.5 py-1 bg-white dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] rounded-md text-[11px] text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
                 />
               </div>
             </div>
@@ -2535,7 +2601,7 @@ export default function AdminPage() {
               {filteredStories.map((st) => (
                 <div
                   key={st.id}
-                  className="p-2.5 sm:p-3 bg-[#0A0A0D] border border-[#1E1E26] hover:border-[#2E2E3C] rounded-lg flex flex-col gap-2.5 text-xs transition"
+                  className="p-2.5 sm:p-3 bg-white hover:bg-slate-50 dark:bg-[#0A0A0D] border border-slate-200 hover:border-slate-300 dark:border-[#1E1E26] dark:hover:border-[#2E2E3C] rounded-lg flex flex-col gap-2.5 text-xs transition shadow-xs"
                 >
                   {/* Hàng 1: Ảnh bìa + Tên + Nhóm nút thao tác */}
                   <div className="flex items-start justify-between gap-2">
@@ -2543,16 +2609,16 @@ export default function AdminPage() {
                       <img 
                         src={st.coverImage} 
                         alt={st.title} 
-                        className="w-9 sm:w-10 aspect-[9/16] object-cover rounded bg-[#1C1C24] flex-shrink-0" 
+                        className="w-9 sm:w-10 aspect-[9/16] object-cover rounded bg-slate-100 dark:bg-[#1C1C24] flex-shrink-0 border border-slate-200 dark:border-transparent" 
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-[10px] text-[#F59E0B] font-bold flex-shrink-0">
+                          <span className="font-mono text-[10px] text-amber-600 dark:text-[#F59E0B] font-bold flex-shrink-0">
                             #{st.code}
                           </span>
-                          <span className="font-medium text-white truncate text-xs sm:text-sm">{st.title}</span>
+                          <span className="font-semibold text-slate-900 dark:text-white truncate text-xs sm:text-sm">{st.title}</span>
                         </div>
-                        <div className="text-[10px] text-[#71717A] mt-0.5">
+                        <div className="text-[10px] text-slate-500 dark:text-[#71717A] mt-0.5">
                           {st.chaptersCount} tập • {st.genre || 'Tình cảm'}
                         </div>
                       </div>
@@ -2562,7 +2628,7 @@ export default function AdminPage() {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={() => handleStartEditStory(st)}
-                        className="p-1.5 bg-[#14141B] hover:bg-[#7C5CFC]/20 text-[#9E9EA8] hover:text-[#7C5CFC] rounded transition"
+                        className="p-1.5 bg-slate-100 hover:bg-indigo-50 border border-slate-200 text-slate-600 hover:text-indigo-600 dark:bg-[#14141B] dark:border-transparent dark:hover:bg-[#7C5CFC]/20 dark:text-[#9E9EA8] dark:hover:text-[#7C5CFC] rounded transition"
                         title="Sửa truyện & Thêm tập"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -2570,16 +2636,16 @@ export default function AdminPage() {
 
                       <button
                         onClick={() => handleCopyStoryLink(st)}
-                        className="p-1.5 bg-[#14141B] hover:bg-[#1E1E28] text-[#9E9EA8] hover:text-white rounded transition"
+                        className="p-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 dark:bg-[#14141B] dark:border-transparent dark:hover:bg-[#1E1E28] dark:text-[#9E9EA8] dark:hover:text-white rounded transition"
                         title="Copy link dán TikTok"
                       >
-                        {copiedStoryId === st.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedStoryId === st.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
 
                       <Link
                         href={`/truyen/${st.slug}`}
                         target="_blank"
-                        className="p-1.5 bg-[#14141B] hover:bg-[#1E1E28] text-[#9E9EA8] hover:text-white rounded transition"
+                        className="p-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 hover:text-slate-900 dark:bg-[#14141B] dark:border-transparent dark:hover:bg-[#1E1E28] dark:text-[#9E9EA8] dark:hover:text-white rounded transition"
                         title="Xem truyện"
                       >
                         <ArrowUpRight className="w-3.5 h-3.5" />
@@ -2587,7 +2653,7 @@ export default function AdminPage() {
 
                       <button
                         onClick={() => handleDeleteStory(st.id)}
-                        className="p-1.5 bg-[#14141B] hover:bg-red-950/40 text-[#71717A] hover:text-red-400 rounded transition"
+                        className="p-1.5 bg-slate-100 hover:bg-red-50 border border-slate-200 text-slate-600 hover:text-red-600 dark:bg-[#14141B] dark:border-transparent dark:hover:bg-red-950/40 dark:text-[#71717A] dark:hover:text-red-400 rounded transition"
                         title="Xóa truyện"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -2596,16 +2662,16 @@ export default function AdminPage() {
                   </div>
 
                   {/* Hàng 2: Ba nút trạng thái nhanh */}
-                  <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-[#181822]">
-                    <span className="text-[10px] text-[#71717A] hidden xs:inline">Trạng thái:</span>
-                    <div className="inline-flex items-center gap-1 bg-[#14141C] p-0.5 rounded border border-[#252535] overflow-x-auto no-scrollbar w-full sm:w-auto justify-between sm:justify-start">
+                  <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-200 dark:border-[#181822]">
+                    <span className="text-[10px] text-slate-500 dark:text-[#71717A] hidden xs:inline">Trạng thái:</span>
+                    <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-[#14141C] p-0.5 rounded border border-slate-200 dark:border-[#252535] overflow-x-auto no-scrollbar w-full sm:w-auto justify-between sm:justify-start">
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'ongoing'); }}
                         className={`px-2 py-0.5 rounded text-[9px] font-medium transition whitespace-nowrap flex-1 sm:flex-initial text-center ${
                           st.status === 'ongoing'
-                            ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 font-bold'
-                            : 'text-[#71717A] hover:text-white'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300 font-bold dark:bg-amber-500/30 dark:text-amber-300 dark:border-amber-500/50'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:text-[#71717A] dark:hover:text-white'
                         }`}
                         title="Bấm để đổi sang Còn tiếp"
                       >
@@ -2616,8 +2682,8 @@ export default function AdminPage() {
                         onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'upcoming'); }}
                         className={`px-2 py-0.5 rounded text-[9px] font-medium transition whitespace-nowrap flex-1 sm:flex-initial text-center ${
                           st.status === 'upcoming'
-                            ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50 font-bold'
-                            : 'text-[#71717A] hover:text-white'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-300 font-bold dark:bg-purple-500/30 dark:text-purple-300 dark:border-purple-500/50'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:text-[#71717A] dark:hover:text-white'
                         }`}
                         title="Bấm để đổi sang Sắp ra mắt"
                       >
@@ -2628,8 +2694,8 @@ export default function AdminPage() {
                         onClick={(e) => { e.stopPropagation(); handleQuickUpdateStatus(st.id, 'completed'); }}
                         className={`px-2 py-0.5 rounded text-[9px] font-medium transition whitespace-nowrap flex-1 sm:flex-initial text-center ${
                           st.status === 'completed'
-                            ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/50 font-bold'
-                            : 'text-[#71717A] hover:text-white'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold dark:bg-emerald-500/30 dark:text-emerald-300 dark:border-emerald-500/50'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200 dark:text-[#71717A] dark:hover:text-white'
                         }`}
                         title="Bấm để đổi sang Full trọn bộ"
                       >
@@ -2651,43 +2717,71 @@ export default function AdminPage() {
       {/* ============================================================ */}
       {activeTab === 'customers' && (
         <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3">
-            <div>
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-                <span>Danh Sách Độc Giả ({filteredUsers.length} người)</span>
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3">
+            <div className="flex-shrink-0">
+              <h2 className="text-sm font-semibold text-white flex flex-wrap items-center gap-2">
+                <span className="whitespace-nowrap">Danh Sách Độc Giả ({filteredUsers.length} người)</span>
                 {dateFilterType !== 'all' && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase whitespace-nowrap">
                     {getDateFilterLabel()}
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold font-mono">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-semibold font-mono whitespace-nowrap flex-shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Real-time</span>
                 </span>
               </h2>
-              <p className="text-[11px] text-[#71717A]">
+              <p className="text-[11px] text-[#71717A] mt-0.5">
                 Tự động đồng bộ thời gian thực • Giờ giấc đăng ký chi tiết
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="relative w-full sm:w-56">
-                <Search className="w-3.5 h-3.5 text-[#52525B] absolute left-3 top-1/2 -translate-y-1/2" />
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Nút Phát Quà Đền Bù Toàn Server */}
+              <button
+                type="button"
+                onClick={handleCompensateAllUsers}
+                disabled={compensating}
+                className="px-2.5 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 dark:bg-gradient-to-r dark:from-amber-500/20 dark:to-purple-500/20 dark:hover:from-amber-500/30 dark:hover:to-purple-500/30 dark:border-amber-500/40 dark:text-amber-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap flex-shrink-0"
+                title="Cộng điểm hàng loạt cho tất cả độc giả làm quà đền bù bảo trì"
+              >
+                <Gift className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <span className="whitespace-nowrap">{compensating ? 'Đang phát...' : '🎁 Phát Quà Đền Bù'}</span>
+              </button>
+
+              {/* Menu Sắp Xếp Độc Giả (Mới nhất, Cũ nhất, Nạp nhiều nhất, Điểm nhiều nhất, Tập mở nhiều nhất) */}
+              <select
+                value={customerSort}
+                onChange={(e) => setCustomerSort(e.target.value as any)}
+                className="bg-white dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] text-slate-900 dark:text-white text-xs px-2.5 py-1.5 rounded-lg focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC] cursor-pointer whitespace-nowrap flex-shrink-0"
+                title="Sắp xếp danh sách độc giả"
+              >
+                <option value="newest">🕒 Mới nhất</option>
+                <option value="oldest">🕰️ Cũ nhất (ngày đầu)</option>
+                <option value="top_recharged">💰 Nạp nhiều nhất</option>
+                <option value="top_coins">🪙 Nhiều Điểm nhất</option>
+                <option value="top_unlocked">📖 Mở nhiều tập nhất</option>
+              </select>
+
+              <div className="relative flex-1 sm:flex-initial sm:w-48 min-w-[140px]">
+                <Search className="w-3.5 h-3.5 text-slate-400 dark:text-[#52525B] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={customerSearch}
                   onChange={(e) => setCustomerSearch(e.target.value)}
-                  placeholder="Tìm theo tài khoản hoặc SĐT..."
-                  className="w-full pl-8 pr-3 py-1.5 bg-[#0A0A0D] border border-[#272733] rounded-lg text-xs text-white focus:outline-none focus:border-[#7C5CFC]"
+                  placeholder="Tìm tài khoản, SĐT..."
+                  className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
                 />
               </div>
 
-              <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
-                <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
+              <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x flex-shrink-0">
+                <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-[#0A0A0D] p-0.5 rounded-lg border border-slate-200 dark:border-[#272733] text-xs min-w-max">
                   <button
                     onClick={() => setCustomerFilter('all')}
                     className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      customerFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                      customerFilter === 'all'
+                        ? 'bg-white text-slate-900 font-bold shadow-xs dark:bg-[#22222E] dark:text-white'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                     }`}
                   >
                     Tất cả ({baseUsers.length})
@@ -2695,7 +2789,9 @@ export default function AdminPage() {
                   <button
                     onClick={() => setCustomerFilter('recharged')}
                     className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      customerFilter === 'recharged' ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/30' : 'text-[#71717A] hover:text-white'
+                      customerFilter === 'recharged'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-500/30'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                     }`}
                   >
                     Đã nạp tiền ({baseUsers.filter(u => u.hasRecharged || (u.totalRechargedVnd || 0) > 0).length})
@@ -2703,19 +2799,33 @@ export default function AdminPage() {
                   <button
                     onClick={() => setCustomerFilter('google')}
                     className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      customerFilter === 'google' ? 'bg-sky-950/70 text-sky-300 border border-sky-500/30' : 'text-[#71717A] hover:text-white'
+                      customerFilter === 'google'
+                        ? 'bg-sky-100 text-sky-800 border border-sky-300 font-bold dark:bg-sky-950/70 dark:text-sky-300 dark:border-sky-500/30'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                     }`}
                   >
                     Google ({baseUsers.filter(u => u.isGoogle).length})
                   </button>
                   <button
+                    onClick={() => setCustomerFilter('phone')}
+                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
+                      customerFilter === 'phone'
+                        ? 'bg-purple-100 text-purple-800 border border-purple-300 font-bold dark:bg-purple-950/70 dark:text-purple-300 dark:border-purple-500/30'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
+                    }`}
+                  >
+                    Tên / SĐT ({baseUsers.filter(u => !u.isGoogle).length})
+                  </button>
+                  <button
                     onClick={() => setCustomerFilter('vip')}
                     className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap flex items-center gap-1 ${
-                      customerFilter === 'vip' ? 'bg-amber-950/70 text-amber-300 border border-amber-500/40 shadow-sm' : 'text-[#71717A] hover:text-white'
+                      customerFilter === 'vip'
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300 font-bold dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-500/40 shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                     }`}
                   >
                     <span>👑 VIP</span>
-                    <span className="font-mono">({safeUsers.filter(u => u.isVip).length})</span>
+                    <span className="font-mono">({baseUsers.filter(u => u.isVip).length})</span>
                   </button>
                 </div>
               </div>
@@ -2729,17 +2839,17 @@ export default function AdminPage() {
 
           {/* DANH SÁCH ĐỘC GIẢ: BẢN THẺ CHO DI ĐỘNG (MOBILE CARDS) & BẢNG CHO MÁY TÍNH (DESKTOP TABLE) */}
           {/* 1. Mobile Cards View (Tối ưu vuốt chạm cho điện thoại) */}
-          <div className="md:hidden divide-y divide-[#1C1C26] rounded-lg border border-[#1A1A24]/60 overflow-hidden bg-[#111116]">
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-[#1C1C26] rounded-lg border border-slate-200 dark:border-[#1A1A24]/60 overflow-hidden bg-white dark:bg-[#111116]">
             {filteredUsers.length === 0 ? (
-              <div className="py-8 text-center text-[#52525B] text-xs">
+              <div className="py-8 text-center text-slate-400 dark:text-[#52525B] text-xs">
                 Không có độc giả nào phù hợp.
               </div>
             ) : (
               filteredUsers.map((u, idx) => (
-                <div key={u.id} className="p-3.5 space-y-2.5 hover:bg-[#14141E] transition">
+                <div key={u.id} className="p-3.5 space-y-2.5 hover:bg-slate-50 dark:hover:bg-[#14141E] transition">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-[#1E1E28] border border-[#2B2B3E] flex items-center justify-center font-bold text-white text-xs flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-[#1E1E28] border border-slate-200 dark:border-[#2B2B3E] flex items-center justify-center font-bold text-slate-700 dark:text-white text-xs flex-shrink-0">
                         {u.avatar ? (
                           <img src={u.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                         ) : (
@@ -2748,28 +2858,35 @@ export default function AdminPage() {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-white text-xs truncate max-w-[150px]">
+                          <span className="font-semibold text-slate-900 dark:text-white text-xs truncate max-w-[150px]">
                             {u.name || u.phone || u.email || u.id}
                           </span>
                           {u.isGoogle && (
-                            <span className="text-[9px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-1 py-0.2 rounded font-mono flex-shrink-0">
+                            <span className="text-[9px] bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20 px-1 py-0.2 rounded font-mono flex-shrink-0 font-medium">
                               Google
                             </span>
                           )}
                         </div>
-                        <div className="text-[10px] text-[#71717A] truncate font-mono">
+                        <div className="text-[10px] text-slate-500 dark:text-[#71717A] truncate font-mono">
                           {u.phone || u.email || u.id}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className="text-[10px] font-mono text-[#71717A]">#{idx + 1}</span>
+                      <span className="text-[10px] font-mono text-slate-400 dark:text-[#71717A]">#{idx + 1}</span>
                       {u.isVip ? (
-                        <span className="text-[10px] font-bold text-[#F59E0B] bg-[#F59E0B]/15 border border-[#F59E0B]/30 px-2 py-0.5 rounded-full">
-                          VIP
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 border border-amber-300 dark:text-[#F59E0B] dark:bg-[#F59E0B]/15 dark:border-[#F59E0B]/30 px-2 py-0.5 rounded-full">
+                            VIP
+                          </span>
+                          {u.vipUntil && (
+                            <span className="text-[9px] font-mono text-amber-600 dark:text-amber-400/90 font-medium mt-0.5">
+                              {formatVipRemainingShort(u.vipUntil)}
+                            </span>
+                          )}
+                        </div>
                       ) : (
-                        <span className="text-[10px] text-[#71717A] bg-[#181822] px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] text-slate-600 dark:text-[#71717A] bg-slate-100 dark:bg-[#181822] border border-slate-200 dark:border-transparent px-1.5 py-0.5 rounded">
                           Thường
                         </span>
                       )}
@@ -2777,22 +2894,22 @@ export default function AdminPage() {
                   </div>
 
                   {/* 3 Chỉ số mini gọn gàng */}
-                  <div className="grid grid-cols-3 gap-1.5 bg-[#0A0A0E] p-2 rounded-lg border border-[#1A1A24] text-center">
+                  <div className="grid grid-cols-3 gap-1.5 bg-slate-50 dark:bg-[#0A0A0E] p-2 rounded-lg border border-slate-200 dark:border-[#1A1A24] text-center">
                     <div>
-                      <div className="text-[9px] text-[#71717A]">Đã Nạp</div>
-                      <div className="text-[11px] font-bold font-mono text-emerald-400 truncate">
+                      <div className="text-[9px] text-slate-500 dark:text-[#71717A]">Đã Nạp</div>
+                      <div className="text-[11px] font-bold font-mono text-emerald-600 dark:text-emerald-400 truncate">
                         {u.totalRechargedVnd > 0 ? `${u.totalRechargedVnd.toLocaleString('vi-VN')} đ` : '0 đ'}
                       </div>
                     </div>
                     <div>
-                      <div className="text-[9px] text-[#71717A]">Số Dư Điểm</div>
-                      <div className="text-[11px] font-bold font-mono text-white truncate">
+                      <div className="text-[9px] text-slate-500 dark:text-[#71717A]">Số Dư Điểm</div>
+                      <div className="text-[11px] font-bold font-mono text-slate-900 dark:text-white truncate">
                         {u.coins || 0} Điểm
                       </div>
                     </div>
                     <div>
-                      <div className="text-[9px] text-[#71717A]">Tập Đã Mở</div>
-                      <div className="text-[11px] font-bold font-mono text-purple-300 truncate">
+                      <div className="text-[9px] text-slate-500 dark:text-[#71717A]">Tập Đã Mở</div>
+                      <div className="text-[11px] font-bold font-mono text-purple-700 dark:text-purple-300 truncate">
                         {u.unlockedCount ?? (u.unlockedChapters?.length || 0)} tập
                       </div>
                     </div>
@@ -2800,23 +2917,23 @@ export default function AdminPage() {
 
                   {/* Hàng thao tác nút bấm to, thân thiện ngón tay cái */}
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-[10px] text-[#71717A] font-mono">
+                    <span className="text-[10px] text-slate-500 dark:text-[#71717A] font-mono">
                       {u.createdAt && !isNaN(new Date(u.createdAt).getTime())
                         ? `${new Date(u.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - ${new Date(u.createdAt).toLocaleDateString('vi-VN')}`
                         : '—'}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
                       <button
                         type="button"
                         onClick={() => handleAdjustCoins(u.id, 5, u.phone || u.id)}
-                        className="px-2.5 py-1.5 bg-[#1A1A24] active:bg-[#7C5CFC] text-xs font-mono font-bold text-white rounded-lg border border-[#2B2B3E] transition cursor-pointer"
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#1A1A24] active:bg-[#7C5CFC] text-xs font-mono font-bold text-slate-700 dark:text-white rounded-lg border border-slate-300 dark:border-[#2B2B3E] transition cursor-pointer"
                       >
                         +5
                       </button>
                       <button
                         type="button"
                         onClick={() => handleAdjustCoins(u.id, 15, u.phone || u.id)}
-                        className="px-2.5 py-1.5 bg-[#1A1A24] active:bg-[#7C5CFC] text-xs font-mono font-bold text-white rounded-lg border border-[#2B2B3E] transition cursor-pointer"
+                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#1A1A24] active:bg-[#7C5CFC] text-xs font-mono font-bold text-slate-700 dark:text-white rounded-lg border border-slate-300 dark:border-[#2B2B3E] transition cursor-pointer"
                       >
                         +15
                       </button>
@@ -2824,18 +2941,26 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={() => handleAdjustCoins(u.id, -5, u.phone || u.id)}
-                          className="px-2 py-1.5 bg-[#1A1A24] active:bg-red-900 text-xs font-mono font-bold text-red-400 rounded-lg border border-[#2B2B3E] transition cursor-pointer"
+                          className="px-1.5 py-1 bg-slate-100 hover:bg-red-50 dark:bg-[#1A1A24] active:bg-red-900 text-xs font-mono font-bold text-red-600 dark:text-red-400 rounded-lg border border-slate-300 dark:border-[#2B2B3E] transition cursor-pointer"
                         >
                           -5
                         </button>
                       )}
                       <button
                         type="button"
+                        onClick={() => handleCustomAdjustCoins(u.id, u.name || u.phone || u.id)}
+                        className="px-2 py-1 bg-purple-50 hover:bg-purple-100 dark:bg-[#1A1A24] active:bg-purple-900 text-xs font-mono font-bold text-purple-700 dark:text-purple-300 rounded-lg border border-purple-200 dark:border-[#2B2B3E] transition cursor-pointer"
+                        title="Tự nhập số điểm cộng hoặc trừ tùy ý"
+                      >
+                        ± Khác
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleToggleVip(u.id, u.name || u.phone || u.id, u.isVip)}
-                        className={`px-3 py-1.5 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition cursor-pointer ${
                           u.isVip
-                            ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                            : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                            ? 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/30'
+                            : 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30'
                         }`}
                       >
                         {u.isVip ? 'Hủy VIP' : '+VIP'}
@@ -2847,60 +2972,60 @@ export default function AdminPage() {
             )}
           </div>
 
-          {/* 2. Desktop Table View (Giữ nguyên trải nghiệm bảng rộng trên máy tính) */}
-          <div className="hidden md:block w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
+          {/* 2. Desktop Table View (Giữ nguyên trải nghiệm bảng rộng trên máy tính, tăng chiều cao xem được 8-10 dòng) */}
+          <div className="hidden md:block w-full max-h-[680px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-slate-200 dark:border-[#1A1A24]/60 touch-pan-x bg-white dark:bg-transparent">
             <table className="w-full text-left text-xs min-w-[780px]">
-              <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
-                <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A] whitespace-nowrap">STT</th>
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Tài Khoản / Người Dùng</th>
-                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Hạng</th>
-                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Đã Nạp</th>
-                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Số Dư Điểm</th>
-                  <th className="py-2.5 px-2 font-medium bg-[#111116] whitespace-nowrap">Tập Đã Mở</th>
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] min-w-[130px] whitespace-nowrap">Ngày & Giờ Tạo</th>
-                  <th className="py-2.5 px-3 font-medium text-right bg-[#111116] whitespace-nowrap">Điều Chỉnh Điểm</th>
+              <thead className="sticky top-0 bg-slate-50 dark:bg-[#111116] z-10 shadow-sm border-b border-slate-200 dark:border-[#1E1E26]">
+                <tr className="text-slate-600 dark:text-[#71717A]">
+                  <th className="py-2.5 px-3 font-semibold bg-slate-50 dark:bg-[#111116] w-12 text-center whitespace-nowrap">STT</th>
+                  <th className="py-2.5 px-3 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Tài Khoản / Người Dùng</th>
+                  <th className="py-2.5 px-2 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Hạng</th>
+                  <th className="py-2.5 px-2 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Đã Nạp</th>
+                  <th className="py-2.5 px-2 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Số Dư Điểm</th>
+                  <th className="py-2.5 px-2 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Tập Đã Mở</th>
+                  <th className="py-2.5 px-3 font-semibold bg-slate-50 dark:bg-[#111116] min-w-[130px] whitespace-nowrap">Ngày & Giờ Tạo</th>
+                  <th className="py-2.5 px-3 font-semibold text-right bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Điều Chỉnh Điểm</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1C1C24]">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#1C1C24]">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-[#52525B]">
+                    <td colSpan={8} className="py-8 text-center text-slate-400 dark:text-[#52525B]">
                       Không có độc giả nào phù hợp.
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((u, idx) => (
-                    <tr key={u.id} className="hover:bg-[#14141B] transition">
-                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold whitespace-nowrap">
+                    <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-[#14141B] transition">
+                      <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-400 dark:text-[#71717A] font-semibold whitespace-nowrap">
                         #{idx + 1}
                       </td>
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2.5">
                           {u.avatar ? (
-                            <img src={u.avatar} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-[#272733]" />
+                            <img src={u.avatar} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-[#272733]" />
                           ) : (
-                            <div className="w-7 h-7 rounded-full bg-[#1E1E28] text-[#A1A1AA] flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border border-[#272733]">
+                            <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-[#1E1E28] text-slate-600 dark:text-[#A1A1AA] flex items-center justify-center text-[11px] font-semibold flex-shrink-0 border border-slate-200 dark:border-[#272733]">
                               {(u.name || u.phone || u.email || 'U')[0].toUpperCase()}
                             </div>
                           )}
                           <div className="min-w-0 max-w-[170px] sm:max-w-[220px]">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-white text-xs truncate" title={u.name || u.phone || u.email || u.id}>
+                              <span className="font-semibold text-slate-900 dark:text-white text-xs truncate" title={u.name || u.phone || u.email || u.id}>
                                 {u.name || u.phone || u.email || u.id}
                               </span>
                               {u.isGoogle && (
-                                <span className="text-[9px] bg-sky-500/10 text-sky-400 border border-sky-500/20 px-1 py-0.2 rounded font-mono flex-shrink-0">
+                                <span className="text-[9px] bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:text-sky-400 dark:border-sky-500/20 px-1 py-0.2 rounded font-mono flex-shrink-0 font-medium">
                                   Google
                                 </span>
                               )}
                             </div>
                             {u.email && u.email !== u.name ? (
-                              <div className="text-[10px] text-[#71717A] truncate font-mono" title={u.email}>
+                              <div className="text-[10px] text-slate-500 dark:text-[#71717A] truncate font-mono" title={u.email}>
                                 {u.email}
                               </div>
                             ) : u.phone && u.phone !== u.name ? (
-                              <div className="text-[10px] text-[#71717A] truncate font-mono" title={u.phone}>
+                              <div className="text-[10px] text-slate-500 dark:text-[#71717A] truncate font-mono" title={u.phone}>
                                 {u.phone}
                               </div>
                             ) : null}
@@ -2909,33 +3034,40 @@ export default function AdminPage() {
                       </td>
                       <td className="py-3 px-2 whitespace-nowrap">
                         {u.isVip ? (
-                          <span className="text-[10px] text-[#F59E0B] font-semibold bg-[#F59E0B]/10 px-1.5 py-0.5 rounded border border-[#F59E0B]/20">
-                            VIP
-                          </span>
+                          <div className="flex flex-col items-start">
+                            <span className="text-[10px] text-amber-800 dark:text-[#F59E0B] font-bold bg-amber-100 dark:bg-[#F59E0B]/10 px-1.5 py-0.5 rounded border border-amber-300 dark:border-[#F59E0B]/20">
+                              VIP
+                            </span>
+                            {u.vipUntil && (
+                              <span className="text-[9px] font-mono text-amber-600 dark:text-amber-400/90 font-medium mt-0.5" title={`Hết hạn: ${new Date(u.vipUntil).toLocaleString('vi-VN')}`}>
+                                {formatVipRemainingShort(u.vipUntil)}
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <span className="text-[10px] text-[#71717A]">Thường</span>
+                          <span className="text-[10px] text-slate-500 dark:text-[#71717A] bg-slate-100 dark:bg-[#181822] border border-slate-200 dark:border-transparent px-1.5 py-0.5 rounded">Thường</span>
                         )}
                       </td>
                       <td className="py-3 px-2 whitespace-nowrap">
                         {u.totalRechargedVnd > 0 ? (
-                          <span className="font-semibold text-emerald-400 font-mono">
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
                             {u.totalRechargedVnd.toLocaleString('vi-VN')} đ
                           </span>
                         ) : (
-                          <span className="text-[#52525B] font-mono">0 đ</span>
+                          <span className="text-slate-400 dark:text-[#52525B] font-mono">0 đ</span>
                         )}
                       </td>
-                      <td className="py-3 px-2 font-semibold text-white font-mono whitespace-nowrap">
+                      <td className="py-3 px-2 font-semibold text-slate-900 dark:text-white font-mono whitespace-nowrap">
                         {u.coins || 0} Điểm
                       </td>
-                      <td className="py-3 px-2 text-[#A1A1AA] whitespace-nowrap">
+                      <td className="py-3 px-2 text-slate-600 dark:text-[#A1A1AA] whitespace-nowrap">
                         {u.unlockedCount ?? (u.unlockedChapters?.length || 0)} tập
                       </td>
                       <td className="py-2.5 px-3 whitespace-nowrap">
                         {u.createdAt && !isNaN(new Date(u.createdAt).getTime()) ? (
                           <div className="space-y-0.5 min-w-[125px]">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-white text-xs font-bold">
+                              <span className="font-mono text-slate-900 dark:text-white text-xs font-bold">
                                 {new Date(u.createdAt).toLocaleTimeString('vi-VN', {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -2945,7 +3077,7 @@ export default function AdminPage() {
                               </span>
                               {formatTimeAgoBadge(u.createdAt)}
                             </div>
-                            <div className="text-[10px] text-[#71717A] font-mono">
+                            <div className="text-[10px] text-slate-500 dark:text-[#71717A] font-mono">
                               {new Date(u.createdAt).toLocaleDateString('vi-VN', {
                                 day: '2-digit',
                                 month: '2-digit',
@@ -2955,37 +3087,44 @@ export default function AdminPage() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-[#52525B]">—</span>
+                          <span className="text-slate-400 dark:text-[#52525B]">—</span>
                         )}
                       </td>
                       <td className="py-3 px-3 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1">
                           <button
                             onClick={() => handleAdjustCoins(u.id, 5, u.phone || u.id)}
-                            className="px-2 py-0.5 bg-[#1A1A24] hover:bg-[#252534] border border-[#2A2A3A] rounded text-[10px] text-[#D4D4D8] transition font-medium"
+                            className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-[#1A1A24] dark:hover:bg-[#252534] dark:border-[#2A2A3A] rounded text-[10px] text-slate-700 dark:text-[#D4D4D8] transition font-semibold"
                           >
                             +5
                           </button>
                           <button
                             onClick={() => handleAdjustCoins(u.id, 15, u.phone || u.id)}
-                            className="px-2 py-0.5 bg-[#1A1A24] hover:bg-[#252534] border border-[#2A2A3A] rounded text-[10px] text-[#D4D4D8] transition font-medium"
+                            className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-[#1A1A24] dark:hover:bg-[#252534] dark:border-[#2A2A3A] rounded text-[10px] text-slate-700 dark:text-[#D4D4D8] transition font-semibold"
                           >
                             +15
                           </button>
                           {(u.coins || 0) >= 5 && (
                             <button
                               onClick={() => handleAdjustCoins(u.id, -5, u.phone || u.id)}
-                              className="px-2 py-0.5 bg-[#1A1A24] hover:bg-red-950/40 border border-[#2A2A3A] rounded text-[10px] text-[#71717A] hover:text-red-400 transition font-medium"
+                              className="px-2 py-0.5 bg-slate-100 hover:bg-red-50 border border-slate-300 dark:bg-[#1A1A24] dark:hover:bg-red-950/40 dark:border-[#2A2A3A] rounded text-[10px] text-slate-600 dark:text-[#71717A] hover:text-red-600 dark:hover:text-red-400 transition font-medium"
                             >
                               -5
                             </button>
                           )}
                           <button
+                            onClick={() => handleCustomAdjustCoins(u.id, u.name || u.phone || u.id)}
+                            className="px-2 py-0.5 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 hover:text-purple-900 dark:bg-[#1A1A24] dark:hover:bg-purple-950/40 dark:border-[#2A2A3A] dark:text-purple-300 dark:hover:text-purple-200 rounded text-[10px] transition font-semibold"
+                            title="Tự nhập số điểm cộng hoặc trừ tùy ý"
+                          >
+                            ± Khác
+                          </button>
+                          <button
                             onClick={() => handleToggleVip(u.id, u.name || u.phone || u.id, u.isVip)}
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium border transition ${
+                            className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition ${
                               u.isVip
-                                ? 'bg-amber-950/40 text-amber-300 border-amber-800/40 hover:bg-amber-900/60'
-                                : 'bg-[#1A1A24] text-[#A1A1AA] border-[#2A2A3A] hover:text-white hover:bg-[#252534]'
+                                ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 dark:hover:bg-amber-900/60'
+                                : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 hover:text-slate-900 dark:bg-[#1A1A24] dark:text-[#A1A1AA] dark:border-[#2A2A3A] dark:hover:text-white dark:hover:bg-[#252534]'
                             }`}
                             title={u.isVip ? 'Thu hồi VIP' : 'Cấp VIP 30 ngày'}
                           >
@@ -3008,23 +3147,23 @@ export default function AdminPage() {
       {/* 3. DÒNG TIỀN & DOANH THU                                      */}
       {/* ============================================================ */}
       {activeTab === 'revenue' && (
-        <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1E1E26] pb-3.5">
+        <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-200 dark:border-[#1E1E26] pb-3.5">
             <div>
-              <h2 className="text-sm font-semibold text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <span>Sổ Nhật Ký Chuyển Khoản ({filteredOrders.length} đơn)</span>
                 {dateFilterType !== 'all' && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border-[#7C5CFC]/40 lowercase">
                     {getDateFilterLabel()}
                   </span>
                 )}
                 {orderSearch && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-medium">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border-[#7C5CFC]/40">
                     Tìm thấy: {filteredOrders.length} đơn
                   </span>
                 )}
               </h2>
-              <p className="text-[11px] text-[#71717A] mt-0.5 break-words">
+              <p className="text-[11px] text-slate-500 dark:text-[#71717A] mt-0.5 break-words">
                 Đối soát tự động qua thông báo Gmail ngân hàng Sacombank (040121635056 - TRAN CONG DUC)
               </p>
             </div>
@@ -3032,19 +3171,19 @@ export default function AdminPage() {
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               {/* Ô TÌM KIẾM ĐƠN HÀNG DÒNG TIỀN */}
               <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 text-slate-400 dark:text-[#71717A] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={orderSearch}
                   onChange={(e) => setOrderSearch(e.target.value)}
                   placeholder="Tìm mã đơn (CR...), tên, email..."
-                  className="w-full pl-8 pr-7 py-1.5 bg-[#0A0A0D] border border-[#272733] rounded-lg text-xs text-white placeholder-[#52525B] focus:outline-none focus:border-[#7C5CFC] transition"
+                  className="w-full pl-8 pr-7 py-1.5 bg-slate-50 dark:bg-[#0A0A0D] border border-slate-300 dark:border-[#272733] rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#52525B] focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC] transition"
                 />
                 {orderSearch && (
                   <button
                     type="button"
                     onClick={() => setOrderSearch('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#71717A] hover:text-white transition"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 dark:text-[#71717A] dark:hover:text-white transition"
                     title="Xóa tìm kiếm"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -3054,35 +3193,43 @@ export default function AdminPage() {
 
               {/* Các tab lọc trạng thái */}
               <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
-                <div className="inline-flex items-center gap-1 bg-[#0A0A0D] p-0.5 rounded-lg border border-[#272733] text-xs min-w-max">
+                <div className="inline-flex items-center gap-1 bg-slate-100 dark:bg-[#0A0A0D] p-0.5 rounded-lg border border-slate-200 dark:border-[#272733] text-xs min-w-max">
                   <button
                     onClick={() => setOrderFilter('all')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      orderFilter === 'all' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition whitespace-nowrap cursor-pointer ${
+                      orderFilter === 'all'
+                        ? 'bg-white text-slate-900 shadow-sm font-bold dark:bg-[#22222E] dark:text-white'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                     }`}
                   >
                     Tất cả ({baseOrders.length})
                   </button>
                   <button
                     onClick={() => setOrderFilter('completed')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      orderFilter === 'completed' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition whitespace-nowrap cursor-pointer ${
+                      orderFilter === 'completed'
+                        ? 'bg-white text-emerald-800 shadow-sm font-bold border border-emerald-200 dark:bg-[#22222E] dark:text-white dark:border-transparent'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                     }`}
                   >
                     Thành công ({baseOrders.filter(o => o.status === 'completed').length})
                   </button>
                   <button
                     onClick={() => setOrderFilter('pending')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      orderFilter === 'pending' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition whitespace-nowrap cursor-pointer ${
+                      orderFilter === 'pending'
+                        ? 'bg-white text-amber-800 shadow-sm font-bold border border-amber-200 dark:bg-[#22222E] dark:text-white dark:border-transparent'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                     }`}
                   >
                     Chờ quét ({baseOrders.filter(o => o.status === 'pending' || o.status === 'processing').length})
                   </button>
                   <button
                     onClick={() => setOrderFilter('vip')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap flex items-center gap-1 ${
-                      orderFilter === 'vip' ? 'bg-amber-950/70 text-amber-300 border border-amber-500/40 shadow-sm' : 'text-[#71717A] hover:text-white'
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                      orderFilter === 'vip'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-sm font-bold dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-500/40'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                     }`}
                   >
                     <span>👑 Gói VIP</span>
@@ -3090,16 +3237,20 @@ export default function AdminPage() {
                   </button>
                   <button
                     onClick={() => setOrderFilter('expired')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap ${
-                      orderFilter === 'expired' ? 'bg-[#22222E] text-white' : 'text-[#71717A] hover:text-white'
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition whitespace-nowrap cursor-pointer ${
+                      orderFilter === 'expired'
+                        ? 'bg-white text-slate-900 shadow-sm font-bold dark:bg-[#22222E] dark:text-white'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                     }`}
                   >
                     Đã hết hạn ({baseOrders.filter(o => o.status === 'expired').length})
                   </button>
                   <button
                     onClick={() => setOrderFilter('tips')}
-                    className={`px-2.5 py-1 rounded text-[11px] font-medium transition whitespace-nowrap flex items-center gap-1 ${
-                      orderFilter === 'tips' ? 'bg-amber-500/25 text-amber-300 border border-amber-500/50 shadow-sm' : 'text-[#71717A] hover:text-white'
+                    className={`px-2.5 py-1 rounded text-[11px] font-semibold transition whitespace-nowrap flex items-center gap-1 cursor-pointer ${
+                      orderFilter === 'tips'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-sm font-bold dark:bg-amber-500/25 dark:text-amber-300 dark:border-amber-500/50'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-transparent'
                     }`}
                   >
                     <span>☕ Cà Phê & Tặng Riêng</span>
@@ -3107,7 +3258,7 @@ export default function AdminPage() {
                   </button>
                   <button
                     onClick={handleCleanupTestData}
-                    className="px-2.5 py-1 rounded text-[11px] font-medium text-red-400 hover:text-red-300 hover:bg-red-950/40 border border-red-900/30 transition ml-1 whitespace-nowrap"
+                    className="px-2.5 py-1 rounded text-[11px] font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 dark:text-red-400 dark:hover:text-red-300 dark:bg-red-950/40 dark:border-red-900/30 transition ml-1 whitespace-nowrap cursor-pointer"
                     title="Xóa toàn bộ user test và đơn test để chuẩn bị ra mắt"
                   >
                     Dọn Data Test
@@ -3117,7 +3268,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-[#71717A] px-2.5 py-1.5 bg-[#0A0A0D] rounded-lg border border-[#1E1E26] sm:hidden">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[#71717A] px-2.5 py-1.5 bg-slate-50 dark:bg-[#0A0A0D] rounded-lg border border-slate-200 dark:border-[#1E1E26] sm:hidden">
             <span>👉 Vuốt ngang xem đầy đủ các cột</span>
             <span className="font-mono text-[#A78BFA] font-medium">
               {orderFilter === 'tips' ? `${filteredTips.length} lượt` : `${filteredOrders.length} đơn`}
@@ -3328,31 +3479,31 @@ export default function AdminPage() {
             )}
           </div>
 
-          {/* 2. Desktop Table View (Giữ nguyên trải nghiệm bảng rộng trên máy tính) */}
-          <div className="hidden md:block w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
+          {/* 2. Desktop Table View (Giữ nguyên trải nghiệm bảng rộng trên máy tính, tăng chiều cao xem được 8-10 dòng) */}
+          <div className="hidden md:block w-full max-h-[680px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-slate-200 dark:border-[#1A1A24]/60 touch-pan-x bg-white dark:bg-transparent shadow-xs">
             <table className="w-full text-left text-xs min-w-[760px]">
-              <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
-                <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] w-12 text-center text-[#71717A] whitespace-nowrap">STT</th>
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Mã Đơn / Nội Dung CK</th>
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Khách Hàng</th>
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Gói Nạp</th>
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Số Tiền</th>
-                  <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Trạng Thái</th>
-                  <th className="py-2.5 px-3 font-medium text-right bg-[#111116] whitespace-nowrap">Thời Gian</th>
+              <thead className="sticky top-0 bg-slate-50 dark:bg-[#111116] z-10 shadow-xs border-b border-slate-200 dark:border-[#1E1E26]">
+                <tr className="text-slate-600 dark:text-[#71717A]">
+                  <th className="py-2.5 px-3 font-bold bg-slate-50 dark:bg-[#111116] w-12 text-center whitespace-nowrap">STT</th>
+                  <th className="py-2.5 px-3 font-bold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Mã Đơn / Nội Dung CK</th>
+                  <th className="py-2.5 px-3 font-bold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Khách Hàng</th>
+                  <th className="py-2.5 px-3 font-bold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Gói Nạp</th>
+                  <th className="py-2.5 px-3 font-bold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Số Tiền</th>
+                  <th className="py-2.5 px-3 font-bold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Trạng Thái</th>
+                  <th className="py-2.5 px-3 font-bold text-right bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Thời Gian</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1C1C24]">
+              <tbody className="divide-y divide-slate-100 dark:divide-[#1C1C24]">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-[#52525B]">
+                    <td colSpan={7} className="py-8 text-center text-slate-400 dark:text-[#52525B]">
                       {orderSearch ? (
                         <div className="space-y-2">
                           <p>Không tìm thấy đơn nạp nào khớp với "{orderSearch}".</p>
                           <button
                             type="button"
                             onClick={() => setOrderSearch('')}
-                            className="px-3 py-1 bg-[#181824] hover:bg-[#222232] text-xs text-[#A78BFA] border border-[#2F2F42] rounded-lg transition"
+                            className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-xs text-indigo-700 dark:bg-[#181824] dark:hover:bg-[#222232] dark:text-[#A78BFA] border border-slate-300 dark:border-[#2F2F42] rounded-lg transition font-medium"
                           >
                             Xóa tìm kiếm
                           </button>
@@ -3364,68 +3515,68 @@ export default function AdminPage() {
                   </tr>
                 ) : (
                   filteredOrders.map((ord: any, idx: number) => (
-                    <tr key={ord.id} className="hover:bg-[#14141B] transition">
-                      <td className="py-3 px-3 text-center font-mono text-[11px] text-[#71717A] font-semibold whitespace-nowrap">
+                    <tr key={ord.id} className="hover:bg-slate-50 dark:hover:bg-[#14141B] transition">
+                      <td className="py-3 px-3 text-center font-mono text-[11px] text-slate-400 dark:text-[#71717A] font-semibold whitespace-nowrap">
                         #{idx + 1}
                       </td>
-                      <td className="py-3 px-3 font-mono font-bold text-white whitespace-nowrap">
+                      <td className="py-3 px-3 font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
                         {ord.orderCode}
                       </td>
-                      <td className="py-3 px-3 text-[#A1A1AA] max-w-[180px]">
-                        <div className="font-medium text-white text-xs truncate" title={ord.userName || ord.userId}>
+                      <td className="py-3 px-3 text-slate-700 dark:text-[#A1A1AA] max-w-[180px]">
+                        <div className="font-bold text-slate-900 dark:text-white text-xs truncate" title={ord.userName || ord.userId}>
                           {ord.userName || ord.userId}
                         </div>
                         {ord.userEmail && (
-                          <div className="text-[10px] text-[#71717A] truncate font-mono" title={ord.userEmail}>
+                          <div className="text-[10px] text-slate-500 dark:text-[#71717A] truncate font-mono" title={ord.userEmail}>
                             {ord.userEmail}
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-[#D4D4D8] whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded text-[10px] bg-[#1E1E28] text-[#D4D4D8] border border-[#2A2A38] font-mono">
+                      <td className="py-3 px-3 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-800 border border-slate-300 dark:bg-[#1E1E28] dark:text-[#D4D4D8] dark:border-[#2A2A38] font-mono font-bold">
                           {ord.packageType}
                         </span>
                       </td>
-                      <td className="py-3 px-3 font-semibold text-emerald-400 whitespace-nowrap font-mono">
+                      <td className="py-3 px-3 font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap font-mono">
                         {ord.amountVnd.toLocaleString('vi-VN')} đ
                       </td>
                       <td className="py-3 px-3 whitespace-nowrap">
                         {ord.status === 'completed' ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30 font-bold">
                             ✓ Thành công
                           </span>
                         ) : ord.status === 'processing' ? (
                           <div className="inline-flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/50 font-semibold animate-pulse">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-300 dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border-[#7C5CFC]/50 font-bold animate-pulse">
                               🔄 Đang xử lý
                             </span>
                             <button
                               onClick={() => handleApproveOrder(ord.orderCode)}
-                              className="px-2 py-0.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 rounded text-[10px] font-medium transition"
+                              className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold transition shadow-xs cursor-pointer"
                             >
                               Duyệt ngay
                             </button>
                           </div>
                         ) : ord.status === 'pending' ? (
                           <div className="inline-flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium">
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30 font-bold">
                               Chờ quét QR
                             </span>
                             <button
                               onClick={() => handleApproveOrder(ord.orderCode)}
-                              className="px-2 py-0.5 bg-[#7C5CFC]/20 hover:bg-[#7C5CFC] text-[#A78BFA] hover:text-white border border-[#7C5CFC]/40 rounded text-[10px] font-medium transition"
+                              className="px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-bold transition shadow-xs cursor-pointer"
                             >
                               Duyệt ngay
                             </button>
                           </div>
                         ) : (
                           <div className="inline-flex items-center gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-[#181822] text-[#71717A] border border-[#272733] font-medium">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-300 dark:bg-[#181822] dark:text-[#71717A] dark:border-[#272733] font-semibold">
                               ✕ Đã hết hạn
                             </span>
                             <button
                               onClick={() => handleApproveOrder(ord.orderCode)}
-                              className="px-2 py-0.5 bg-[#1C1C26] hover:bg-emerald-950/60 text-[#A1A1AA] hover:text-emerald-300 border border-[#2B2B3A] hover:border-emerald-500/40 rounded text-[10px] font-medium transition"
+                              className="px-2 py-0.5 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-300 hover:border-emerald-300 dark:bg-[#1C1C26] dark:hover:bg-emerald-950/60 dark:text-[#A1A1AA] dark:hover:text-emerald-300 dark:border-[#2B2B3A] dark:hover:border-emerald-500/40 rounded text-[10px] font-semibold transition cursor-pointer"
                               title="Bấm để duyệt nếu khách đã chuyển khoản muộn hoặc quên ghi mã"
                             >
                               Duyệt tay
@@ -3433,7 +3584,7 @@ export default function AdminPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-3 text-right text-[#71717A] text-[11px] whitespace-nowrap font-mono">
+                      <td className="py-3 px-3 text-right text-slate-500 dark:text-[#71717A] text-[11px] whitespace-nowrap font-mono">
                         {ord.createdAt && !isNaN(new Date(ord.createdAt).getTime())
                           ? `${new Date(ord.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(ord.createdAt).toLocaleDateString('vi-VN')}`
                           : '—'}
@@ -3456,42 +3607,42 @@ export default function AdminPage() {
         <div className="space-y-6 animate-fadeIn">
           {/* Hàng thẻ thống kê */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
-              <div className="text-[11px] font-medium text-[#71717A]">
+            <div className="p-4 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl shadow-xs">
+              <div className="text-[11px] font-medium text-slate-500 dark:text-[#71717A]">
                 {dateFilterType === 'all' ? 'Tổng Số Máy Đã Vào (Khách Thực Tế)' : `Khách Vào (${getDateFilterLabel()})`}
               </div>
-              <div className="text-2xl font-bold text-white mt-1">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
                 {baseMachines.length.toLocaleString('vi-VN')}
               </div>
-              <div className="text-[10px] text-emerald-400 mt-1">
+              <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
                 {dateFilterType === 'all' ? 'Chuẩn: 1 máy = tính 1 lần duy nhất' : `Số máy truy cập trong ${getDateFilterLabel()}`}
               </div>
             </div>
 
-            <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
-              <div className="text-[11px] font-medium text-[#71717A]">Số Máy Hoạt Động Hôm Nay</div>
-              <div className="text-2xl font-bold text-sky-400 mt-1">
+            <div className="p-4 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl shadow-xs">
+              <div className="text-[11px] font-medium text-slate-500 dark:text-[#71717A]">Số Máy Hoạt Động Hôm Nay</div>
+              <div className="text-2xl font-bold text-sky-600 dark:text-sky-400 mt-1">
                 {(analytics?.todayActiveMachines || analytics?.todayViews || 0).toLocaleString('vi-VN')}
               </div>
-              <div className="text-[10px] text-[#A1A1AA] mt-1">F5 / tải lại không bị tính trùng</div>
+              <div className="text-[10px] text-slate-500 dark:text-[#A1A1AA] mt-1">F5 / tải lại không bị tính trùng</div>
             </div>
 
-            <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
-              <div className="text-[11px] font-medium text-[#71717A]">Từ TikTok Bio</div>
+            <div className="p-4 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl shadow-xs">
+              <div className="text-[11px] font-medium text-slate-500 dark:text-[#71717A]">Từ TikTok Bio</div>
               <div className="text-2xl font-bold text-[#F43F5E] mt-1">
                 {(displaySources?.['TikTok Bio'] || 0).toLocaleString('vi-VN')}
               </div>
-              <div className="text-[10px] text-[#A1A1AA] mt-1">
+              <div className="text-[10px] text-slate-500 dark:text-[#A1A1AA] mt-1">
                 {dateFilterType === 'all' ? 'Khách bấm từ link bio TikTok' : `Trong ${getDateFilterLabel()}`}
               </div>
             </div>
 
-            <div className="p-4 bg-[#111116] border border-[#1E1E26] rounded-xl">
-              <div className="text-[11px] font-medium text-[#71717A]">Thiết Bị Di Động</div>
+            <div className="p-4 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl shadow-xs">
+              <div className="text-[11px] font-medium text-slate-500 dark:text-[#71717A]">Thiết Bị Di Động</div>
               <div className="text-2xl font-bold text-[#7C5CFC] mt-1">
                 {((displayDevices?.['iPhone (iOS)'] || 0) + (displayDevices?.['Android Phone'] || 0)).toLocaleString('vi-VN')}
               </div>
-              <div className="text-[10px] text-[#A1A1AA] mt-1">iPhone & Android chiếm ưu thế</div>
+              <div className="text-[10px] text-slate-500 dark:text-[#A1A1AA] mt-1">iPhone & Android chiếm ưu thế</div>
             </div>
           </div>
 
@@ -3499,8 +3650,8 @@ export default function AdminPage() {
             {/* Phân tích nguồn & thiết bị (5 cột) */}
             <div className="lg:col-span-5 space-y-4">
               {/* Nguồn truy cập */}
-              <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 space-y-3">
-                <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+              <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-4 space-y-3 shadow-xs">
+                <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
                   Nguồn Truy Cập (Referrer) {dateFilterType !== 'all' ? `• ${getDateFilterLabel()}` : ''}
                 </h3>
                 <div className="space-y-2">
@@ -3511,10 +3662,10 @@ export default function AdminPage() {
                       return (
                         <div key={src} className="space-y-1">
                           <div className="flex justify-between text-xs">
-                            <span className="text-[#D4D4D8] font-medium">{src}</span>
-                            <span className="text-[#71717A]">{count} máy ({pct}%)</span>
+                            <span className="text-slate-800 dark:text-[#D4D4D8] font-medium">{src}</span>
+                            <span className="text-slate-500 dark:text-[#71717A]">{count} máy ({pct}%)</span>
                           </div>
-                          <div className="h-1.5 w-full bg-[#1C1C24] rounded-full overflow-hidden">
+                          <div className="h-1.5 w-full bg-slate-100 dark:bg-[#1C1C24] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
                                 src.includes('TikTok') ? 'bg-[#F43F5E]' : src.includes('Facebook') ? 'bg-[#1877F2]' : 'bg-[#7C5CFC]'
@@ -3526,14 +3677,14 @@ export default function AdminPage() {
                       );
                     })
                   ) : (
-                    <div className="text-xs text-[#71717A] py-2 text-center">Chưa có dữ liệu nguồn.</div>
+                    <div className="text-xs text-slate-500 dark:text-[#71717A] py-2 text-center">Chưa có dữ liệu nguồn.</div>
                   )}
                 </div>
               </div>
 
               {/* Phân loại thiết bị */}
-              <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 space-y-3">
-                <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+              <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-4 space-y-3 shadow-xs">
+                <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
                   Thiết Bị Độc Giả Sử Dụng {dateFilterType !== 'all' ? `• ${getDateFilterLabel()}` : ''}
                 </h3>
                 <div className="space-y-2">
@@ -3542,29 +3693,29 @@ export default function AdminPage() {
                       const total = baseMachines.length || 1;
                       const pct = Math.round((count / total) * 100);
                       return (
-                        <div key={dev} className="flex justify-between items-center text-xs p-2 bg-[#0A0A0D] rounded-lg border border-[#1C1C24]">
-                          <span className="text-white font-medium">{dev}</span>
-                          <span className="font-mono text-[#F59E0B] font-semibold">{count} ({pct}%)</span>
+                        <div key={dev} className="flex justify-between items-center text-xs p-2 bg-slate-50 dark:bg-[#0A0A0D] rounded-lg border border-slate-200 dark:border-[#1C1C24]">
+                          <span className="text-slate-900 dark:text-white font-medium">{dev}</span>
+                          <span className="font-mono text-amber-600 dark:text-[#F59E0B] font-semibold">{count} ({pct}%)</span>
                         </div>
                       );
                     })
                   ) : (
-                    <div className="text-xs text-[#71717A] py-2 text-center">Chưa có dữ liệu thiết bị.</div>
+                    <div className="text-xs text-slate-500 dark:text-[#71717A] py-2 text-center">Chưa có dữ liệu thiết bị.</div>
                   )}
                 </div>
               </div>
 
               {/* Top truyện xem nhiều */}
               {displayTopStories && displayTopStories.length > 0 && (
-                <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-4 space-y-3">
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider">
+                <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-4 space-y-3 shadow-xs">
+                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider">
                     Top Bộ Truyện Xem Nhiều {dateFilterType !== 'all' ? `• ${getDateFilterLabel()}` : ''}
                   </h3>
                   <div className="space-y-2 max-h-[300px] overflow-y-auto admin-table-scroll pr-1">
                     {displayTopStories.map((st: any, idx: number) => (
-                      <div key={idx} className="flex justify-between items-center text-xs p-2 bg-[#0A0A0D] rounded-lg border border-[#1C1C24]">
-                        <span className="text-white font-medium truncate max-w-[200px]">{st.title}</span>
-                        <span className="font-mono text-emerald-400 font-semibold">{st.count} lượt đọc</span>
+                      <div key={idx} className="flex justify-between items-center text-xs p-2 bg-slate-50 dark:bg-[#0A0A0D] rounded-lg border border-slate-200 dark:border-[#1C1C24]">
+                        <span className="text-slate-900 dark:text-white font-medium truncate max-w-[200px]">{st.title}</span>
+                        <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">{st.count} lượt đọc</span>
                       </div>
                     ))}
                   </div>
@@ -3573,49 +3724,49 @@ export default function AdminPage() {
             </div>
 
             {/* Bảng danh sách thiết bị (1 Máy = 1 Lần, hiển thị cách đây bao lâu) */}
-            <div className="lg:col-span-7 bg-[#111116] border border-[#1E1E26] rounded-xl p-4 space-y-3">
-              <div className="flex items-center justify-between border-b border-[#1E1E26] pb-2.5">
+            <div className="lg:col-span-7 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-4 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#1E1E26] pb-2.5">
                 <div>
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <h3 className="text-xs font-semibold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <span>Danh Sách Thiết Bị Truy Cập ({periodMachines.length} máy)</span>
                     {dateFilterType !== 'all' && (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border-[#7C5CFC]/40 font-bold lowercase">
                         {getDateFilterLabel()}
                       </span>
                     )}
                   </h3>
-                  <p className="text-[10px] text-[#71717A]">
+                  <p className="text-[10px] text-slate-500 dark:text-[#71717A]">
                     F5 / reload không làm tăng số lượng • Hiển thị thời gian cách đây bao lâu
                   </p>
                 </div>
                 <button
                   onClick={fetchData}
-                  className="px-2.5 py-1 bg-[#1A1A24] hover:bg-[#252534] border border-[#2A2A38] text-[11px] text-[#D4D4D8] rounded-md transition font-medium"
+                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-300 dark:bg-[#1A1A24] dark:hover:bg-[#252534] dark:border-[#2A2A38] text-[11px] text-slate-700 dark:text-[#D4D4D8] rounded-md transition font-medium"
                 >
                   Làm mới
                 </button>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-[#71717A] px-2.5 py-1.5 bg-[#0A0A0D] rounded-lg border border-[#1E1E26] sm:hidden">
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[#71717A] px-2.5 py-1.5 bg-slate-50 dark:bg-[#0A0A0D] rounded-lg border border-slate-200 dark:border-[#1E1E26] sm:hidden">
                 <span>👉 Vuốt ngang xem chi tiết máy</span>
-                <span className="font-mono text-[#A78BFA] font-medium">{periodMachines.length} máy</span>
+                <span className="font-mono text-indigo-600 dark:text-[#A78BFA] font-medium">{periodMachines.length} máy</span>
               </div>
 
-              <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-[#1A1A24]/60 touch-pan-x">
+              <div className="w-full max-h-[560px] overflow-y-auto overflow-x-auto admin-table-scroll rounded-lg border border-slate-200 dark:border-[#1A1A24]/60 touch-pan-x bg-white dark:bg-transparent">
                 <table className="w-full text-left text-xs min-w-[680px]">
-                  <thead className="sticky top-0 bg-[#111116] z-10 shadow-sm">
-                    <tr className="border-b border-[#1E1E26] text-[#71717A]">
-                      <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Thiết Bị / Mã Máy</th>
-                      <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Nguồn Đến</th>
-                      <th className="py-2.5 px-3 font-medium bg-[#111116] whitespace-nowrap">Trang Xem Gần Nhất</th>
-                      <th className="py-2.5 px-3 font-medium text-right bg-[#111116] whitespace-nowrap">Hoạt Động Gần Nhất</th>
+                  <thead className="sticky top-0 bg-slate-50 dark:bg-[#111116] z-10 shadow-sm border-b border-slate-200 dark:border-[#1E1E26]">
+                    <tr className="text-slate-600 dark:text-[#71717A]">
+                      <th className="py-2.5 px-3 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Thiết Bị / Mã Máy</th>
+                      <th className="py-2.5 px-3 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Nguồn Đến</th>
+                      <th className="py-2.5 px-3 font-semibold bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Trang Xem Gần Nhất</th>
+                      <th className="py-2.5 px-3 font-semibold text-right bg-slate-50 dark:bg-[#111116] whitespace-nowrap">Hoạt Động Gần Nhất</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1C1C24]">
+                  <tbody className="divide-y divide-slate-100 dark:divide-[#1C1C24]">
                     {periodMachines.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="py-8 text-center text-[#52525B]">
+                        <td colSpan={4} className="py-8 text-center text-slate-400 dark:text-[#52525B]">
                           {dateFilterType !== 'all'
                             ? `Không có thiết bị nào truy cập trong "${getDateFilterLabel()}".`
                             : 'Chưa có thiết bị nào được ghi nhận.'}
@@ -3630,10 +3781,10 @@ export default function AdminPage() {
                           : '';
 
                         return (
-                          <tr key={evt.id} className="hover:bg-[#14141B] transition">
+                          <tr key={evt.id} className="hover:bg-slate-50 dark:hover:bg-[#14141B] transition">
                             <td className="py-2.5 px-3 whitespace-nowrap">
-                              <div className="font-medium text-white">{evt.device}</div>
-                              <div className="text-[10px] text-[#71717A] font-mono">
+                              <div className="font-semibold text-slate-900 dark:text-white">{evt.device}</div>
+                              <div className="text-[10px] text-slate-500 dark:text-[#71717A] font-mono">
                                 ID: {evt.id ? evt.id.substring(0, 14) + '...' : 'Ẩn danh'}
                               </div>
                             </td>
@@ -3641,24 +3792,24 @@ export default function AdminPage() {
                               <span
                                 className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                                   evt.referrer?.includes('TikTok')
-                                    ? 'bg-[#F43F5E]/15 text-[#F43F5E] border border-[#F43F5E]/30'
+                                    ? 'bg-rose-50 text-rose-600 border border-rose-200 dark:bg-[#F43F5E]/15 dark:text-[#F43F5E] dark:border-[#F43F5E]/30'
                                     : evt.referrer?.includes('Facebook')
-                                    ? 'bg-[#1877F2]/15 text-[#1877F2] border border-[#1877F2]/30'
-                                    : 'bg-[#1C1C26] text-[#A1A1AA]'
+                                    ? 'bg-blue-50 text-blue-600 border border-blue-200 dark:bg-[#1877F2]/15 dark:text-[#1877F2] dark:border-[#1877F2]/30'
+                                    : 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-[#1C1C26] dark:text-[#A1A1AA]'
                                 }`}
                               >
                                 {evt.referrer}
                               </span>
                             </td>
-                            <td className="py-2.5 px-3 font-medium text-[#D4D4D8] truncate max-w-[160px] whitespace-nowrap" title={evt.storyTitle || evt.path}>
+                            <td className="py-2.5 px-3 font-medium text-slate-800 dark:text-[#D4D4D8] truncate max-w-[160px] whitespace-nowrap" title={evt.storyTitle || evt.path}>
                               {evt.storyTitle || evt.path}
                             </td>
                             <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                              <div className={`text-xs font-semibold ${isRecent ? 'text-emerald-400' : 'text-[#A1A1AA]'}`}>
+                              <div className={`text-xs font-semibold ${isRecent ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-600 dark:text-[#A1A1AA]'}`}>
                                 {evt.timeAgo || 'Vừa xong'}
                               </div>
                               {displayTime && (
-                                <div className="text-[10px] text-[#52525B]">
+                                <div className="text-[10px] text-slate-400 dark:text-[#52525B]">
                                   lúc {displayTime}
                                 </div>
                               )}
@@ -3789,22 +3940,22 @@ export default function AdminPage() {
       {activeTab === 'feedback' && (
         <div className="space-y-5 animate-fadeIn">
           {/* Header & Thống kê nhanh */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111116] border border-[#1E1E26] rounded-xl p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-5 shadow-xs">
             <div>
-              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                 <span>📬 Hòm Thư Ý Kiến Độc Giả ({baseFeedback.length} thư)</span>
                 {dateFilterType !== 'all' && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold lowercase">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border-[#7C5CFC]/40 font-bold lowercase">
                     {getDateFilterLabel()}
                   </span>
                 )}
                 {baseFeedback.filter(f => f.status === 'new').length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-bold">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] bg-purple-100 text-purple-800 border border-purple-300 dark:bg-[#7C5CFC]/20 dark:text-[#A78BFA] dark:border-[#7C5CFC]/40 font-bold">
                     {baseFeedback.filter(f => f.status === 'new').length} tin mới
                   </span>
                 )}
               </h2>
-              <p className="text-[11px] text-[#71717A] mt-0.5">
+              <p className="text-[11px] text-slate-500 dark:text-[#71717A] mt-0.5">
                 Toàn bộ phản hồi, góp ý kịch bản, báo lỗi website và yêu cầu hỗ trợ từ độc giả
               </p>
             </div>
@@ -3812,7 +3963,7 @@ export default function AdminPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={fetchData}
-                className="px-3 py-1.5 bg-[#1A1A24] hover:bg-[#252534] border border-[#2A2A38] text-xs text-[#D4D4D8] rounded-md transition font-medium"
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs text-slate-700 dark:bg-[#1A1A24] dark:hover:bg-[#252534] dark:border-[#2A2A38] dark:text-[#D4D4D8] rounded-md transition font-medium"
               >
                 Làm mới
               </button>
@@ -3820,9 +3971,9 @@ export default function AdminPage() {
           </div>
 
           {/* Danh sách góp ý */}
-          <div className="bg-[#111116] border border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4">
+          <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-3.5 sm:p-5 space-y-4 shadow-xs">
             {/* Thanh Phân Loại & Bộ Lọc */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-[#1E1E26]">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-[#1E1E26]">
               {/* Tabs phân loại Loại thư vuốt ngang trên Mobile */}
               <div className="overflow-x-auto no-scrollbar -mx-1 px-1 touch-pan-x">
                 <div className="inline-flex items-center gap-1.5 text-xs min-w-max">
@@ -3830,8 +3981,8 @@ export default function AdminPage() {
                     onClick={() => setFeedbackTypeFilter('all')}
                     className={`px-3 py-1.5 rounded-lg font-medium transition ${
                       feedbackTypeFilter === 'all'
-                        ? 'bg-[#7C5CFC] text-white shadow-sm'
-                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                        ? 'bg-indigo-600 text-white font-bold shadow-sm dark:bg-[#7C5CFC]'
+                        : 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#16161F] dark:border-[#22222E] dark:text-[#A1A1AA] dark:hover:text-white'
                     }`}
                   >
                     Tất cả ({baseFeedback.length})
@@ -3841,8 +3992,8 @@ export default function AdminPage() {
                     onClick={() => setFeedbackTypeFilter('bug')}
                     className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
                       feedbackTypeFilter === 'bug'
-                        ? 'bg-red-500 text-white shadow-sm'
-                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                        ? 'bg-red-600 text-white font-bold shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#16161F] dark:border-[#22222E] dark:text-[#A1A1AA] dark:hover:text-white'
                     }`}
                   >
                     <span>🐛 Báo lỗi</span>
@@ -3855,8 +4006,8 @@ export default function AdminPage() {
                     onClick={() => setFeedbackTypeFilter('content')}
                     className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
                       feedbackTypeFilter === 'content'
-                        ? 'bg-amber-500 text-black font-semibold shadow-sm'
-                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                        ? 'bg-amber-500 text-white font-bold shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#16161F] dark:border-[#22222E] dark:text-[#A1A1AA] dark:hover:text-white'
                     }`}
                   >
                     <span>💡 Góp ý truyện</span>
@@ -3869,8 +4020,8 @@ export default function AdminPage() {
                     onClick={() => setFeedbackTypeFilter('payment')}
                     className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
                       feedbackTypeFilter === 'payment'
-                        ? 'bg-emerald-500 text-black font-semibold shadow-sm'
-                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                        ? 'bg-emerald-600 text-white font-bold shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#16161F] dark:border-[#22222E] dark:text-[#A1A1AA] dark:hover:text-white'
                     }`}
                   >
                     <span>💳 Mở khóa / Điểm</span>
@@ -3883,8 +4034,8 @@ export default function AdminPage() {
                     onClick={() => setFeedbackTypeFilter('other')}
                     className={`px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1.5 ${
                       feedbackTypeFilter === 'other'
-                        ? 'bg-blue-500 text-white shadow-sm'
-                        : 'bg-[#16161F] text-[#A1A1AA] hover:text-white border border-[#22222E]'
+                        ? 'bg-blue-600 text-white font-bold shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#16161F] dark:border-[#22222E] dark:text-[#A1A1AA] dark:hover:text-white'
                     }`}
                   >
                     <span>💬 Ý kiến khác</span>
@@ -3896,13 +4047,13 @@ export default function AdminPage() {
               </div>
 
               {/* Lọc theo trạng thái: Chưa xem / Đã xem */}
-              <div className="flex items-center gap-1 text-[11px] bg-[#0E0E14] p-1 rounded-lg border border-[#22222E] self-start lg:self-auto">
+              <div className="flex items-center gap-1 text-[11px] bg-slate-100 dark:bg-[#0E0E14] p-1 rounded-lg border border-slate-200 dark:border-[#22222E] self-start lg:self-auto">
                 <button
                   onClick={() => setFeedbackStatusFilter('all')}
                   className={`px-2.5 py-1 rounded transition ${
                     feedbackStatusFilter === 'all'
-                      ? 'bg-[#22222E] text-white font-medium'
-                      : 'text-[#71717A] hover:text-white'
+                      ? 'bg-white text-slate-900 font-bold shadow-xs dark:bg-[#22222E] dark:text-white'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                   }`}
                 >
                   Toàn bộ
@@ -3924,8 +4075,8 @@ export default function AdminPage() {
                   onClick={() => setFeedbackStatusFilter('reviewed')}
                   className={`px-2.5 py-1 rounded transition ${
                     feedbackStatusFilter === 'reviewed'
-                      ? 'bg-[#22222E] text-white font-medium'
-                      : 'text-[#71717A] hover:text-white'
+                      ? 'bg-white text-slate-900 font-bold shadow-xs dark:bg-[#22222E] dark:text-white'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-[#71717A] dark:hover:text-white'
                   }`}
                 >
                   Đã xem
@@ -3944,7 +4095,7 @@ export default function AdminPage() {
 
               if (displayList.length === 0) {
                 return (
-                  <div className="py-12 text-center text-[#52525B] space-y-2">
+                  <div className="py-12 text-center text-slate-400 dark:text-[#52525B] space-y-2">
                     <div className="text-2xl">📭</div>
                     <div className="text-xs">Không có thư nào trong mục phân loại này.</div>
                   </div>
@@ -3952,45 +4103,45 @@ export default function AdminPage() {
               }
 
               return (
-                <div className="divide-y divide-[#1C1C24] space-y-3 max-h-[600px] overflow-y-auto admin-table-scroll pr-1">
+                <div className="divide-y divide-slate-100 dark:divide-[#1C1C24] space-y-3 max-h-[600px] overflow-y-auto admin-table-scroll pr-1">
                   {displayList.map((item) => (
                   <div key={item.id} className="pt-3 first:pt-0 space-y-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1A1A24] pb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-[#1A1A24] pb-2">
                       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         {item.type === 'content' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30 font-medium whitespace-nowrap">
                             💡 Nội dung truyện
                           </span>
                         )}
                         {item.type === 'bug' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/15 text-red-400 border border-red-500/30 font-medium whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-rose-100 text-rose-800 border border-rose-300 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30 font-medium whitespace-nowrap">
                             🐛 Báo lỗi kỹ thuật
                           </span>
                         )}
                         {item.type === 'payment' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/15 dark:text-emerald-400 dark:border-emerald-500/30 font-medium whitespace-nowrap">
                             💳 Sự cố mở khóa / Điểm
                           </span>
                         )}
                         {item.type === 'other' && (
-                          <span className="px-2 py-0.5 rounded text-[10px] bg-blue-500/15 text-blue-400 border border-blue-500/30 font-medium whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-500/15 dark:text-blue-400 dark:border-blue-500/30 font-medium whitespace-nowrap">
                             💬 Ý kiến khác
                           </span>
                         )}
 
-                        <span className="text-xs font-semibold text-white truncate max-w-[160px]" title={item.userName}>
+                        <span className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[160px]" title={item.userName}>
                           {item.userName || 'Độc giả ẩn danh'}
                         </span>
 
                         {item.contact && (
-                          <span className="text-[11px] font-mono text-[#A78BFA] bg-[#7C5CFC]/10 px-2 py-0.5 rounded border border-[#7C5CFC]/20 truncate max-w-[180px]" title={item.contact}>
+                          <span className="text-[11px] font-mono text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 dark:text-[#A78BFA] dark:bg-[#7C5CFC]/10 dark:border-[#7C5CFC]/20 truncate max-w-[180px]" title={item.contact}>
                             Liên hệ: {item.contact}
                           </span>
                         )}
                       </div>
 
                       <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-                        <span className="text-[10px] text-[#71717A] font-mono whitespace-nowrap">
+                        <span className="text-[10px] text-slate-500 dark:text-[#71717A] font-mono whitespace-nowrap">
                           {item.createdAt && !isNaN(new Date(item.createdAt).getTime())
                             ? `${new Date(item.createdAt).toLocaleTimeString('vi-VN')} - ${new Date(item.createdAt).toLocaleDateString('vi-VN')}`
                             : '—'}
@@ -4000,19 +4151,19 @@ export default function AdminPage() {
                           {item.status === 'new' ? (
                             <button
                               onClick={() => handleUpdateFeedbackStatus(item.id, 'reviewed')}
-                              className="px-2 py-0.5 rounded text-[10px] bg-[#7C5CFC]/20 hover:bg-[#7C5CFC] text-[#A78BFA] hover:text-white border border-[#7C5CFC]/40 font-medium transition whitespace-nowrap"
+                              className="px-2 py-0.5 rounded text-[10px] bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 dark:bg-[#7C5CFC]/20 dark:hover:bg-[#7C5CFC] dark:text-[#A78BFA] dark:hover:text-white dark:border-[#7C5CFC]/40 font-medium transition whitespace-nowrap"
                             >
                               Đánh dấu đã xem
                             </button>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[10px] bg-[#1C1C24] text-[#71717A] border border-[#272733] whitespace-nowrap">
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 border border-slate-200 dark:bg-[#1C1C24] dark:text-[#71717A] dark:border-[#272733] whitespace-nowrap">
                               ✓ Đã xem
                             </span>
                           )}
 
                           <button
                             onClick={() => handleDeleteFeedback(item.id)}
-                            className="p-1 rounded text-[#71717A] hover:text-red-400 hover:bg-red-950/30 transition text-xs"
+                            className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 dark:text-[#71717A] dark:hover:text-red-400 dark:hover:bg-red-950/30 transition text-xs"
                             title="Xóa góp ý"
                           >
                             ✕
@@ -4022,7 +4173,7 @@ export default function AdminPage() {
                     </div>
 
                     {/* Nội dung góp ý */}
-                    <div className="p-3 bg-[#0A0A0E] rounded-lg border border-[#1E1E26] text-xs text-[#D4D4D8] leading-relaxed whitespace-pre-wrap">
+                    <div className="p-3 bg-slate-50 dark:bg-[#0A0A0E] rounded-lg border border-slate-200 dark:border-[#1E1E26] text-xs text-slate-800 dark:text-[#D4D4D8] leading-relaxed whitespace-pre-wrap">
                       {item.content}
                     </div>
 
@@ -4066,20 +4217,20 @@ export default function AdminPage() {
       {activeTab === 'wheel' && (
         <div className="space-y-6 animate-fadeIn pb-12">
           {/* Sub-tab Switcher: Cấu Hình vs Sổ Nhật Ký Quay Thưởng */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#111116] border border-[#1E1E26] rounded-xl p-2.5 shadow-md">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-2.5 shadow-sm">
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setWheelSubTab('config')}
                 className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
                   wheelSubTab === 'config'
-                    ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
-                    : 'bg-[#181820] text-[#A1A1AA] hover:text-white border border-[#23232E]'
+                    ? 'bg-pink-100 text-pink-900 border border-pink-300 dark:bg-gradient-to-r dark:from-pink-500/20 dark:to-purple-500/20 dark:text-pink-300 dark:border-pink-500/40 shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 dark:bg-[#181820] dark:text-[#A1A1AA] dark:hover:text-white dark:border-[#23232E]'
                 }`}
               >
                 <span>⚙️</span>
                 <span>Cấu Hình Giải Thưởng & Tỉ Lệ</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-mono">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-200 text-pink-800 dark:bg-pink-500/20 dark:text-pink-300 font-mono font-bold">
                   {wheelSettings?.prizes?.length || 8} ô
                 </span>
               </button>
@@ -4089,20 +4240,20 @@ export default function AdminPage() {
                 onClick={() => setWheelSubTab('history')}
                 className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
                   wheelSubTab === 'history'
-                    ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 text-pink-300 border border-pink-500/40 shadow-sm'
-                    : 'bg-[#181820] text-[#A1A1AA] hover:text-white border border-[#23232E]'
+                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-gradient-to-r dark:from-pink-500/20 dark:to-purple-500/20 dark:text-pink-300 dark:border-pink-500/40 shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 dark:bg-[#181820] dark:text-[#A1A1AA] dark:hover:text-white dark:border-[#23232E]'
                 }`}
               >
                 <span>📜</span>
                 <span>Sổ Nhật Ký & Lịch Sử Quay Thưởng</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-200 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 font-mono font-bold">
                   {baseLuckySpins.length} lượt
                 </span>
               </button>
             </div>
 
-            <div className="flex items-center gap-2 text-[11px] text-[#71717A] px-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-[#71717A] px-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
               <span>Dữ liệu quay tách riêng độc lập với Sổ Doanh Thu</span>
             </div>
           </div>

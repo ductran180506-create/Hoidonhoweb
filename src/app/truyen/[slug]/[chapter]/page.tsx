@@ -146,10 +146,10 @@ export default function ReaderPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-5 pb-16 protect-content">
       {/* Thanh điều khiển đọc trên cùng MangaVerse */}
-      <div className="sticky top-14 z-30 bg-[#0B0F19]/90 backdrop-blur-md border-b border-[#1F293D] -mx-4 px-4 py-2 flex items-center justify-between text-xs">
+      <div className="sticky top-14 z-30 bg-white/95 dark:bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-200 dark:border-[#1F293D] -mx-4 px-4 py-2 flex items-center justify-between text-xs">
         <Link
           href={`/truyen/${story.slug}`}
-          className="text-[#9CA3AF] hover:text-white flex items-center gap-1 font-medium"
+          className="text-slate-600 dark:text-[#9CA3AF] hover:text-slate-900 dark:hover:text-white flex items-center gap-1 font-semibold"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Mục lục</span>
@@ -159,7 +159,7 @@ export default function ReaderPage() {
         <select
           value={chapterIndex}
           onChange={(e) => router.push(`/truyen/${story.slug}/${e.target.value}`)}
-          className="bg-[#121826] border border-[#1F293D] text-white rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-[#8B5CF6]"
+          className="bg-slate-100 dark:bg-[#121826] border border-slate-300 dark:border-[#1F293D] text-slate-900 dark:text-white rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500 font-semibold"
         >
           {allChapters.map((c) => (
             <option key={c.chapterIndex} value={c.chapterIndex}>
@@ -169,17 +169,17 @@ export default function ReaderPage() {
         </select>
 
         {/* Cỡ chữ */}
-        <div className="flex items-center gap-1 bg-[#121826] border border-[#1F293D] rounded-lg px-1.5 py-0.5 text-[#9CA3AF]">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#121826] border border-slate-300 dark:border-[#1F293D] rounded-lg px-1.5 py-0.5 text-slate-700 dark:text-[#9CA3AF]">
           <button
             onClick={() => setFontSize(Math.max(14, fontSize - 1))}
-            className="hover:text-white px-1 font-bold"
+            className="hover:text-slate-900 dark:hover:text-white px-1 font-bold"
           >
             A-
           </button>
-          <span className="text-[10px] text-[#6B7280]">{fontSize}</span>
+          <span className="text-[10px] text-slate-500 dark:text-[#6B7280] font-bold">{fontSize}</span>
           <button
             onClick={() => setFontSize(Math.min(24, fontSize + 1))}
-            className="hover:text-white px-1 font-bold"
+            className="hover:text-slate-900 dark:hover:text-white px-1 font-bold"
           >
             A+
           </button>
@@ -190,21 +190,21 @@ export default function ReaderPage() {
       <div className="text-center space-y-1 pt-1">
         <Link
           href={`/truyen/${story.slug}`}
-          className="text-xs text-[#8B5CF6] font-semibold hover:underline"
+          className="text-xs text-indigo-600 dark:text-[#8B5CF6] font-bold hover:underline"
         >
           {story.title}
         </Link>
-        <h1 className="font-headline font-bold text-base sm:text-lg text-white">
+        <h1 className="font-headline font-bold text-base sm:text-lg text-slate-900 dark:text-white">
           {chapter.title}
         </h1>
       </div>
 
       {/* Khu vực đọc hoặc Khung Khóa */}
-      <div className="bg-[#121826] border border-[#1F293D] rounded-2xl p-5 sm:p-7 min-h-[350px]">
+      <div className="bg-white dark:bg-[#121826] border border-slate-200 dark:border-[#1F293D] rounded-2xl p-5 sm:p-7 min-h-[350px] shadow-xs">
         {!isLocked ? (
           /* Nội dung đọc rõ ràng, sạch sẽ */
           <div
-            className="space-y-4 text-[#E5E7EB] leading-relaxed select-none font-body"
+            className="space-y-4 text-slate-800 dark:text-[#E5E7EB] leading-relaxed select-none font-body"
             style={{ fontSize: `${fontSize}px`, lineHeight: 1.85 }}
           >
             {content.split('\n\n').map((paragraph, idx) => (
@@ -216,15 +216,15 @@ export default function ReaderPage() {
         ) : (
           /* Khung khóa MangaVerse */
           <div className="space-y-5 text-center py-6">
-            <div className="w-11 h-11 mx-auto rounded-xl bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center border border-[#8B5CF6]/20">
+            <div className="w-11 h-11 mx-auto rounded-xl bg-amber-100 dark:bg-[#8B5CF6]/10 text-amber-700 dark:text-[#8B5CF6] flex items-center justify-center border border-amber-300 dark:border-[#8B5CF6]/20">
               <Lock className="w-5 h-5" />
             </div>
 
             <div>
-              <div className="text-xs text-[#F59E0B] font-bold mb-1">
+              <div className="text-xs text-amber-700 dark:text-[#F59E0B] font-bold mb-1">
                 MỞ KHÓA TRỌN BỘ ({chapter.priceCoins || 5} ĐIỂM)
               </div>
-              <h3 className="font-headline text-base font-bold text-white">
+              <h3 className="font-headline text-base font-bold text-slate-900 dark:text-white">
                 Chỉ cần 5 Điểm để đọc toàn bộ các tập của bộ truyện này
               </h3>
             </div>
@@ -235,7 +235,7 @@ export default function ReaderPage() {
                   <button
                     onClick={handleUnlockWithCoins}
                     disabled={unlocking}
-                    className="w-full py-2.5 px-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-semibold rounded-lg text-xs shadow-sm shadow-[#8B5CF6]/30 transition"
+                    className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#8B5CF6] dark:hover:bg-[#7C3AED] text-white font-semibold rounded-lg text-xs shadow-sm transition"
                   >
                     {unlocking ? 'Đang mở...' : `Mở Khóa Full Bộ (${chapter.priceCoins || 5} Điểm) • Ví: ${balance} Điểm`}
                   </button>
@@ -243,13 +243,13 @@ export default function ReaderPage() {
                   <div className="space-y-2">
                     <button
                       onClick={() => setIsRechargeOpen(true)}
-                      className="w-full py-2.5 px-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-semibold rounded-lg text-xs shadow-sm shadow-[#8B5CF6]/30 transition"
+                      className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#8B5CF6] dark:hover:bg-[#7C3AED] text-white font-semibold rounded-lg text-xs shadow-sm transition"
                     >
                       ☕ Mời Cà Phê Tích Điểm (Ví hiện có: {balance} Điểm)
                     </button>
                     <button
                       onClick={() => setIsRechargeOpen(true)}
-                      className="w-full py-2 px-4 bg-[#F59E0B]/10 hover:bg-[#F59E0B]/20 border border-[#F59E0B]/30 text-[#F59E0B] rounded-lg text-xs font-semibold transition"
+                      className="w-full py-2 px-4 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-800 dark:bg-[#F59E0B]/10 dark:hover:bg-[#F59E0B]/20 dark:border-[#F59E0B]/30 dark:text-[#F59E0B] rounded-lg text-xs font-semibold transition"
                     >
                       Gói Hội Viên VIP 39k (Đọc không giới hạn)
                     </button>
@@ -258,7 +258,7 @@ export default function ReaderPage() {
               ) : (
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="w-full py-2.5 px-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-semibold rounded-lg text-xs shadow-sm shadow-[#8B5CF6]/30 transition"
+                  className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#8B5CF6] dark:hover:bg-[#7C3AED] text-white font-semibold rounded-lg text-xs shadow-sm transition"
                 >
                   Đăng Nhập SĐT Để Mở Khóa
                 </button>
@@ -283,7 +283,7 @@ export default function ReaderPage() {
         {prevChapter ? (
           <Link
             href={`/truyen/${story.slug}/${prevChapter}`}
-            className="py-2 px-3 bg-[#121826] hover:bg-[#182234] border border-[#1F293D] text-[#D1D5DB] rounded-lg flex items-center gap-1 transition"
+            className="py-2 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 dark:bg-[#121826] dark:hover:bg-[#182234] dark:border-[#1F293D] dark:text-[#D1D5DB] rounded-lg flex items-center gap-1 transition shadow-xs font-semibold"
           >
             <ChevronLeft className="w-3.5 h-3.5" /> Tập {prevChapter}
           </Link>
@@ -293,7 +293,7 @@ export default function ReaderPage() {
 
         <Link
           href={`/truyen/${story.slug}`}
-          className="py-2 px-3 text-[#6B7280] hover:text-white"
+          className="py-2 px-3 text-slate-500 hover:text-slate-900 dark:text-[#6B7280] dark:hover:text-white font-medium"
         >
           Mục lục
         </Link>
@@ -301,14 +301,14 @@ export default function ReaderPage() {
         {nextChapter ? (
           <Link
             href={`/truyen/${story.slug}/${nextChapter}`}
-            className="py-2 px-3.5 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-semibold rounded-lg flex items-center gap-1 shadow-sm transition"
+            className="py-2 px-3.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#8B5CF6] dark:hover:bg-[#7C3AED] text-white font-semibold rounded-lg flex items-center gap-1 shadow-sm transition"
           >
             Tập {nextChapter} <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         ) : (
           <Link
             href="/"
-            className="py-2 px-3 bg-[#121826] text-[#6B7280] hover:text-white rounded-lg border border-[#1F293D]"
+            className="py-2 px-3 bg-slate-100 text-slate-600 hover:text-slate-900 dark:bg-[#121826] dark:text-[#6B7280] dark:hover:text-white rounded-lg border border-slate-300 dark:border-[#1F293D] font-medium"
           >
             Hết truyện
           </Link>

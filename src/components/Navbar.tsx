@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Search, Coins, User as UserIcon, LogOut, Sliders, Gift, CheckCircle2, Sparkles, Crown } from 'lucide-react';
 import { formatVipTimeRemaining } from '@/lib/vip-utils';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Navbar() {
   const { 
@@ -78,7 +79,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0E0E12]/95 backdrop-blur-md border-b border-[#1E1E26] w-full">
+    <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0E0E12]/95 backdrop-blur-md border-b border-slate-200 dark:border-[#1E1E26] w-full">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2 sm:gap-4">
         {/* Logo Hồi Đó Nhỏ */}
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -88,7 +89,7 @@ export default function Navbar() {
             className="flex items-center gap-2 group select-none cursor-pointer"
             title="Hồi Đó Nhỏ - Truyện Tranh AI"
           >
-            <span className="font-bold text-white text-sm sm:text-base tracking-tight uppercase">
+            <span className="font-bold text-slate-900 dark:text-white text-sm sm:text-base tracking-tight uppercase">
               HỒI ĐÓ NHỎ
             </span>
           </Link>
@@ -96,7 +97,7 @@ export default function Navbar() {
             href="https://www.tiktok.com/@carrot.tia"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-[#71717A] hover:text-[#A1A1AA] transition hidden sm:inline-flex"
+            className="text-[11px] text-slate-500 dark:text-[#71717A] hover:text-slate-800 dark:hover:text-[#A1A1AA] transition hidden sm:inline-flex"
             title="Kênh TikTok @carrot.tia"
           >
             @carrot.tia ↗
@@ -105,13 +106,13 @@ export default function Navbar() {
 
         {/* Thanh tìm kiếm mã truyện */}
         <form onSubmit={handleSearch} className="flex-1 max-w-xs relative hidden sm:block">
-          <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-[#52525B]" />
+          <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-slate-400 dark:text-[#52525B]" />
           <input
             type="text"
             value={searchCode}
             onChange={(e) => setSearchCode(e.target.value)}
             placeholder="Tìm theo mã tập (vd: 01, 02)..."
-            className="w-full pl-8 pr-3 py-1.5 bg-[#14141B] border border-[#22222B] rounded-lg text-xs text-white placeholder-[#52525B] focus:outline-none focus:border-[#7C5CFC] transition"
+            className="w-full pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-[#14141B] border border-slate-300 dark:border-[#22222B] rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#52525B] focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC] transition"
           />
         </form>
 
@@ -123,23 +124,23 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsHistoryOpen(true)}
-                className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] hover:border-[#7C5CFC]/40 rounded-lg text-xs text-[#E4E4E7] transition active:scale-95 cursor-pointer relative"
+                className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#14141B] dark:hover:bg-[#1C1C26] border border-slate-300 dark:border-[#22222B] hover:border-indigo-400 dark:hover:border-[#7C5CFC]/40 rounded-lg text-xs text-slate-800 dark:text-[#E4E4E7] transition active:scale-95 cursor-pointer relative"
                 title={user.isVip ? `👑 Hội Viên VIP: Còn ${formatVipTimeRemaining(user.vipUntil)} (Bấm để xem chi tiết tài khoản)` : 'Bấm để xem lịch sử nạp & tài khoản'}
               >
                 {user.avatar ? (
                   <img src={user.avatar} alt={user.name || 'User'} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
                 ) : (
-                  <UserIcon className="w-3.5 h-3.5 text-[#7C5CFC] flex-shrink-0" />
+                  <UserIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-[#7C5CFC] flex-shrink-0" />
                 )}
                 <span className="font-semibold max-w-[60px] xs:max-w-[100px] sm:max-w-[140px] truncate" title={user.name || user.phone}>
                   {user.name || user.phone}
                 </span>
                 {user.isVip && (
                   <span 
-                    className="flex items-center gap-0.5 text-[9px] font-bold text-[#F59E0B] bg-[#F59E0B]/15 border border-[#F59E0B]/30 px-1 py-0.2 rounded"
+                    className="flex items-center gap-0.5 text-[9px] font-bold text-amber-700 bg-amber-100 border border-amber-300 dark:text-[#F59E0B] dark:bg-[#F59E0B]/15 dark:border-[#F59E0B]/30 px-1 py-0.2 rounded"
                     title={`Hội Viên VIP: Còn ${formatVipTimeRemaining(user.vipUntil)}`}
                   >
-                    <Crown className="w-2.5 h-2.5 text-[#F59E0B]" />
+                    <Crown className="w-2.5 h-2.5 text-amber-600 dark:text-[#F59E0B]" />
                     <span>VIP</span>
                   </span>
                 )}
@@ -151,21 +152,21 @@ export default function Navbar() {
                 onClick={() => setIsCheckInOpen(true)}
                 className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-xs transition font-semibold active:scale-95 cursor-pointer relative ${
                   checkInState?.canCheckIn
-                    ? 'bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 shadow-sm'
-                    : 'bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] text-emerald-400/90'
+                    ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 dark:bg-gradient-to-r dark:from-amber-500/20 dark:via-orange-500/20 dark:to-amber-500/20 dark:hover:from-amber-500/30 dark:hover:to-orange-500/30 dark:border-amber-500/40 dark:text-amber-300 shadow-sm'
+                    : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#14141B] dark:hover:bg-[#1C1C26] border border-slate-300 dark:border-[#22222B] text-emerald-700 dark:text-emerald-400/90'
                 }`}
                 title={checkInState?.canCheckIn ? 'Điểm danh nhận xu hôm nay' : 'Hôm nay đã điểm danh (Bấm để xem chuỗi thưởng)'}
               >
                 {checkInState?.canCheckIn ? (
                   <>
-                    <Gift className="w-3.5 h-3.5 text-amber-400 animate-bounce" />
+                    <Gift className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 animate-bounce" />
                     <span className="hidden xs:inline">Điểm Danh</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping absolute -top-0.5 -right-0.5" />
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 absolute -top-0.5 -right-0.5" />
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span className="hidden sm:inline text-[11px]">Đã nhận</span>
                   </>
                 )}
@@ -175,10 +176,10 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsLuckyWheelOpen(true)}
-                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-xs transition font-semibold active:scale-95 cursor-pointer relative bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-amber-600/20 hover:from-purple-600/30 hover:to-amber-600/30 border border-purple-500/40 text-purple-300 shadow-sm"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-xs transition font-semibold active:scale-95 cursor-pointer relative bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 dark:bg-gradient-to-r dark:from-purple-600/20 dark:via-pink-600/20 dark:to-amber-600/20 dark:hover:from-purple-600/30 dark:hover:to-amber-600/30 dark:border-purple-500/40 dark:text-purple-300 shadow-sm"
                 title="Vòng Quay May Mắn (100% Trúng Quà)"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span className="hidden sm:inline">Vòng Quay</span>
                 <span className="sm:hidden text-[11px]">Quay</span>
                 {luckyWheelState?.canFreeSpin && (
@@ -195,29 +196,32 @@ export default function Navbar() {
                   setPendingOrder(null);
                   setIsRechargeOpen(true);
                 }}
-                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 bg-[#181824] hover:bg-[#222233] border border-[#2D2D3D] rounded-lg text-xs text-white transition font-medium active:scale-95"
+                className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-[#181824] dark:hover:bg-[#222233] border border-slate-300 dark:border-[#2D2D3D] rounded-lg text-xs text-slate-900 dark:text-white transition font-medium active:scale-95 shadow-xs"
                 title="Bấm để Mời Cà Phê / Ủng Hộ Tác Giả"
               >
                 <Coins className="w-3.5 h-3.5 text-[#F59E0B] flex-shrink-0" />
-                <span className="font-bold text-amber-300">{balance} <span className="text-[10px] font-normal text-amber-300/80">Điểm</span></span>
-                <span className="text-[#A1A1AA] text-[10px] ml-0.5 hidden sm:inline">☕ Mời Cà Phê</span>
+                <span className="font-bold text-amber-600 dark:text-amber-300">{balance} <span className="text-[10px] font-normal text-amber-700 dark:text-amber-300/80">Điểm</span></span>
+                <span className="text-slate-600 dark:text-[#A1A1AA] text-[10px] ml-0.5 hidden sm:inline">☕ Mời Cà Phê</span>
               </button>
 
               <button
                 onClick={logout}
                 title="Đăng xuất"
-                className="p-1.5 text-[#71717A] hover:text-red-400 rounded transition active:scale-90"
+                className="p-1.5 text-slate-500 hover:text-red-500 dark:text-[#71717A] dark:hover:text-red-400 rounded transition active:scale-90"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
+
+              {/* Nút Chuyển Đổi Giao Diện Sáng / Tối */}
+              <ThemeToggle />
             </div>
           ) : isAdmin ? (
             <div className="flex items-center gap-1 sm:gap-1.5">
               <Link
                 href="/admin"
-                className="flex items-center gap-1 px-2 py-1 text-xs text-amber-300 hover:text-white bg-amber-500/15 border border-amber-500/30 rounded-lg transition font-medium animate-fadeIn"
+                className="flex items-center gap-1 px-2 py-1 text-xs text-amber-800 bg-amber-100 border border-amber-300 dark:text-amber-300 dark:bg-amber-500/15 dark:border-amber-500/30 rounded-lg transition font-medium animate-fadeIn"
               >
-                <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                <Sliders className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span className="hidden sm:inline">👑 Quản Trị Viên</span>
                 <span className="sm:hidden text-[11px]">Admin</span>
               </Link>
@@ -229,19 +233,26 @@ export default function Navbar() {
                   router.push('/');
                 }}
                 title="Đăng xuất Quản trị"
-                className="p-1.5 text-[#71717A] hover:text-red-400 rounded transition"
+                className="p-1.5 text-slate-500 hover:text-red-500 dark:text-[#71717A] dark:hover:text-red-400 rounded transition"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
+
+              {/* Nút Chuyển Đổi Giao Diện Sáng / Tối */}
+              <ThemeToggle />
             </div>
           ) : (
-            <button
-              onClick={() => setIsAuthModalOpen(true)}
-              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs text-[#A1A1AA] hover:text-white bg-[#14141B] hover:bg-[#1E1E28] border border-[#22222B] rounded-lg transition font-medium active:scale-95"
-            >
-              <UserIcon className="w-3.5 h-3.5 text-[#7C5CFC]" />
-              <span>Đăng Nhập</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="flex items-center gap-1 px-2 sm:px-3 py-1.5 text-xs text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 dark:text-[#A1A1AA] dark:hover:text-white dark:bg-[#14141B] dark:hover:bg-[#1E1E28] border border-slate-300 dark:border-[#22222B] rounded-lg transition font-semibold active:scale-95 shadow-xs"
+              >
+                <UserIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-[#7C5CFC]" />
+                <span>Đăng Nhập</span>
+              </button>
+              {/* Nút Chuyển Đổi Giao Diện Sáng / Tối */}
+              <ThemeToggle />
+            </div>
           )}
 
           {/* Phím Điểm Danh & Mời Cà Phê nhanh cho khách */}
@@ -249,25 +260,25 @@ export default function Navbar() {
             <>
               <button
                 onClick={() => setIsCheckInOpen(true)}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-gradient-to-r from-amber-500/15 to-orange-500/15 hover:from-amber-500/25 hover:to-orange-500/25 border border-amber-500/30 text-amber-300 text-xs font-semibold rounded-lg transition active:scale-95 flex items-center gap-1 relative shadow-sm"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 dark:bg-gradient-to-r dark:from-amber-500/15 dark:to-orange-500/15 dark:hover:from-amber-500/25 dark:hover:to-orange-500/25 dark:border-amber-500/30 dark:text-amber-300 text-xs font-semibold rounded-lg transition active:scale-95 flex items-center gap-1 relative shadow-xs"
                 title="Điểm danh nhận quà 7 ngày (+15 Điểm)"
               >
-                <Gift className="w-3.5 h-3.5 text-amber-400" />
+                <Gift className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span className="hidden xs:inline">Điểm Danh</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 absolute -top-0.5 -right-0.5" />
               </button>
               <button
                 onClick={() => setIsLuckyWheelOpen(true)}
-                className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-gradient-to-r from-purple-500/15 to-pink-500/15 hover:from-purple-500/25 hover:to-pink-500/25 border border-purple-500/30 text-purple-300 text-xs font-semibold rounded-lg transition active:scale-95 flex items-center gap-1 relative shadow-sm"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-purple-100 hover:bg-purple-200 border border-purple-300 text-purple-900 dark:bg-gradient-to-r dark:from-purple-500/15 dark:to-pink-500/15 dark:hover:from-purple-500/25 dark:hover:to-pink-500/25 dark:border-purple-500/30 dark:text-purple-300 text-xs font-semibold rounded-lg transition active:scale-95 flex items-center gap-1 relative shadow-xs"
                 title="Vòng Quay May Mắn (100% Trúng Thưởng)"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span className="hidden xs:inline">Vòng Quay</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 absolute -top-0.5 -right-0.5" />
               </button>
               <button
                 onClick={() => setIsRechargeOpen(true)}
-                className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-sm active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+                className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#7C5CFC] dark:hover:bg-[#6D4CF0] text-white text-xs font-semibold rounded-lg transition shadow-xs active:scale-95 whitespace-nowrap flex items-center gap-1.5"
               >
                 <span>☕</span>
                 <span>Mời Cà Phê</span>
@@ -281,13 +292,13 @@ export default function Navbar() {
       {!isReaderPage && (
         <div className="sm:hidden px-4 pb-2.5 pt-0.5">
           <form onSubmit={handleSearch} className="relative w-full">
-            <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-[#52525B]" />
+            <Search className="absolute left-2.5 top-2 w-3.5 h-3.5 text-slate-400 dark:text-[#52525B]" />
             <input
               type="text"
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value)}
               placeholder="Tìm theo mã tập (vd: 01, 02)..."
-              className="w-full pl-8 pr-3 py-1.5 bg-[#14141B] border border-[#22222B] rounded-lg text-xs text-white placeholder-[#52525B] focus:outline-none focus:border-[#7C5CFC]"
+              className="w-full pl-8 pr-3 py-1.5 bg-slate-100 dark:bg-[#14141B] border border-slate-300 dark:border-[#22222B] rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#52525B] focus:outline-none focus:border-indigo-500 dark:focus:border-[#7C5CFC]"
             />
           </form>
         </div>

@@ -193,23 +193,60 @@ export async function GET(req: NextRequest) {
         u.hasRecharged = totalPaid > 0;
         u.isGoogle = Boolean(authUsersMap[u.id] || (u.email && u.email.includes('@')));
 
-        // TỰ ĐỘNG ĐỒNG BỘ VIP NẾU CÓ ĐƠN VIP THÀNH CÔNG
-        const completedVipTx = userTxs.find(t => t.payment_code?.startsWith('VIP') || Number(t.amount_vnd) === 39000);
-        if (completedVipTx) {
-          const txTime = new Date(completedVipTx.created_at).getTime();
-          const vipExpire = new Date(txTime + 30 * 24 * 60 * 60 * 1000);
-          if (vipExpire > new Date()) {
-            u.isVip = true;
-            if (!u.vipUntil || new Date(u.vipUntil) < vipExpire) {
-              u.vipUntil = vipExpire.toISOString();
-            }
+        // TỰ ĐỘNG ĐỒNG BỘ VIP ĐẦY ĐỦ (Gói VIP 39k, Đổi 40 Điểm 7 Ngày, Vòng Quay VIP, Admin Cấp/Thu Hồi VIP)
+        const sortedUserTxs = [...userTxs].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        let calcExpireMs = 0;
+        let revokedAfterMs = 0;
+        for (const tx of sortedUserTxs) {
+          const code = (tx.payment_code || '').toUpperCase();
+          const txTime = new Date(tx.created_at).getTime();
+          if (code.startsWith('ADMIN_VIP_REVOKE')) {
+            calcExpireMs = 0;
+            revokedAfterMs = Math.max(revokedAfterMs, txTime);
+            continue;
           }
+          let daysToAdd = 0;
+          if (code.startsWith('ADMIN_VIP_')) {
+            const m = code.match(/ADMIN_VIP_(\d+)D/);
+            daysToAdd = m ? parseInt(m[1], 10) : 30;
+          } else if (code.startsWith('VIP') || Number(tx.amount_vnd) === 39000) {
+            daysToAdd = 30;
+          } else if (code.includes('EXCHANGE_VIP') || code.includes('EX_VIP')) {
+            daysToAdd = 7;
+          } else if (code.includes('LUCKY_REWARD_VIP_')) {
+            const m = code.match(/LUCKY_REWARD_VIP_(\d+)DAYS/);
+            daysToAdd = m ? parseInt(m[1], 10) : 1;
+          }
+          if (daysToAdd > 0) {
+            const baseTime = calcExpireMs > txTime ? calcExpireMs : txTime;
+            calcExpireMs = baseTime + daysToAdd * 24 * 60 * 60 * 1000;
+          }
+        }
+
+        if (calcExpireMs > Date.now()) {
+          u.isVip = true;
+          const calcIso = new Date(calcExpireMs).toISOString();
+          if (!u.vipUntil || new Date(u.vipUntil) < new Date(calcIso)) {
+            u.vipUntil = calcIso;
+          }
+        } else if (revokedAfterMs > 0) {
+          u.isVip = false;
+          u.vipUntil = null;
         }
       });
 
-      const users = Object.values(mergedUserMap).sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      // Loại bỏ các tài khoản khách vãng lai rác (guest-...) chưa từng nạp tiền, 0 điểm, 0 tập mở
+      const users = Object.values(mergedUserMap)
+        .filter((u: any) => {
+          const idStr = String(u.id || '');
+          if (idStr.startsWith('guest-') && (u.coins || 0) <= 0 && (u.totalRechargedVnd || 0) <= 0 && (u.unlockedCount || 0) <= 0 && !u.isVip) {
+            return false;
+          }
+          return true;
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       // Hàm kiểm tra các giao dịch nội bộ hệ thống (Điểm danh / Vòng quay) để tách riêng khỏi Sổ Chuyển Khoản
       const isInternalNonOrderTx = (code?: string) => {
@@ -714,31 +751,136 @@ export async function POST(req: NextRequest) {
 
     if (action === 'toggle_vip') {
       const { userId, days = 30 } = body;
-      const isCurrentlyVip = db.isVip(userId);
+      const { getUserBalanceAndVip, addUserVipDaysOnSupabase } = await import('@/lib/vip-server');
+      const currentStatus = await getUserBalanceAndVip(userId);
+      const isCurrentlyVip = currentStatus.isVip;
       let newVipUntil: string | null = null;
+
       if (!isCurrentlyVip) {
-        const exp = new Date();
-        exp.setDate(exp.getDate() + Number(days));
-        newVipUntil = exp.toISOString();
+        newVipUntil = await addUserVipDaysOnSupabase(userId, Number(days));
+        try {
+          await supabaseAdmin.from('transactions').insert({
+            id: `adm-vip-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            user_id: userId,
+            amount_vnd: 0,
+            coins: 0,
+            payment_code: `ADMIN_VIP_${Number(days)}D_${Date.now()}`,
+            status: 'completed',
+            created_at: new Date().toISOString(),
+          });
+        } catch (e) {}
+      } else {
+        // Hủy VIP trên cả Local DB, Supabase users, Auth Metadata và Transactions
+        db.setVip(userId, null);
+        try {
+          await supabaseAdmin.from('users').update({ vip_until: null } as any).eq('id', userId);
+        } catch (e) {}
+        try {
+          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+          if (authUser?.user) {
+            await supabaseAdmin.auth.admin.updateUserById(userId, {
+              user_metadata: {
+                ...(authUser.user.user_metadata || {}),
+                is_vip: false,
+                vip_until: null,
+              },
+            });
+          }
+        } catch (e) {}
+        try {
+          await supabaseAdmin.from('transactions').insert({
+            id: `adm-rev-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+            user_id: userId,
+            amount_vnd: 0,
+            coins: 0,
+            payment_code: `ADMIN_VIP_REVOKE_${Date.now()}`,
+            status: 'completed',
+            created_at: new Date().toISOString(),
+          });
+        } catch (e) {}
       }
 
-      // Cập nhật Local DB
-      db.setVip(userId, newVipUntil);
-
-      // Cập nhật Supabase Auth nếu có
-      try {
-        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
-        if (authUser?.user) {
-          await supabaseAdmin.auth.admin.updateUserById(userId, {
-            user_metadata: {
-              ...(authUser.user.user_metadata || {}),
-              vip_until: newVipUntil
-            }
-          });
-        }
-      } catch (e) {}
-
       return NextResponse.json({ success: true, isVip: Boolean(newVipUntil), vipUntil: newVipUntil });
+    }
+
+    if (action === 'compensate_all_users') {
+      const { amount = 5, target = 'all' } = body;
+      const bonusCoins = Math.max(1, Math.min(500, Number(amount) || 5));
+
+      try {
+        const [{ data: sbUsers }, { data: authList }, { data: sbTxs }] = await Promise.all([
+          supabaseAdmin.from('users').select('id, phone, balance').limit(5000),
+          supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+          supabaseAdmin.from('transactions').select('user_id, amount_vnd, status').eq('status', 'completed').gt('amount_vnd', 0),
+        ]);
+
+        const rechargedSet = new Set((sbTxs || []).map((t: any) => t.user_id));
+        const userRowsMap = new Map<string, { id: string; phone: string; balance: number; existsInTable: boolean }>();
+
+        (sbUsers || []).forEach((u: any) => {
+          if (String(u.id).startsWith('guest-') && (u.balance || 0) <= 0 && !rechargedSet.has(u.id)) {
+            return;
+          }
+          userRowsMap.set(u.id, {
+            id: u.id,
+            phone: u.phone || u.id,
+            balance: Number(u.balance) || 0,
+            existsInTable: true,
+          });
+        });
+
+        (authList?.users || []).forEach((au: any) => {
+          if (!userRowsMap.has(au.id)) {
+            userRowsMap.set(au.id, {
+              id: au.id,
+              phone: au.email || au.id,
+              balance: 0,
+              existsInTable: false,
+            });
+          }
+        });
+
+        const targets = Array.from(userRowsMap.values()).filter((u) => {
+          if (target === 'recharged') return rechargedSet.has(u.id);
+          return true;
+        });
+
+        // Cập nhật theo batch 30 người/lần để cực nhanh và không nghẽn kết nối
+        const BATCH_SIZE = 30;
+        let updatedCount = 0;
+        for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+          const chunk = targets.slice(i, i + BATCH_SIZE);
+          await Promise.all(
+            chunk.map(async (u) => {
+              const newBal = u.balance + bonusCoins;
+              if (u.existsInTable) {
+                await supabaseAdmin.from('users').update({ balance: newBal }).eq('id', u.id);
+              } else {
+                await supabaseAdmin.from('users').insert({
+                  id: u.id,
+                  phone: u.phone,
+                  balance: newBal,
+                  created_at: new Date().toISOString(),
+                });
+              }
+              db.adjustCoins(u.id, bonusCoins);
+              updatedCount++;
+            })
+          );
+        }
+
+        return NextResponse.json({
+          success: true,
+          count: updatedCount,
+          amount: bonusCoins,
+          message: `🎁 Đã phát quà đền bù +${bonusCoins} Điểm cho ${updatedCount} độc giả thành công!`,
+        });
+      } catch (err: any) {
+        return NextResponse.json(
+          { success: false, message: 'Lỗi phát quà đền bù: ' + err.message },
+          { status: 500 }
+        );
+      }
     }
 
     if (action === 'cleanup_test_data') {
@@ -815,12 +957,21 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: false, message: 'Không tìm thấy thông tin đơn hàng' }, { status: 404 });
       }
 
-      // 2. Cập nhật transaction thành completed và cộng tiền user trong Supabase
+      // 2. Cập nhật transaction thành completed và cộng tiền user trong Supabase (chống cộng trùng 100%)
       try {
-        await supabaseAdmin
+        const { data: updatedRows, error: updateErr } = await supabaseAdmin
           .from('transactions')
           .update({ status: 'completed' })
-          .eq('payment_code', orderCode);
+          .eq('payment_code', orderCode)
+          .in('status', ['pending', 'processing', 'expired', 'cancelled'])
+          .select('id');
+
+        if (!updateErr && (!updatedRows || updatedRows.length === 0)) {
+          return NextResponse.json({
+            success: true,
+            message: `Đơn hàng ${orderCode} đã được cộng điểm hoàn tất trước đó!`,
+          });
+        }
 
         const { data: user } = await supabaseAdmin
           .from('users')
@@ -843,30 +994,8 @@ export async function POST(req: NextRequest) {
         }
 
         if (targetOrder.isVip) {
-          try {
-            const now = new Date();
-            let exp = new Date(now.getTime() + (targetOrder.vipDays || 30) * 24 * 60 * 60 * 1000);
-
-            const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(targetOrder.userId);
-            if (authUser?.user) {
-              const currentVipUntil = authUser.user.user_metadata?.vip_until;
-              if (currentVipUntil && new Date(currentVipUntil) > now) {
-                exp = new Date(new Date(currentVipUntil).getTime() + (targetOrder.vipDays || 30) * 24 * 60 * 60 * 1000);
-              }
-              await supabaseAdmin.auth.admin.updateUserById(targetOrder.userId, {
-                user_metadata: {
-                  ...(authUser.user.user_metadata || {}),
-                  is_vip: true,
-                  vip_until: exp.toISOString(),
-                },
-              });
-            }
-
-            // Đồng bộ local DB
-            try {
-              db.setVip(targetOrder.userId, exp.toISOString());
-            } catch (dErr) {}
-          } catch (e) {}
+          const { addUserVipDaysOnSupabase } = await import('@/lib/vip-server');
+          await addUserVipDaysOnSupabase(targetOrder.userId, targetOrder.vipDays || 30);
         }
       } catch (err) {
         console.warn('Lỗi duyệt đơn Supabase:', err);

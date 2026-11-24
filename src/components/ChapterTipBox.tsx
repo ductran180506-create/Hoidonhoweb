@@ -39,7 +39,7 @@ export default function ChapterTipBox({
   chapterTitle,
   onTipSuccess,
 }: ChapterTipBoxProps) {
-  const { user, refreshBalance } = useAuth();
+  const { user, refreshBalance, setIsAuthModalOpen } = useAuth();
   const [selectedAmount, setSelectedAmount] = useState<number>(10000);
   const [isCustomMode, setIsCustomMode] = useState<boolean>(false);
   const [customVnd, setCustomVnd] = useState<string>('30000');
@@ -76,8 +76,13 @@ export default function ChapterTipBox({
 
   // Tạo đơn mời cà phê bằng tiền thật (VND)
   const handleOpenQrModal = async () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     setSubmitting(true);
-    const effectiveUserId = user?.id || `guest-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const effectiveUserId = user.id;
 
     try {
       const res = await fetch('/api/payment/create-order', {
@@ -167,50 +172,50 @@ export default function ChapterTipBox({
   };
 
   return (
-    <div className="bg-gradient-to-b from-[#181524] via-[#12111A] to-[#0D0D12] border border-amber-500/35 rounded-2xl p-4 sm:p-5 shadow-2xl relative overflow-hidden space-y-4">
+    <div className="bg-gradient-to-b from-amber-50/70 via-white to-amber-50/40 dark:from-[#181524] dark:via-[#12111A] dark:to-[#0D0D12] border border-amber-300 dark:border-amber-500/35 rounded-2xl p-4 sm:p-5 shadow-lg relative overflow-hidden space-y-4">
       {/* Background Glow */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#252336] pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-amber-200/80 dark:border-[#252336] pb-3">
         <div className="flex items-center gap-2.5">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white flex items-center justify-center text-xl shadow-lg shadow-amber-500/20 flex-shrink-0">
             ☕
           </div>
           <div>
-            <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-1.5 flex-wrap">
+            <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
               <span>Mời Cà Phê Tác Giả @carrot.tia</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30 font-semibold flex items-center gap-1">
                 <span>Chuyển Khoản Trực Tiếp</span>
               </span>
             </h3>
-            <p className="text-[11px] text-[#A1A1AA] mt-0.5">
+            <p className="text-[11px] text-slate-600 dark:text-[#A1A1AA] mt-0.5">
               Ủng hộ tác giả ly cà phê để có thêm động lực vẽ các tập tiếp theo nhé!
             </p>
           </div>
         </div>
 
         {/* Huy hiệu tài khoản nhận */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs bg-[#0F0E17] px-2.5 py-1 rounded-lg border border-[#2B2840] text-[#D4D4D8]">
-          <span className="text-amber-400 font-bold font-mono">Sacombank</span>
-          <span className="text-[#71717A]">•</span>
-          <span className="font-mono text-white text-[11px]">040121635056</span>
+        <div className="flex items-center gap-1.5 self-start sm:self-auto text-xs bg-white dark:bg-[#0F0E17] px-2.5 py-1 rounded-lg border border-slate-200 dark:border-[#2B2840] text-slate-800 dark:text-[#D4D4D8] shadow-xs">
+          <span className="text-amber-700 dark:text-amber-400 font-bold font-mono">Sacombank</span>
+          <span className="text-slate-400 dark:text-[#71717A]">•</span>
+          <span className="font-mono text-slate-900 dark:text-white text-[11px] font-bold">040121635056</span>
         </div>
       </div>
 
       {/* Thông báo thành công */}
       {successToast && (
-        <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+        <div className="p-3 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-300 dark:border-emerald-500/40 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
           <span>{successToast}</span>
         </div>
       )}
 
       {/* Các lựa chọn mức tiền thật (VND) */}
       <div className="space-y-2">
-        <div className="text-[11px] text-[#A1A1AA] font-medium flex items-center justify-between">
+        <div className="text-[11px] text-slate-600 dark:text-[#A1A1AA] font-medium flex items-center justify-between">
           <span>Chọn mức mời cà phê (Tiền thật):</span>
-          <span className="text-amber-400 text-[10px] font-semibold">Quét mã QR Ngân Hàng / Momo</span>
+          <span className="text-amber-700 dark:text-amber-400 text-[10px] font-bold">Quét mã QR Ngân Hàng / Momo</span>
         </div>
 
         {/* 4 Khung chọn mức tiền: 10k, 20k, 50k, Tặng Riêng */}
@@ -227,15 +232,15 @@ export default function ChapterTipBox({
                 }}
                 className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${
                   isSelected
-                    ? 'bg-gradient-to-b from-amber-500/25 to-orange-500/25 text-white border-amber-400 shadow-lg shadow-amber-500/15 ring-1 ring-amber-400'
-                    : 'bg-[#151322] border-[#252336] text-[#A1A1AA] hover:text-white hover:border-[#383550]'
+                    ? 'bg-amber-100 border-2 border-amber-500 text-amber-950 font-bold shadow-md ring-1 ring-amber-400 dark:bg-gradient-to-b dark:from-amber-500/25 dark:to-orange-500/25 dark:text-white dark:border-amber-400'
+                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 dark:bg-[#151322] dark:border-[#252336] dark:text-[#A1A1AA] dark:hover:text-white dark:hover:border-[#383550]'
                 }`}
               >
                 <span className="text-xl">{preset.icon}</span>
-                <span className="font-bold text-xs sm:text-sm font-mono text-amber-300">
+                <span className="font-bold text-xs sm:text-sm font-mono text-amber-700 dark:text-amber-300">
                   {preset.amount.toLocaleString('vi-VN')} đ
                 </span>
-                <span className="text-[10px] text-[#71717A] leading-tight truncate w-full">
+                <span className="text-[10px] text-slate-500 dark:text-[#71717A] leading-tight truncate w-full font-medium">
                   {preset.label}
                 </span>
               </button>
@@ -248,15 +253,15 @@ export default function ChapterTipBox({
             onClick={() => setIsCustomMode(true)}
             className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${
               isCustomMode
-                ? 'bg-gradient-to-b from-amber-500/25 to-orange-500/25 text-white border-amber-400 shadow-lg shadow-amber-500/15 ring-1 ring-amber-400'
-                : 'bg-[#151322] border-[#252336] text-[#A1A1AA] hover:text-white hover:border-[#383550]'
+                ? 'bg-amber-100 border-2 border-amber-500 text-amber-950 font-bold shadow-md ring-1 ring-amber-400 dark:bg-gradient-to-b dark:from-amber-500/25 dark:to-orange-500/25 dark:text-white dark:border-amber-400'
+                : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:text-slate-900 dark:bg-[#151322] dark:border-[#252336] dark:text-[#A1A1AA] dark:hover:text-white dark:hover:border-[#383550]'
             }`}
           >
             <span className="text-xl">🎁</span>
-            <span className="font-bold text-xs sm:text-sm font-mono text-amber-300">
+            <span className="font-bold text-xs sm:text-sm font-mono text-amber-700 dark:text-amber-300">
               {isCustomMode && effectiveAmount > 0 ? `${effectiveAmount.toLocaleString('vi-VN')}đ` : 'Tặng Riêng'}
             </span>
-            <span className="text-[10px] text-[#71717A] leading-tight truncate w-full">
+            <span className="text-[10px] text-slate-500 dark:text-[#71717A] leading-tight truncate w-full font-medium">
               {isCustomMode ? 'Số tiền tùy chọn' : 'Tự nhập số tiền'}
             </span>
           </button>
@@ -264,13 +269,13 @@ export default function ChapterTipBox({
 
         {/* Khung nhập số tiền tùy chọn khi chọn Tặng Riêng */}
         {isCustomMode && (
-          <div className="p-3 bg-[#0E0D17] border border-amber-500/40 rounded-xl space-y-2 animate-fadeIn">
+          <div className="p-3 bg-white dark:bg-[#0E0D17] border border-amber-400 dark:border-amber-500/40 rounded-xl space-y-2 animate-fadeIn shadow-xs">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-amber-300 font-semibold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-amber-800 dark:text-amber-300 font-semibold flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                 <span>Nhập số tiền muốn tặng riêng cho tác giả:</span>
               </span>
-              <span className="text-[11px] text-[#71717A]">Tối thiểu 5.000 đ</span>
+              <span className="text-[11px] text-slate-500 dark:text-[#71717A]">Tối thiểu 5.000 đ</span>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <div className="relative flex-1">
@@ -282,9 +287,9 @@ export default function ChapterTipBox({
                     setCustomVnd(clean);
                   }}
                   placeholder="Nhập số tiền (vd: 30000, 100000, 200000)..."
-                  className="w-full bg-[#161426] border border-[#2B2842] focus:border-amber-400 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-[#52525B] outline-none transition"
+                  className="w-full bg-slate-50 dark:bg-[#161426] border border-slate-300 dark:border-[#2B2842] focus:border-amber-500 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white font-mono placeholder-slate-400 dark:placeholder-[#52525B] outline-none transition"
                 />
-                <span className="absolute right-3 top-2.5 text-xs text-amber-300 font-semibold pointer-events-none">
+                <span className="absolute right-3 top-2.5 text-xs text-amber-700 dark:text-amber-300 font-bold pointer-events-none">
                   VND
                 </span>
               </div>
@@ -296,8 +301,8 @@ export default function ChapterTipBox({
                     onClick={() => setCustomVnd(quickVal.toString())}
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition active:scale-95 ${
                       customVnd === quickVal.toString()
-                        ? 'bg-amber-500 text-slate-950 shadow-sm'
-                        : 'bg-[#1C1A2E] hover:bg-[#25223E] text-[#A1A1AA] hover:text-white border border-[#2D2A4A]'
+                        ? 'bg-amber-500 text-white font-bold shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-300 dark:bg-[#1C1A2E] dark:hover:bg-[#25223E] dark:text-[#A1A1AA] dark:hover:text-white dark:border-[#2D2A4A]'
                     }`}
                   >
                     {quickVal.toLocaleString('vi-VN')}đ
@@ -319,7 +324,7 @@ export default function ChapterTipBox({
               value={donorName}
               onChange={(e) => setDonorName(e.target.value)}
               placeholder="Tên của bạn (vd: Bạn Đọc Ẩn Danh)"
-              className="sm:w-44 bg-[#0F0E17] border border-[#252336] focus:border-amber-500/60 rounded-xl px-3 py-2 text-xs text-white placeholder-[#71717A] outline-none"
+              className="sm:w-44 bg-white dark:bg-[#0F0E17] border border-slate-300 dark:border-[#252336] focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#71717A] outline-none shadow-xs"
             />
           )}
           <input
@@ -328,28 +333,28 @@ export default function ChapterTipBox({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder={isPrivate ? "Nhập lời nhắn gửi riêng tác giả (chỉ tác giả thấy trong Quản Trị)..." : "Nhập lời nhắn gửi tác giả (vd: Tập này cuốn xỉu tác giả ơi...)"}
-            className={`flex-1 bg-[#0F0E17] border focus:border-amber-500/60 rounded-xl px-3 py-2 text-xs text-white placeholder-[#71717A] outline-none transition ${
-              isPrivate ? 'border-amber-500/40 bg-amber-500/5' : 'border-[#252336]'
+            className={`flex-1 bg-white dark:bg-[#0F0E17] border focus:border-amber-500 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#71717A] outline-none transition shadow-xs ${
+              isPrivate ? 'border-amber-400 bg-amber-50/50 dark:border-amber-500/40 dark:bg-amber-500/5' : 'border-slate-300 dark:border-[#252336]'
             }`}
           />
         </div>
 
         {/* Checkbox Tặng riêng tư cho tác giả */}
         <div className="flex items-center justify-between gap-2 px-1">
-          <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-[#A1A1AA] hover:text-[#E4E4E7] transition">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-600 dark:text-[#A1A1AA] hover:text-slate-900 dark:hover:text-[#E4E4E7] transition">
             <input
               type="checkbox"
               checked={isPrivate}
               onChange={(e) => setIsPrivate(e.target.checked)}
-              className="w-4 h-4 rounded accent-amber-500 bg-[#0E0E14] border-[#2B2B3D] cursor-pointer"
+              className="w-4 h-4 rounded accent-amber-500 bg-white border-slate-300 dark:bg-[#0E0E14] dark:border-[#2B2B3D] cursor-pointer"
             />
             <span className="flex items-center gap-1 font-medium">
-              <Lock className={`w-3.5 h-3.5 ${isPrivate ? 'text-amber-400' : 'text-[#71717A]'}`} />
+              <Lock className={`w-3.5 h-3.5 ${isPrivate ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-[#71717A]'}`} />
               <span>Gửi lời nhắn riêng tư (Chỉ tác giả thấy trong Quản Trị)</span>
             </span>
           </label>
           {isPrivate && (
-            <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full hidden sm:inline">
+            <span className="text-[10px] text-amber-800 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 px-2 py-0.5 rounded-full hidden sm:inline font-semibold">
               Không hiện công khai lên bình luận
             </span>
           )}
@@ -362,16 +367,16 @@ export default function ChapterTipBox({
           type="button"
           onClick={handleOpenQrModal}
           disabled={submitting || effectiveAmount <= 0}
-          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-xl shadow-amber-500/25 active:scale-98 transition disabled:opacity-50 cursor-pointer"
+          className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg active:scale-98 transition disabled:opacity-50 cursor-pointer"
         >
           {submitting ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
               <span>Đang tạo mã VietQR...</span>
             </>
           ) : (
             <>
-              <QrCode className="w-4 h-4 text-slate-950" />
+              <QrCode className="w-4 h-4 text-white" />
               <span>Quét QR Mời Cà Phê {effectiveAmount.toLocaleString('vi-VN')} đ</span>
             </>
           )}
@@ -380,9 +385,9 @@ export default function ChapterTipBox({
 
       {/* Dải Bảng Vàng Tri Ân người vừa mời cà phê bằng tiền thật */}
       {recentTips.length > 0 && (
-        <div className="pt-2 border-t border-[#252336]/70 space-y-1.5">
-          <div className="text-[10px] text-[#71717A] font-semibold flex items-center gap-1.5">
-            <Heart className="w-3 h-3 text-rose-400 fill-rose-400" />
+        <div className="pt-2 border-t border-amber-200/80 dark:border-[#252336]/70 space-y-1.5">
+          <div className="text-[10px] text-slate-600 dark:text-[#71717A] font-semibold flex items-center gap-1.5">
+            <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
             <span>Độc giả vừa mời cà phê tập này:</span>
           </div>
 
@@ -390,18 +395,18 @@ export default function ChapterTipBox({
             {recentTips.map((tip) => (
               <div
                 key={tip.id}
-                className="inline-flex items-center gap-1.5 bg-[#0D0C14] px-2.5 py-1 rounded-full border border-[#252336] text-[10px] text-[#A1A1AA] flex-shrink-0"
+                className="inline-flex items-center gap-1.5 bg-white dark:bg-[#0D0C14] px-2.5 py-1 rounded-full border border-slate-200 dark:border-[#252336] text-[10px] text-slate-700 dark:text-[#A1A1AA] flex-shrink-0 shadow-xs"
               >
-                <span className="font-semibold text-white">{tip.userName}</span>
-                <span className="text-amber-400 font-bold font-mono">
+                <span className="font-bold text-slate-900 dark:text-white">{tip.userName}</span>
+                <span className="text-amber-700 dark:text-amber-400 font-bold font-mono">
                   +{tip.amountVnd ? `${tip.amountVnd.toLocaleString('vi-VN')}đ` : `${(tip.amountCoins || 5) * 2000}đ`}
                 </span>
                 {tip.isPrivate ? (
-                  <span className="text-amber-400/80 flex items-center gap-0.5 text-[9px] bg-amber-500/10 px-1.5 py-0.2 rounded">
+                  <span className="text-amber-800 dark:text-amber-400/80 flex items-center gap-0.5 text-[9px] bg-amber-100 dark:bg-amber-500/10 px-1.5 py-0.2 rounded font-medium">
                     <Lock className="w-2.5 h-2.5" /> Tặng riêng
                   </span>
                 ) : tip.message ? (
-                  <span className="text-[#71717A] truncate max-w-[120px]">
+                  <span className="text-slate-500 dark:text-[#71717A] truncate max-w-[120px]">
                     "{tip.message}"
                   </span>
                 ) : null}
@@ -415,26 +420,26 @@ export default function ChapterTipBox({
       {/* POPUP MÃ VIETQR CHUYỂN KHOẢN TIỀN THẬT TRỰC TIẾP          */}
       {/* ======================================================== */}
       {qrModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/85 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-sm bg-[#12111A] border border-amber-500/50 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-3.5 text-white max-h-[95vh] overflow-y-auto no-scrollbar animate-scaleUp">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#12111A] border border-amber-400 dark:border-amber-500/50 rounded-2xl p-4 sm:p-5 shadow-2xl space-y-3.5 text-slate-900 dark:text-white max-h-[95vh] overflow-y-auto no-scrollbar animate-scaleUp">
             
             {/* Nút đóng */}
             <button
               onClick={() => setQrModalOrder(null)}
-              className="absolute top-3.5 right-3.5 p-1.5 text-[#71717A] hover:text-white hover:bg-[#1E1C2C] rounded-lg transition"
+              className="absolute top-3.5 right-3.5 p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-white dark:hover:bg-[#1E1C2C] rounded-lg transition"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Header Modal */}
             <div className="text-center space-y-1">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-500/15 border border-amber-500/30 text-xl">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 text-xl">
                 ☕
               </div>
-              <h4 className="font-bold text-sm sm:text-base text-white">
+              <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
                 Mời Cà Phê Tác Giả @carrot.tia
               </h4>
-              <p className="text-[11px] text-[#A1A1AA]">
+              <p className="text-[11px] text-slate-500 dark:text-[#A1A1AA]">
                 Mở app ngân hàng bất kỳ hoặc Momo để quét mã QR bên dưới
               </p>
             </div>
@@ -442,105 +447,105 @@ export default function ChapterTipBox({
             {/* Trạng thái thành công */}
             {isSuccess ? (
               <div className="py-8 text-center space-y-2 animate-fadeIn">
-                <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-3xl">
+                <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/50 flex items-center justify-center text-3xl">
                   🎉
                 </div>
-                <h5 className="font-bold text-emerald-400 text-base">
+                <h5 className="font-bold text-emerald-600 dark:text-emerald-400 text-base">
                   Đã Nhận Được Tiền Cà Phê!
                 </h5>
-                <p className="text-xs text-[#A1A1AA]">
+                <p className="text-xs text-slate-500 dark:text-[#A1A1AA]">
                   Tác giả @carrot.tia chân thành cảm ơn tấm lòng ủng hộ của bạn! ❤️
                 </p>
               </div>
             ) : (
               <>
                 {/* Ảnh VietQR chuẩn Sacombank */}
-                <div className="bg-white p-3 rounded-2xl shadow-lg mx-auto w-fit border-2 border-amber-500/40 relative group">
+                <div className="bg-white p-3 rounded-2xl shadow-lg mx-auto w-fit border-2 border-amber-400 relative group">
                   <img
                     src={qrModalOrder.qrUrl}
                     alt="Mã VietQR Mời Cà Phê"
                     className="w-52 h-52 sm:w-56 sm:h-56 object-contain mx-auto"
                   />
                   <div className="absolute inset-x-0 bottom-1.5 text-center">
-                    <span className="text-[9px] font-bold text-slate-800 bg-amber-300 px-2 py-0.5 rounded-full shadow">
+                    <span className="text-[9px] font-bold text-slate-900 bg-amber-300 px-2 py-0.5 rounded-full shadow">
                       Quét tự động điền STK & Số tiền
                     </span>
                   </div>
                 </div>
 
                 {/* Đồng hồ đếm ngược */}
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-300 font-mono bg-amber-500/10 py-1 px-3 rounded-full border border-amber-500/20 w-fit mx-auto">
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-amber-800 dark:text-amber-300 font-mono bg-amber-100 dark:bg-amber-500/10 py-1 px-3 rounded-full border border-amber-300 dark:border-amber-500/20 w-fit mx-auto font-semibold">
                   <Clock className="w-3.5 h-3.5 animate-spin" />
                   <span>Mã QR có hiệu lực: <strong>{formatCountdown(timeLeft)}</strong></span>
                 </div>
 
                 {/* Thông tin chuyển khoản chi tiết kèm nút Copy */}
-                <div className="bg-[#181624] border border-[#29263C] rounded-xl p-3 space-y-2 text-xs font-mono">
+                <div className="bg-slate-50 dark:bg-[#181624] border border-slate-200 dark:border-[#29263C] rounded-xl p-3 space-y-2 text-xs font-mono">
                   {/* Ngân hàng */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[#71717A]">Ngân hàng:</span>
-                    <span className="font-bold text-white">Sacombank</span>
+                    <span className="text-slate-500 dark:text-[#71717A]">Ngân hàng:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Sacombank</span>
                   </div>
 
                   {/* Số tài khoản */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[#71717A]">Số tài khoản:</span>
+                    <span className="text-slate-500 dark:text-[#71717A]">Số tài khoản:</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-bold text-amber-300 font-mono">040121635056</span>
+                      <span className="font-bold text-amber-700 dark:text-amber-300 font-mono">040121635056</span>
                       <button
                         onClick={() => handleCopy('040121635056', 'acc')}
-                        className="p-1 hover:bg-[#252238] rounded text-[#A1A1AA] hover:text-white transition"
+                        className="p-1 hover:bg-slate-200 dark:hover:bg-[#252238] rounded text-slate-500 dark:text-[#A1A1AA] hover:text-slate-900 dark:hover:text-white transition"
                         title="Copy STK"
                       >
-                        {copiedField === 'acc' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedField === 'acc' ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </div>
 
                   {/* Chủ tài khoản */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[#71717A]">Chủ tài khoản:</span>
-                    <span className="font-bold text-white">TRAN CONG DUC</span>
+                    <span className="text-slate-500 dark:text-[#71717A]">Chủ tài khoản:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">TRAN CONG DUC</span>
                   </div>
 
                   {/* Số tiền */}
-                  <div className="flex items-center justify-between border-t border-[#242136] pt-1.5">
-                    <span className="text-[#71717A]">Số tiền:</span>
+                  <div className="flex items-center justify-between border-t border-slate-200 dark:border-[#242136] pt-1.5">
+                    <span className="text-slate-500 dark:text-[#71717A]">Số tiền:</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-extrabold text-emerald-400 text-sm">
+                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">
                         {qrModalOrder.amountVnd.toLocaleString('vi-VN')} đ
                       </span>
                       <button
                         onClick={() => handleCopy(qrModalOrder.amountVnd.toString(), 'amount')}
-                        className="p-1 hover:bg-[#252238] rounded text-[#A1A1AA] hover:text-white transition"
+                        className="p-1 hover:bg-slate-200 dark:hover:bg-[#252238] rounded text-slate-500 dark:text-[#A1A1AA] hover:text-slate-900 dark:hover:text-white transition"
                         title="Copy số tiền"
                       >
-                        {copiedField === 'amount' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedField === 'amount' ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </div>
 
                   {/* Nội dung chuyển khoản */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[#71717A]">Nội dung CK:</span>
+                    <span className="text-slate-500 dark:text-[#71717A]">Nội dung CK:</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-extrabold text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">
+                      <span className="font-extrabold text-amber-900 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-500/30">
                         {qrModalOrder.orderCode}
                       </span>
                       <button
                         onClick={() => handleCopy(qrModalOrder.orderCode, 'code')}
-                        className="p-1 hover:bg-[#252238] rounded text-[#A1A1AA] hover:text-white transition"
+                        className="p-1 hover:bg-slate-200 dark:hover:bg-[#252238] rounded text-slate-500 dark:text-[#A1A1AA] hover:text-slate-900 dark:hover:text-white transition"
                         title="Copy mã đơn"
                       >
-                        {copiedField === 'code' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedField === 'code' ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Hướng dẫn và trạng thái tự động đối soát */}
-                <div className="text-center text-[10px] text-[#71717A] flex items-center justify-center gap-1.5 pt-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="text-center text-[10px] text-slate-500 dark:text-[#71717A] flex items-center justify-center gap-1.5 pt-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Hệ thống tự động xác nhận sau 2-3 giây khi tiền vào tài khoản</span>
                 </div>
               </>
