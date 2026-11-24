@@ -6,7 +6,7 @@ export const metadata = {
 export default function MaintenancePage() {
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-10">
-      <div className="max-w-sm w-full text-center space-y-5 bg-[#111116] border border-[#22222C] p-6 sm:p-7 rounded-2xl shadow-2xl relative overflow-hidden">
+      <div className="max-w-sm w-full text-center space-y-5 bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#22222C] p-6 sm:p-7 rounded-2xl shadow-xl dark:shadow-2xl relative overflow-hidden">
         {/* Glow hiệu ứng nền */}
         <div className="absolute -top-20 -left-20 w-40 h-40 bg-carrot-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -18,20 +18,20 @@ export default function MaintenancePage() {
 
         {/* Tiêu đề & Thông báo ngắn gọn */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 uppercase tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping inline-block" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping inline-block" />
             Đang Bảo Trì Hệ Thống
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
             HỒI ĐÓ NHỎ ĐANG NÂNG CẤP
           </h1>
-          <p className="text-xs text-[#A1A1AA] leading-relaxed">
+          <p className="text-xs text-slate-600 dark:text-[#A1A1AA] leading-relaxed">
             Web đang tạm ngưng ít phút để nâng cấp hệ thống và cập nhật truyện mới. Bạn vui lòng quay lại sau nhé!
           </p>
         </div>
 
         {/* Thông báo quà đền bù gọn gàng */}
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-xs text-amber-300 font-medium flex items-center justify-center gap-2">
+        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-3 text-xs text-amber-800 dark:text-amber-300 font-medium flex items-center justify-center gap-2">
           <span className="text-base">🎁</span>
           <span>Sẽ có <strong>quà đền bù</strong> cho tất cả độc giả ngay khi web mở lại!</span>
         </div>
@@ -42,7 +42,7 @@ export default function MaintenancePage() {
             href="https://www.tiktok.com/@carrot.tia"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#F43F5E] hover:bg-[#E11D48] text-white text-xs font-semibold rounded-xl transition shadow-md active:scale-95"
+            className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#F43F5E] hover:bg-[#E11D48] text-white text-xs font-semibold rounded-xl transition shadow-md active:scale-95 cursor-pointer"
           >
             <span>Xem video trên TikTok @carrot.tia</span>
             <span>↗</span>
