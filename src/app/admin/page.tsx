@@ -15,6 +15,7 @@ import {
 import { Story, Order } from '@/lib/types';
 import { compressImage, formatFileSize } from '@/lib/image-compressor';
 import AdminSidebar, { AdminTab } from '@/components/admin/AdminSidebar';
+import AdminChatCRM from '@/components/admin/AdminChatCRM';
 import { useAuth } from '@/lib/auth-context';
 
 interface ChapterItem {
@@ -58,7 +59,7 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState('');
 
   // 6 Phân khu chính: stories | customers | revenue | analytics | feedback | wheel
-  const [activeTab, setActiveTab] = useState<'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback' | 'wheel'>('stories');
+  const [activeTab, setActiveTab] = useState<AdminTab>('stories');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { setIsLuckyWheelOpen } = useAuth();
@@ -108,6 +109,27 @@ export default function AdminPage() {
     }
     setWheelSaving(false);
   };
+
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
+
+  const fetchChatUnread = async () => {
+    try {
+      const res = await fetch('/api/chat/conversations', {
+        headers: getAdminHeaders(),
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.conversations)) {
+        const totalUnread = data.conversations.reduce((sum: number, c: any) => sum + (c.unreadAdmin || 0), 0);
+        setUnreadChatCount(totalUnread);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchChatUnread();
+    const interval = setInterval(fetchChatUnread, 6000);
+    return () => clearInterval(interval);
+  }, []);
 
   const DEFAULT_PRESET_PRIZES = [
     { id: 0, label: '+2 Điểm', sublabel: 'Thưởng xu', icon: '🎁', color: '#4F46E5', textColor: '#FFFFFF', type: 'coins', value: 2, weight: 28 },
@@ -1331,6 +1353,7 @@ export default function AdminPage() {
           analytics: baseMachines.length,
           feedback: baseFeedback.length,
           newFeedback: baseFeedback.filter(f => f.status === 'new').length,
+          unreadChat: unreadChatCount,
         }}
         onNewStoryClick={() => {
           setEditingStoryId(null);
@@ -1723,6 +1746,12 @@ export default function AdminPage() {
           {activeTab === 'wheel' && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 font-semibold">
               {wheelSettings?.prizes?.length || 8} giải thưởng • {baseLuckySpins.length} lượt quay
+            </span>
+          )}
+          {activeTab === 'chat' && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold flex items-center gap-1">
+              <span>Hộp thoại 1-1</span>
+              {unreadChatCount > 0 && <span className="text-rose-400 font-bold">• {unreadChatCount} tin mới</span>}
             </span>
           )}
         </div>
@@ -4838,6 +4867,13 @@ export default function AdminPage() {
         </div>
       )}
         </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* 7. TIN NHẮN KHÁCH HÀNG (LIVE CHAT CRM 1-1)                    */}
+      {/* ============================================================ */}
+      {activeTab === 'chat' && (
+        <AdminChatCRM />
       )}
         </div>
       </div>

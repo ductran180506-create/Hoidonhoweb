@@ -17,9 +17,11 @@ import {
   ExternalLink,
   ChevronRight,
   ShieldCheck,
+  MessageSquare,
+  MessageCircle,
 } from 'lucide-react';
 
-export type AdminTab = 'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback' | 'wheel';
+export type AdminTab = 'stories' | 'customers' | 'revenue' | 'analytics' | 'feedback' | 'wheel' | 'chat';
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
@@ -37,6 +39,7 @@ interface AdminSidebarProps {
     feedback: number;
     newFeedback: number;
     wheelSpins?: number;
+    unreadChat?: number;
   };
   onNewStoryClick?: () => void;
   onOpenLuckyWheel?: () => void;
@@ -443,6 +446,49 @@ export default function AdminSidebar({
                     {isRail && (
                       <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
                         Hòm Thư Góp Ý ({counts.feedback})
+                      </div>
+                    )}
+                  </button>
+                </li>
+
+                {/* 3.3 Tin Nhắn Khách Hàng (Chat 1-1) */}
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab('chat')}
+                    className={`w-full flex items-center ${isRail ? 'justify-center px-0 h-10' : 'justify-between px-2.5 py-2'} rounded-lg transition group cursor-pointer relative ${
+                      activeTab === 'chat'
+                        ? 'bg-[#7C5CFC]/15 text-[#C4B5FD] font-semibold border border-[#7C5CFC]/30 shadow-sm'
+                        : 'text-[#CBD5E1] hover:bg-[#181824] hover:text-white border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <MessageCircle className={`w-4 h-4 flex-shrink-0 ${activeTab === 'chat' ? 'text-amber-400' : 'text-amber-400'}`} />
+                      {!isRail && (
+                        <span className="truncate">Tin Nhắn Khách Hàng</span>
+                      )}
+                    </div>
+                    {!isRail ? (
+                      counts.unreadChat && counts.unreadChat > 0 ? (
+                        <span className="text-[9px] px-1.5 py-0.2 bg-rose-500/30 text-rose-300 border border-rose-500/50 rounded font-bold animate-pulse">
+                          {counts.unreadChat} mới
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-1.5 py-0.2 bg-[#222232] text-[#94A3B8] rounded font-semibold">
+                          1-1
+                        </span>
+                      )
+                    ) : (
+                      counts.unreadChat && counts.unreadChat > 0 && (
+                        <span className="absolute -top-1 -right-1 px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-rose-600 text-white animate-pulse">
+                          {counts.unreadChat}
+                        </span>
+                      )
+                    )}
+
+                    {isRail && (
+                      <div className="opacity-0 group-hover:opacity-100 transition pointer-events-none absolute left-full ml-3 px-2.5 py-1 bg-[#1E1E2B] text-white text-[11px] rounded shadow-xl border border-[#2C2C3D] whitespace-nowrap z-50">
+                        Tin Nhắn Khách Hàng {counts.unreadChat ? `(${counts.unreadChat} mới)` : ''}
                       </div>
                     )}
                   </button>

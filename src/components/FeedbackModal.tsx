@@ -84,8 +84,8 @@ export default function FeedbackModal() {
 
   return (
     <>
-      {/* Nút bấm nổi ở góc dưới bên phải */}
-      <div className="fixed bottom-3 right-3 z-40 sm:bottom-6 sm:right-6">
+      {/* Nút bấm nổi ở góc dưới bên trái (để nhường góc phải cho Live Chat 1-1 & Zalo) */}
+      <div className="fixed bottom-3 left-3 z-40 sm:bottom-6 sm:left-6">
         <button
           onClick={() => {
             setIsOpen(true);

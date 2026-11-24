@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { User, Wallet, Story, Chapter, UnlockedChapter, Order, AnalyticsEvent, Comment, FeedbackItem } from './types';
+import { User, Wallet, Story, Chapter, UnlockedChapter, Order, AnalyticsEvent, Comment, FeedbackItem, SupportMessage, SupportConversation } from './types';
 
 export interface LuckyWheelPrize {
   id: number;
@@ -81,6 +81,8 @@ interface DatabaseSchema {
   luckyWheelSettings?: LuckyWheelSettings;
   luckyWheelHistory?: LuckyWheelSpinRecord[];
   chapterTips?: ChapterTipRecord[];
+  supportConversations?: SupportConversation[];
+  supportMessages?: SupportMessage[];
 }
 
 const IS_VERCEL = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
@@ -979,5 +981,114 @@ export const db = {
     }
     saveData(data);
     return record;
+  },
+
+  // === LIVE CHAT 1-1 HỖ TRỢ ĐỘC GIẢ ===
+  getOrCreateConversation: (userId: string, userName?: string, userContact?: string): SupportConversation => {
+    const data = ensureDataFile();
+    if (!data.supportConversations) data.supportConversations = [];
+    let conv = data.supportConversations.find(c => c.userId === userId);
+    if (!conv) {
+      conv = {
+        id: `conv-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        userId,
+        userName: userName || `Độc giả ${userId.slice(-4)}`,
+        userContact: userContact || '',
+        lastMessage: 'Cuộc trò chuyện đã được tạo',
+        lastSender: 'admin',
+        unreadAdmin: 0,
+        unreadUser: 0,
+        updatedAt: new Date().toISOString(),
+      };
+      data.supportConversations.unshift(conv);
+      saveData(data);
+    } else {
+      let changed = false;
+      if (userName && conv.userName !== userName) {
+        conv.userName = userName;
+        changed = true;
+      }
+      if (userContact && conv.userContact !== userContact) {
+        conv.userContact = userContact;
+        changed = true;
+      }
+      if (changed) saveData(data);
+    }
+    return conv;
+  },
+
+  getAllConversations: (): SupportConversation[] => {
+    const data = ensureDataFile();
+    return (data.supportConversations || []).sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  },
+
+  getConversationById: (convId: string): SupportConversation | undefined => {
+    const data = ensureDataFile();
+    return (data.supportConversations || []).find(c => c.id === convId);
+  },
+
+  getConversationByUserId: (userId: string): SupportConversation | undefined => {
+    const data = ensureDataFile();
+    return (data.supportConversations || []).find(c => c.userId === userId);
+  },
+
+  getMessagesByConversationId: (convId: string): SupportMessage[] => {
+    const data = ensureDataFile();
+    return (data.supportMessages || [])
+      .filter(m => m.conversationId === convId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  },
+
+  addSupportMessage: (
+    convId: string,
+    sender: 'user' | 'admin',
+    content: string,
+    imageUrl?: string
+  ): SupportMessage => {
+    const data = ensureDataFile();
+    if (!data.supportMessages) data.supportMessages = [];
+    if (!data.supportConversations) data.supportConversations = [];
+
+    const msg: SupportMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      conversationId: convId,
+      sender,
+      content,
+      imageUrl: imageUrl || '',
+      createdAt: new Date().toISOString(),
+    };
+    data.supportMessages.push(msg);
+
+    // Cập nhật cuộc trò chuyện
+    const conv = data.supportConversations.find(c => c.id === convId);
+    if (conv) {
+      conv.lastMessage = content || (imageUrl ? '[Đã gửi một hình ảnh]' : '');
+      conv.lastSender = sender;
+      conv.updatedAt = msg.createdAt;
+      if (sender === 'user') {
+        conv.unreadAdmin = (conv.unreadAdmin || 0) + 1;
+      } else {
+        conv.unreadUser = (conv.unreadUser || 0) + 1;
+      }
+    }
+
+    saveData(data);
+    return msg;
+  },
+
+  markConversationRead: (convId: string, reader: 'admin' | 'user') => {
+    const data = ensureDataFile();
+    if (!data.supportConversations) return;
+    const conv = data.supportConversations.find(c => c.id === convId);
+    if (conv) {
+      if (reader === 'admin') {
+        conv.unreadAdmin = 0;
+      } else {
+        conv.unreadUser = 0;
+      }
+      saveData(data);
+    }
   }
 };

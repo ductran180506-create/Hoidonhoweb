@@ -112,3 +112,24 @@ export interface FeedbackItem {
   status: 'new' | 'reviewed';
   createdAt: string;
 }
+
+export interface SupportMessage {
+  id: string;
+  conversationId: string;
+  sender: 'user' | 'admin';
+  content: string;
+  imageUrl?: string;
+  createdAt: string;
+}
+
+export interface SupportConversation {
+  id: string;
+  userId: string;
+  userName: string;
+  userContact?: string;
+  lastMessage: string;
+  lastSender: 'user' | 'admin';
+  unreadAdmin: number;
+  unreadUser: number;
+  updatedAt: string;
+}

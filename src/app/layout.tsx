@@ -9,6 +9,7 @@ import CheckInModal from '@/components/CheckInModal';
 import FeedbackModal from '@/components/FeedbackModal';
 import PaymentHistoryModal from '@/components/PaymentHistoryModal';
 import LuckyWheelModal from '@/components/LuckyWheelModal';
+import LiveChatWidget from '@/components/LiveChatWidget';
 
 export const metadata: Metadata = {
   title: 'Hồi Đó Nhỏ - Truyện Tranh AI (@carrot.tia)',
@@ -47,6 +48,7 @@ export default function RootLayout({
           <PaymentHistoryModal />
           <FeedbackModal />
           <LuckyWheelModal />
+          <LiveChatWidget />
         </AuthProvider>
       </body>
     </html>
