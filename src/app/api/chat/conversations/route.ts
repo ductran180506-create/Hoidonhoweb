@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getChatStore } from '@/lib/chat-store';
 import { isAuthorizedAdmin } from '@/lib/admin-auth';
+import { db } from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -16,18 +18,41 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const conversations = db.getAllConversations();
+    const store = await getChatStore();
 
-    // Lấy thêm thông tin số dư và VIP của từng user nếu có
-    const enriched = conversations.map(c => {
-      const wallet = db.getWallet(c.userId);
-      const isVip = db.isVip(c.userId);
-      return {
-        ...c,
-        balance: wallet.balance || 0,
-        isVip,
-      };
-    });
+    // Sắp xếp cuộc trò chuyện có tin nhắn mới nhất lên đầu
+    const sorted = [...store.conversations].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+
+    // Lấy thêm số dư & VIP của từng độc giả
+    const enriched = await Promise.all(
+      sorted.map(async (c) => {
+        let balance = db.getWallet(c.userId).balance || 0;
+        let isVip = db.isVip(c.userId);
+
+        try {
+          const { data: sbUser } = await supabaseAdmin
+            .from('users')
+            .select('balance, vip_until')
+            .eq('id', c.userId)
+            .maybeSingle();
+
+          if (sbUser) {
+            balance = Math.max(balance, sbUser.balance || 0);
+            if (sbUser.vip_until && new Date(sbUser.vip_until) > new Date()) {
+              isVip = true;
+            }
+          }
+        } catch (e) {}
+
+        return {
+          ...c,
+          balance,
+          isVip,
+        };
+      })
+    );
 
     return NextResponse.json({
       success: true,

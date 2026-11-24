@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { getChatStore, saveChatStore } from '@/lib/chat-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    db.markConversationRead(conversationId, reader as 'admin' | 'user');
+    const store = await getChatStore();
+    const conv = store.conversations.find(c => c.id === conversationId);
+
+    if (conv) {
+      if (reader === 'admin') {
+        conv.unreadAdmin = 0;
+      } else {
+        conv.unreadUser = 0;
+      }
+      await saveChatStore(store);
+    }
 
     return NextResponse.json({
       success: true,
