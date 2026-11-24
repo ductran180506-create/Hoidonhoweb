@@ -461,8 +461,17 @@ export const db = {
 
   addVipDays: (userId: string, days: number): User | undefined => {
     const data = ensureDataFile();
-    const user = data.users.find(u => u.id === userId);
-    if (!user) return undefined;
+    let user = data.users.find(u => u.id === userId || u.phone === userId);
+    if (!user) {
+      user = {
+        id: userId,
+        phone: userId,
+        pin: '1234',
+        vipUntil: null,
+        createdAt: new Date().toISOString(),
+      };
+      data.users.push(user);
+    }
 
     const now = new Date();
     let expireDate = now;
@@ -477,7 +486,7 @@ export const db = {
 
   isVip: (userId: string): boolean => {
     const data = ensureDataFile();
-    const user = data.users.find(u => u.id === userId);
+    const user = data.users.find(u => u.id === userId || u.phone === userId);
     if (!user || !user.vipUntil) return false;
     return new Date(user.vipUntil) > new Date();
   },

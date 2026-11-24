@@ -46,7 +46,7 @@ function ContinuousReaderContent() {
       // Nếu đã có dữ liệu truyện rồi thì chỉ cập nhật ngầm, không bật loading làm giật/tải lại trang
       loadStoryAndChapters(Boolean(story));
     }
-  }, [slug, user?.id]);
+  }, [slug, user?.id, user?.isVip]);
 
   useEffect(() => {
     if (story && chapters.length > 0) {
@@ -98,10 +98,10 @@ function ContinuousReaderContent() {
 
       const contentsMap: Record<string, { content?: string; images?: string[] }> = {};
 
-      // 1. Tập MIỄN PHÍ: Chỉ khi giá = 0 (Mở khóa ngay lập tức 0ms, không cần gọi API)
+      // 1. Tập MIỄN PHÍ hoặc TÀI KHOẢN VIP: Mở khóa ngay lập tức 0ms, không cần gọi API
       const paidChapters: Chapter[] = [];
       for (const chap of chapterList) {
-        if (!chap.priceCoins || chap.priceCoins === 0) {
+        if (!chap.priceCoins || chap.priceCoins === 0 || user?.isVip) {
           contentsMap[chap.id] = {
             content: chap.content || '',
             images: chap.images || [],
@@ -111,8 +111,8 @@ function ContinuousReaderContent() {
         }
       }
 
-      // 2. Tập tính phí: Kiểm tra xem độc giả đã mở khóa trọn bộ chưa
-      if (paidChapters.length > 0 && user?.id) {
+      // 2. Tập tính phí: Kiểm tra xem độc giả đã mở khóa trọn bộ chưa (nếu chưa có VIP)
+      if (paidChapters.length > 0 && user?.id && !user?.isVip) {
         try {
           const uRes = await fetch('/api/chapter/unlock', {
             method: 'POST',
@@ -125,8 +125,8 @@ function ContinuousReaderContent() {
             }),
           });
           const uData = await uRes.json();
-          if (uData.unlocked) {
-            // Đã mở khóa full bộ -> mở khóa tất cả các tập
+          if (uData.unlocked || uData.isVip) {
+            // Đã mở khóa full bộ hoặc là VIP -> mở khóa tất cả các tập
             chapterList.forEach((ch) => {
               contentsMap[ch.id] = {
                 content: ch.content || '',
@@ -212,9 +212,11 @@ function ContinuousReaderContent() {
 
   const currentChapter = chapters.find(c => c.chapterIndex === activeChapterIndex) || chapters[0];
   const nextChapter = chapters.find(c => c.chapterIndex === activeChapterIndex + 1);
-  const isCurrentUnlocked = currentChapter ? Boolean(unlockedContents[currentChapter.id]) : false;
-  const isNextUnlocked = nextChapter ? Boolean(unlockedContents[nextChapter.id]) : false;
-  const currentData = currentChapter ? unlockedContents[currentChapter.id] : null;
+  const isCurrentUnlocked = Boolean(user?.isVip) || (currentChapter ? Boolean(unlockedContents[currentChapter.id]) : false);
+  const isNextUnlocked = Boolean(user?.isVip) || (nextChapter ? Boolean(unlockedContents[nextChapter.id]) : false);
+  const currentData = currentChapter 
+    ? (unlockedContents[currentChapter.id] || (user?.isVip ? { content: currentChapter.content, images: currentChapter.images } : null))
+    : null;
 
   return (
     <div className="max-w-2xl sm:max-w-3xl mx-auto space-y-3.5 sm:space-y-4 pb-20 protect-content animate-fadeIn w-full overflow-hidden">
@@ -312,7 +314,7 @@ function ContinuousReaderContent() {
           className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 scroll-smooth select-none"
         >
           {chapters.map((chap) => {
-            const isUnlocked = Boolean(unlockedContents[chap.id]);
+            const isUnlocked = Boolean(user?.isVip || unlockedContents[chap.id] || !chap.priceCoins || chap.priceCoins === 0);
             const isActive = chap.chapterIndex === activeChapterIndex;
             return (
               <button
@@ -328,6 +330,10 @@ function ContinuousReaderContent() {
                 {(!chap.priceCoins || chap.priceCoins === 0) ? (
                   <span className="text-[9px] text-emerald-400 font-bold bg-emerald-950/60 px-1 py-0.2 rounded border border-emerald-800/40">
                     Free
+                  </span>
+                ) : user?.isVip ? (
+                  <span className="text-[9px] text-amber-400 font-bold bg-amber-500/15 px-1 py-0.2 rounded border border-amber-500/30">
+                    VIP
                   </span>
                 ) : !isUnlocked ? (
                   <span className="text-[10px] text-[#F59E0B] font-medium flex items-center gap-0.5">
@@ -352,6 +358,10 @@ function ContinuousReaderContent() {
             {(!currentChapter.priceCoins || currentChapter.priceCoins === 0) ? (
               <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-800/40">
                 Đọc Miễn Phí
+              </span>
+            ) : user?.isVip ? (
+              <span className="text-[10px] text-amber-300 font-bold bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+                👑 Đặc Quyền VIP (Mở Khóa Toàn Bộ)
               </span>
             ) : !isCurrentUnlocked ? (
               <span className="text-[10px] text-[#F59E0B] flex items-center gap-1 font-medium bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded">

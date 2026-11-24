@@ -27,7 +27,7 @@ export default function ReaderPage() {
 
   useEffect(() => {
     loadChapter();
-  }, [slug, chapterIndex, user]);
+  }, [slug, chapterIndex, user?.id, user?.isVip]);
 
   const loadChapter = async () => {
     setLoading(true);
@@ -55,8 +55,8 @@ export default function ReaderPage() {
       }
       setChapter(targetChap);
 
-      // Nếu là tập miễn phí (0 xu): Mở ngay lập tức 0ms không cần fetch unlock
-      if (!targetChap.priceCoins || targetChap.priceCoins === 0) {
+      // Nếu là tập miễn phí (0 xu) HOẶC tài khoản VIP: Mở ngay lập tức 0ms không cần fetch unlock
+      if (!targetChap.priceCoins || targetChap.priceCoins === 0 || user?.isVip) {
         setContent(targetChap.content || '');
         setIsLocked(false);
       } else {
@@ -72,8 +72,8 @@ export default function ReaderPage() {
         });
 
         const unlockData = await unlockRes.json();
-        if (unlockData.unlocked && (unlockData.content || (unlockData.images && unlockData.images.length > 0))) {
-          setContent(unlockData.content || '');
+        if (unlockData.unlocked || unlockData.isVip) {
+          setContent(unlockData.content || targetChap.content || '');
           setIsLocked(false);
         } else {
           setIsLocked(true);

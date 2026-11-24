@@ -78,14 +78,31 @@ export async function POST(req: NextRequest) {
       }, { status: 403 });
     }
 
-    // 4. Kiểm tra VIP (Local DB hoặc Supabase Auth metadata)
+    // 4. Kiểm tra VIP (Local DB hoặc Supabase users table hoặc Supabase Auth metadata)
     let isVipUser = db.isVip(effectiveUserId);
+
     if (!isVipUser) {
       try {
-        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(effectiveUserId);
-        const vipUntil = authUser?.user?.user_metadata?.vip_until;
-        if (vipUntil && new Date(vipUntil) > new Date()) {
+        const { data: userRow } = await supabaseAdmin
+          .from('users')
+          .select('vip_until')
+          .eq('id', effectiveUserId)
+          .maybeSingle();
+        if (userRow?.vip_until && new Date(userRow.vip_until) > new Date()) {
           isVipUser = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!isVipUser) {
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(effectiveUserId);
+        if (isUuid) {
+          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(effectiveUserId);
+          const vipUntil = authUser?.user?.user_metadata?.vip_until;
+          if (vipUntil && new Date(vipUntil) > new Date()) {
+            isVipUser = true;
+          }
         }
       } catch (e) {}
     }
@@ -96,7 +113,8 @@ export async function POST(req: NextRequest) {
         unlocked: true,
         isVip: true,
         content: chapter.content,
-        images: chapter.images || [],
+        images: toCdnUrls(chapter.images),
+        message: 'Tài khoản VIP - Đã mở khóa full bộ!',
       });
     }
 
