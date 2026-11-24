@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { X, Check, Loader2, Copy, QrCode, Download, Smartphone, ArrowRight, ShieldCheck, Clock, AlertCircle, RefreshCw, Crown } from 'lucide-react';
+import { formatVipTimeRemaining } from '@/lib/vip-utils';
 
 interface OrderResponse {
   id: string;
@@ -348,7 +349,7 @@ export default function RechargeModal() {
                       </span>
                     </div>
                     <div className="text-[10px] text-[#A1A1AA] mt-0.5">
-                      {user?.isVip ? 'Đang là VIP (Đổi để cộng dồn thêm +7 ngày)' : 'Đọc không giới hạn toàn bộ kho truyện trong 7 ngày'}
+                      {user?.isVip ? `Đang là VIP (Còn ${formatVipTimeRemaining(user.vipUntil)} • Đổi để gia hạn +7 ngày)` : 'Đọc không giới hạn toàn bộ kho truyện trong 7 ngày'}
                     </div>
                   </div>
                 </div>

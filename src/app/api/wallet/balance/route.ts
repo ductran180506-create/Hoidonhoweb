@@ -22,12 +22,18 @@ export async function GET(req: NextRequest) {
   try {
     const { data: sbUser } = await supabaseAdmin
       .from('users')
-      .select('balance')
+      .select('balance, vip_until')
       .eq('id', userId)
       .maybeSingle();
 
     if (sbUser) {
       balance = Math.max(balance, sbUser.balance || 0);
+      if (sbUser.vip_until && new Date(sbUser.vip_until) > new Date()) {
+        isVip = true;
+        if (!vipUntil || new Date(sbUser.vip_until) > new Date(vipUntil)) {
+          vipUntil = sbUser.vip_until;
+        }
+      }
     }
   } catch (e) {}
 
@@ -37,17 +43,21 @@ export async function GET(req: NextRequest) {
     const auVip = authUser?.user?.user_metadata?.vip_until;
     if (auVip && new Date(auVip) > new Date()) {
       isVip = true;
-      vipUntil = auVip;
+      if (!vipUntil || new Date(auVip) > new Date(vipUntil)) {
+        vipUntil = auVip;
+      }
     }
   } catch (e) {}
 
   // 3. Kết hợp với ví Local DB
   const localWallet = db.getWallet(userId);
   balance = Math.max(balance, localWallet.balance || 0);
-  const localUser = db.getUserByPhone?.(userId);
-  if (!vipUntil && localUser?.vipUntil && new Date(localUser.vipUntil) > new Date()) {
+  const localUser = db.getUserByIdOrPhone?.(userId) || db.getUserByPhone?.(userId);
+  if (localUser?.vipUntil && new Date(localUser.vipUntil) > new Date()) {
     isVip = true;
-    vipUntil = localUser.vipUntil;
+    if (!vipUntil || new Date(localUser.vipUntil) > new Date(vipUntil)) {
+      vipUntil = localUser.vipUntil;
+    }
   }
 
   return NextResponse.json({

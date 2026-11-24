@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Search, Coins, User as UserIcon, LogOut, Sliders, Gift, CheckCircle2, Sparkles } from 'lucide-react';
+import { Search, Coins, User as UserIcon, LogOut, Sliders, Gift, CheckCircle2, Sparkles, Crown } from 'lucide-react';
+import { formatVipTimeRemaining } from '@/lib/vip-utils';
 
 export default function Navbar() {
   const { 
@@ -118,24 +119,28 @@ export default function Navbar() {
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {user ? (
             <div className="flex items-center gap-1 sm:gap-1.5">
-              {/* Huy hiệu Tên Độc Giả: Bấm để mở Lịch Sử Nạp & Đơn Chờ */}
+              {/* Huy hiệu Tên Độc Giả: Bấm để mở Lịch Sử Nạp & Đơn Chờ & Chi Tiết VIP */}
               <button
                 type="button"
                 onClick={() => setIsHistoryOpen(true)}
-                className="flex items-center gap-1 px-1.5 sm:px-2.5 py-1 bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] hover:border-[#333344] rounded-lg text-xs text-[#E4E4E7] transition active:scale-95 cursor-pointer relative"
-                title="Bấm để xem lịch sử nạp & đơn chờ thanh toán"
+                className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2.5 py-1 bg-[#14141B] hover:bg-[#1C1C26] border border-[#22222B] hover:border-[#7C5CFC]/40 rounded-lg text-xs text-[#E4E4E7] transition active:scale-95 cursor-pointer relative"
+                title={user.isVip ? `👑 Hội Viên VIP: Còn ${formatVipTimeRemaining(user.vipUntil)} (Bấm để xem chi tiết tài khoản)` : 'Bấm để xem lịch sử nạp & tài khoản'}
               >
                 {user.avatar ? (
                   <img src={user.avatar} alt={user.name || 'User'} className="w-4 h-4 rounded-full object-cover flex-shrink-0" />
                 ) : (
                   <UserIcon className="w-3.5 h-3.5 text-[#7C5CFC] flex-shrink-0" />
                 )}
-                <span className="font-semibold max-w-[60px] xs:max-w-[100px] sm:max-w-[150px] truncate" title={user.name || user.phone}>
+                <span className="font-semibold max-w-[60px] xs:max-w-[100px] sm:max-w-[140px] truncate" title={user.name || user.phone}>
                   {user.name || user.phone}
                 </span>
                 {user.isVip && (
-                  <span className="text-[9px] font-bold text-[#F59E0B] bg-[#F59E0B]/15 border border-[#F59E0B]/30 px-1 py-0.2 rounded">
-                    VIP
+                  <span 
+                    className="flex items-center gap-0.5 text-[9px] font-bold text-[#F59E0B] bg-[#F59E0B]/15 border border-[#F59E0B]/30 px-1 py-0.2 rounded"
+                    title={`Hội Viên VIP: Còn ${formatVipTimeRemaining(user.vipUntil)}`}
+                  >
+                    <Crown className="w-2.5 h-2.5 text-[#F59E0B]" />
+                    <span>VIP</span>
                   </span>
                 )}
               </button>

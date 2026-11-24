@@ -110,14 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const email = u.email || '';
     const name = u.name || u.user_metadata?.full_name || u.user_metadata?.name || (email ? email.split('@')[0] : (u.phone ? (u.phone.length >= 9 ? `${u.phone.slice(0, 3)}***${u.phone.slice(-3)}` : u.phone) : 'Độc Giả'));
     const avatar = u.avatar || u.user_metadata?.avatar_url || u.user_metadata?.picture;
+    const auVip = u.vipUntil || u.user_metadata?.vip_until || null;
+    const isVip = Boolean(u.isVip || (auVip && new Date(auVip) > new Date()));
     return {
       id: u.id,
       phone: u.phone || email || u.id,
       email: u.email,
       name,
       avatar,
-      isVip: Boolean(u.isVip),
-      vipUntil: u.vipUntil || null,
+      isVip,
+      vipUntil: auVip,
     };
   };
 
@@ -207,11 +209,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchBalance = async (userId: string) => {
     try {
-      const res = await fetch(`/api/wallet/balance?userId=${userId}`);
+      const res = await fetch(`/api/wallet/balance?userId=${encodeURIComponent(userId)}`);
       const data = await res.json();
       if (data.success) {
         setBalance(data.balance);
-        setUser(prev => prev ? { ...prev, isVip: data.isVip } : null);
+        setUser(prev => {
+          if (!prev) return null;
+          const updated: AuthUser = {
+            ...prev,
+            isVip: Boolean(data.isVip),
+            vipUntil: data.vipUntil || prev.vipUntil || null,
+          };
+          try {
+            localStorage.setItem('carrot_user', JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        });
       }
     } catch (err) {
       console.error(err);

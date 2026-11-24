@@ -397,7 +397,12 @@ export const db = {
 
   getUserByPhone: (phone: string): User | undefined => {
     const data = ensureDataFile();
-    return data.users.find(u => u.phone === phone);
+    return data.users.find(u => u.phone === phone || u.id === phone);
+  },
+
+  getUserByIdOrPhone: (idOrPhone: string): User | undefined => {
+    const data = ensureDataFile();
+    return data.users.find(u => u.id === idOrPhone || u.phone === idOrPhone);
   },
 
   createUser: (phone: string, pin: string, customId?: string): User => {

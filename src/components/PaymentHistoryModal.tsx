@@ -10,8 +10,11 @@ import {
   RefreshCw, 
   ExternalLink,
   Coffee,
-  Crown
+  Crown,
+  Clock,
+  Sparkles
 } from 'lucide-react';
+import { formatVipTimeRemaining, formatVipExpireDate } from '@/lib/vip-utils';
 
 interface TransactionItem {
   id: string;
@@ -155,9 +158,9 @@ export default function PaymentHistoryModal() {
             <Receipt className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="font-semibold text-base text-white">Lịch Sử Nạp & Đơn Hàng</h3>
+            <h3 className="font-semibold text-base text-white">Tài Khoản & Lịch Sử Nạp</h3>
             <p className="text-[11px] text-[#71717A]">
-              Theo dõi biến động điểm và tiếp tục đơn chờ thanh toán
+              Thông tin hội viên, thời hạn VIP và biến động điểm nạp
             </p>
           </div>
         </div>
@@ -209,6 +212,86 @@ export default function PaymentHistoryModal() {
             </button>
           </div>
         </div>
+
+        {/* Thẻ Trạng Thái & Thời Hạn Hội Viên VIP */}
+        {user?.isVip ? (
+          <div className="p-3.5 bg-gradient-to-r from-amber-500/15 via-[#231A33] to-purple-500/15 border border-amber-500/40 rounded-xl relative overflow-hidden shadow-lg shadow-amber-950/20">
+            <div className="absolute top-0 right-0 w-28 h-28 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex items-start justify-between gap-3 relative z-10">
+              <div className="flex items-start gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 text-black flex items-center justify-center font-bold flex-shrink-0 shadow-md shadow-amber-500/20 mt-0.5">
+                  <Crown className="w-5 h-5 text-black" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                      Hội Viên VIP
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Đang Kích Hoạt
+                    </span>
+                  </div>
+
+                  <div className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    <span>Thời hạn: <span className="text-amber-300 font-extrabold">{formatVipTimeRemaining(user.vipUntil)}</span></span>
+                  </div>
+
+                  {user.vipUntil && (
+                    <div className="text-[11px] text-[#A1A1AA] flex items-center gap-1 font-mono">
+                      <span>Hết hạn:</span>
+                      <strong className="text-[#E4E4E7] font-semibold">{formatVipExpireDate(user.vipUntil)}</strong>
+                    </div>
+                  )}
+
+                  <div className="text-[10px] text-amber-400/80 pt-0.5 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                    <span>Đặc quyền: Mở khóa full tất cả các tập truyện</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                <button
+                  onClick={() => {
+                    setPendingOrder(null);
+                    setIsHistoryOpen(false);
+                    setIsRechargeOpen(true);
+                  }}
+                  className="py-1.5 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black text-xs font-bold rounded-lg transition shadow-md shadow-amber-500/20 flex items-center gap-1 active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>Gia hạn VIP</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-3 bg-[#151520] border border-[#232332] rounded-xl flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-[#20202E] border border-[#2E2E3E] text-[#71717A] flex items-center justify-center flex-shrink-0">
+                <Crown className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-[#D4D4D8]">Chưa kích hoạt Hội Viên VIP</div>
+                <div className="text-[10px] text-[#71717A]">
+                  Đăng ký 39k/tháng hoặc đổi 40 Điểm = 7 Ngày để đọc Full truyện
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setPendingOrder(null);
+                setIsHistoryOpen(false);
+                setIsRechargeOpen(true);
+              }}
+              className="py-1.5 px-2.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-amber-300 text-[11px] font-bold rounded-lg transition active:scale-95 cursor-pointer whitespace-nowrap"
+            >
+              Nâng Cấp VIP
+            </button>
+          </div>
+        )}
 
         {/* Cuộn nội dung danh sách */}
         <div className="flex-1 overflow-y-auto space-y-3 pr-1 -mr-1">
