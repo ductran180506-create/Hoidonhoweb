@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
@@ -21,9 +20,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const headersList = headers();
-  const isMaintenance = headersList.get('x-is-maintenance') === '1';
-
   // Script khởi tạo theme ngay lập tức để chống chớp giật màn hình (No Flash of Unstyled Theme)
   const themeInitScript = `
     try {
@@ -37,20 +33,6 @@ export default function RootLayout({
       }
     } catch (e) {}
   `;
-
-  // Khi đang bật chế độ bảo trì: Khóa hoàn toàn, ẩn sạch thanh Navbar (nút Đăng Nhập, Mời Cà Phê, Tìm kiếm), Footer và các Modal
-  if (isMaintenance) {
-    return (
-      <html lang="vi" className="dark" suppressHydrationWarning>
-        <head>
-          <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        </head>
-        <body className="bg-[#0B0B0E] text-slate-100 min-h-screen flex items-center justify-center p-4 selection:bg-carrot-500 selection:text-white font-sans antialiased">
-          {children}
-        </body>
-      </html>
-    );
-  }
 
   return (
     <html lang="vi" className="dark" suppressHydrationWarning>
