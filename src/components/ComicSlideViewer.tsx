@@ -21,11 +21,25 @@ function SlideImage({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(() => toCdnUrl(src));
+  const [hasFallenBack, setHasFallenBack] = useState(false);
 
   useEffect(() => {
+    setCurrentSrc(toCdnUrl(src));
     setLoaded(false);
     setError(false);
+    setHasFallenBack(false);
   }, [src]);
+
+  const handleImgError = () => {
+    // TỰ ĐỘNG DỰ PHÒNG: Nếu Worker vượt trần 100k/ngày, tự động chuyển về link gốc Supabase!
+    if (!hasFallenBack && src && currentSrc !== src) {
+      setHasFallenBack(true);
+      setCurrentSrc(src);
+    } else {
+      setError(true);
+    }
+  };
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
@@ -43,18 +57,19 @@ function SlideImage({
             onClick={() => {
               setError(false);
               setLoaded(false);
+              setCurrentSrc(src);
             }}
-            className="px-3 py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-medium rounded-lg transition shadow-md shadow-[#7C5CFC]/20"
+            className="px-3 py-1.5 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-xs font-medium rounded-lg transition shadow-md shadow-[#7C5CFC]/20 cursor-pointer"
           >
             Bấm để tải lại
           </button>
         </div>
       ) : (
         <img
-          src={toCdnUrl(src)}
+          src={currentSrc}
           alt={alt}
           onLoad={() => setLoaded(true)}
-          onError={() => setError(true)}
+          onError={handleImgError}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           className={`${className} transition-opacity duration-200 ${loaded ? 'opacity-100' : 'opacity-0'}`}
@@ -456,6 +471,11 @@ export default function ComicSlideViewer({
                 alt={`${title} - Trang ${idx + 1}`}
                 className="w-full max-w-full h-auto object-contain mx-auto block select-none pointer-events-none"
                 loading={idx < 3 ? 'eager' : 'lazy'}
+                onError={(e) => {
+                  if (imgUrl && e.currentTarget.src !== imgUrl) {
+                    e.currentTarget.src = imgUrl; // Fallback sang link gốc Supabase nếu CDN quá tải
+                  }
+                }}
                 onContextMenu={(e) => e.preventDefault()}
               />
               <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/80 backdrop-blur-md text-[10px] text-gray-300 font-mono rounded border border-white/10 shadow">

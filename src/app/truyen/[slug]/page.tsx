@@ -247,7 +247,16 @@ function ContinuousReaderContent() {
       {/* Thông tin truyện */}
       <div className="bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl p-3 sm:p-4 flex gap-3 sm:gap-3.5 items-center shadow-xs">
         <div className="w-12 sm:w-16 aspect-[9/16] flex-shrink-0 bg-slate-100 dark:bg-[#0A0A0D] rounded-lg overflow-hidden border border-slate-200 dark:border-[#1E1E26] shadow-sm">
-          <img src={toCdnUrl(story.coverImage)} alt={story.title} className="w-full h-full object-cover" />
+          <img 
+            src={toCdnUrl(story.coverImage)} 
+            alt={story.title} 
+            className="w-full h-full object-cover" 
+            onError={(e) => {
+              if (story.coverImage && e.currentTarget.src !== story.coverImage) {
+                e.currentTarget.src = story.coverImage;
+              }
+            }}
+          />
         </div>
 
         <div className="space-y-1 flex-1 min-w-0">
