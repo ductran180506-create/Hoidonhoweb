@@ -105,14 +105,16 @@ export default function AdminChatCRM() {
     fetchConversations();
   }, []);
 
-  // Polling danh sách & tin nhắn mỗi 4 giây
+  // Polling danh sách & tin nhắn mỗi 15 giây (chỉ khi Admin đang xem tab)
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchConversations(true);
-      if (selectedConv?.id) {
-        fetchMessages(selectedConv.id, true);
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchConversations(true);
+        if (selectedConv?.id) {
+          fetchMessages(selectedConv.id, true);
+        }
       }
-    }, 4000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, [selectedConv?.id]);

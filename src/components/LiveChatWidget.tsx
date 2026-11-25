@@ -88,16 +88,21 @@ export default function LiveChatWidget() {
     }
   };
 
-  // Khởi tạo & Polling tin nhắn mới (Không chạy ở trang Admin/Bảo trì)
+  // Khởi tạo & Polling tin nhắn mới: CHỈ chạy khi khách thực sự bấm MỞ khung chat (Tiết kiệm 95% CPU Vercel)
   useEffect(() => {
     if (isHiddenRoute) return;
+
+    // Khi khung chat đang đóng: DỪNG TOÀN BỘ gọi ngầm
+    if (!isOpen) return;
+
     fetchMessages();
 
-    // Polling mỗi 3.5 giây khi mở chat, hoặc 15 giây khi đóng chat
-    const intervalTime = isOpen ? 3500 : 15000;
+    // Trong lúc mở chat, thăm dò tin nhắn mới mỗi 5 giây (chỉ khi tab đang active)
     const interval = setInterval(() => {
-      fetchMessages(true);
-    }, intervalTime);
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchMessages(true);
+      }
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [isOpen, user?.id, isHiddenRoute]);

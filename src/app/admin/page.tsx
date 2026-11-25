@@ -128,7 +128,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchChatUnread();
-    const interval = setInterval(fetchChatUnread, 6000);
+    // Đồng bộ số tin nhắn chưa đọc định kỳ 60s (chỉ khi tab đang active)
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchChatUnread();
+      }
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -464,49 +469,30 @@ export default function AdminPage() {
     if (!isSilent) setLoading(false);
   };
 
-  // Tự động đồng bộ Realtime liên tục mỗi 6 giây khi đang ở trang Admin
+  // Tự động đồng bộ dữ liệu Admin: 60s/lần và chỉ chạy khi tab đang hiển thị (tiết kiệm CPU)
   useEffect(() => {
     if (!isAuthenticated) return;
+
     const interval = setInterval(() => {
-      fetchData(true);
-    }, 6000);
-    return () => clearInterval(interval);
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchData(true);
+      }
+    }, 60000);
+
+    // Tự động làm mới ngay khi Admin chuyển quay lại tab này
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData(true);
+        fetchChatUnread();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [isAuthenticated]);
-
-  // Tự động đồng bộ đơn hàng bên Admin khi có đơn đang chờ hoặc đang xử lý
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const hasActiveOrder = Array.isArray(orders) && orders.some((o) => o.status === 'pending' || o.status === 'processing');
-    if (!hasActiveOrder) return;
-
-    const poll = setInterval(async () => {
-      try {
-        const res = await fetch('/api/admin/stories', { headers: getAdminHeaders() });
-        const data = await res.json();
-        if (data.success) {
-          setStats(data.stats || { totalStories: 0, totalOrders: 0, completedOrders: 0, totalRevenue: 0, totalUsers: 0 });
-          setOrders(Array.isArray(data.orders) ? data.orders : []);
-          if (Array.isArray(data.luckySpins)) {
-            setLuckySpins(data.luckySpins);
-          }
-          if (Array.isArray(data.chapterTips)) {
-            setChapterTips(data.chapterTips);
-          }
-          if (Array.isArray(data.users)) {
-            setUsers(
-              data.users.map((u: any) => ({
-                ...u,
-                coins: u.coins ?? u.balance ?? 0,
-                unlockedCount: u.unlockedCount ?? (u.unlockedChapters?.length || 0),
-              }))
-            );
-          }
-        }
-      } catch {}
-    }, 4000);
-
-    return () => clearInterval(poll);
-  }, [isAuthenticated, orders]);
 
   const handleUpdateFeedbackStatus = async (id: string, status: 'new' | 'reviewed') => {
     try {
