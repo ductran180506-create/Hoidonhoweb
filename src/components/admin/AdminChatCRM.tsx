@@ -45,6 +45,11 @@ export default function AdminChatCRM() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectedConvRef = useRef<Conversation | null>(null);
+
+  useEffect(() => {
+    selectedConvRef.current = selectedConv;
+  }, [selectedConv]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,9 +72,18 @@ export default function AdminChatCRM() {
       const data = await res.json();
       if (data.success && Array.isArray(data.conversations)) {
         setConversations(data.conversations);
-        // Nếu chưa chọn ai, tự động chọn người đầu tiên
-        if (!selectedConv && data.conversations.length > 0) {
-          setSelectedConv(data.conversations[0]);
+
+        // Tự động chọn cuộc trò chuyện đầu tiên nếu chưa chọn ai
+        if (!selectedConvRef.current && data.conversations.length > 0) {
+          const first = data.conversations[0];
+          setSelectedConv(first);
+          fetchMessages(first.id, true);
+        } else if (selectedConvRef.current) {
+          // Cập nhật lại thông tin mới nhất của conversation đang chọn
+          const updated = data.conversations.find((c: Conversation) => c.id === selectedConvRef.current?.id);
+          if (updated) {
+            setSelectedConv(prev => (prev ? { ...prev, ...updated } : updated));
+          }
         }
       }
     } catch (e) {
@@ -105,19 +119,19 @@ export default function AdminChatCRM() {
     fetchConversations();
   }, []);
 
-  // Polling danh sách & tin nhắn mỗi 15 giây (chỉ khi Admin đang xem tab)
+  // Polling danh sách & tin nhắn mỗi 10 giây (chỉ khi Admin đang xem tab)
   useEffect(() => {
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
         fetchConversations(true);
-        if (selectedConv?.id) {
-          fetchMessages(selectedConv.id, true);
+        if (selectedConvRef.current?.id) {
+          fetchMessages(selectedConvRef.current.id, true);
         }
       }
-    }, 15000);
+    }, 10000);
 
     return () => clearInterval(interval);
-  }, [selectedConv?.id]);
+  }, []);
 
   // Khi chọn conversation
   const handleSelectConv = (conv: Conversation) => {
@@ -232,13 +246,26 @@ export default function AdminChatCRM() {
   const filteredConversations = conversations.filter(c => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
-    return (
-      c.userName.toLowerCase().includes(q) ||
-      c.userId.toLowerCase().includes(q) ||
-      (c.userContact && c.userContact.toLowerCase().includes(q)) ||
-      (c.lastMessage && c.lastMessage.toLowerCase().includes(q))
-    );
+    const name = (c.userName || '').toLowerCase();
+    const uid = (c.userId || '').toLowerCase();
+    const contact = (c.userContact || '').toLowerCase();
+    const last = (c.lastMessage || '').toLowerCase();
+    return name.includes(q) || uid.includes(q) || contact.includes(q) || last.includes(q);
   });
+
+  const formatSafeTime = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatSafeDateTime = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    return `${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} • ${d.toLocaleDateString('vi-VN')}`;
+  };
 
   return (
     <div className="space-y-4 animate-fadeIn">
@@ -273,7 +300,7 @@ export default function AdminChatCRM() {
             type="button"
             onClick={() => fetchConversations()}
             disabled={loadingConv}
-            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#181824] dark:hover:bg-[#222232] dark:text-[#A1A1AA] dark:hover:text-white border border-slate-300 dark:border-[#2D2D3D] transition active:scale-95"
+            className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-[#181824] dark:hover:bg-[#222232] dark:text-[#A1A1AA] dark:hover:text-white border border-slate-300 dark:border-[#2D2D3D] transition active:scale-95 cursor-pointer"
             title="Làm mới"
           >
             <RefreshCw className={`w-4 h-4 ${loadingConv ? 'animate-spin' : ''}`} />
@@ -281,11 +308,11 @@ export default function AdminChatCRM() {
         </div>
       </div>
 
-      {/* KHUNG GIAO DIỆN CHAT 2 CỘT */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[650px] bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl overflow-hidden shadow-sm">
+      {/* KHUNG GIAO DIỆN CHAT 2 CỘT (FLEXBOX CHỐNG TRÀN VÀ TỰ CO GIÃN MƯỢT MÀ) */}
+      <div className="flex flex-col md:flex-row h-[700px] bg-white dark:bg-[#111116] border border-slate-200 dark:border-[#1E1E26] rounded-xl overflow-hidden shadow-sm">
         
-        {/* CỘT TRÁI (4 CỘT): DANH SÁCH CUỘC TRÒ CHUYỆN */}
-        <div className="lg:col-span-4 border-r border-slate-200 dark:border-[#1E1E26] flex flex-col h-full bg-slate-50 dark:bg-[#0E0E14]">
+        {/* CỘT TRÁI: DANH SÁCH CUỘC TRÒ CHUYỆN */}
+        <div className="w-full md:w-80 lg:w-96 flex-shrink-0 border-r border-slate-200 dark:border-[#1E1E26] flex flex-col h-full bg-slate-50 dark:bg-[#0E0E14]">
           {/* Ô tìm kiếm */}
           <div className="p-3 border-b border-slate-200 dark:border-[#1E1E26] bg-white dark:bg-[#12121A]">
             <div className="relative">
@@ -319,6 +346,7 @@ export default function AdminChatCRM() {
               filteredConversations.map(conv => {
                 const isSelected = selectedConv?.id === conv.id;
                 const hasUnread = conv.unreadAdmin > 0;
+                const initial = conv.userName ? conv.userName.trim()[0]?.toUpperCase() || 'U' : 'U';
 
                 return (
                   <div
@@ -326,7 +354,7 @@ export default function AdminChatCRM() {
                     onClick={() => handleSelectConv(conv)}
                     className={`p-3 transition cursor-pointer flex items-start gap-2.5 relative select-none ${
                       isSelected
-                        ? 'bg-indigo-50/80 border-l-4 border-l-indigo-600 dark:bg-[#181828] dark:border-l-[#7C5CFC]'
+                        ? 'bg-indigo-50/90 border-l-4 border-l-indigo-600 dark:bg-[#181828] dark:border-l-[#7C5CFC]'
                         : hasUnread
                         ? 'bg-rose-50/80 hover:bg-rose-100/50 dark:bg-rose-950/20 dark:hover:bg-[#151522]'
                         : 'hover:bg-slate-100/70 dark:hover:bg-[#13131C]'
@@ -335,7 +363,7 @@ export default function AdminChatCRM() {
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shadow">
-                        {conv.userName ? conv.userName[0].toUpperCase() : 'U'}
+                        {initial}
                       </div>
                       {hasUnread && (
                         <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-rose-500 border-2 border-white dark:border-[#0E0E14] animate-pulse" />
@@ -345,11 +373,11 @@ export default function AdminChatCRM() {
                     {/* Nội dung tóm tắt */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
-                        <span className={`text-xs truncate font-semibold ${hasUnread ? 'text-slate-900 font-bold' : 'text-slate-800 dark:text-[#E4E4E7]'}`}>
-                          {conv.userName}
+                        <span className={`text-xs truncate font-semibold ${hasUnread ? 'text-slate-900 font-bold dark:text-white' : 'text-slate-800 dark:text-[#E4E4E7]'}`}>
+                          {conv.userName || 'Độc giả'}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-[#71717A] flex-shrink-0 ml-1">
-                          {new Date(conv.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                          {formatSafeTime(conv.updatedAt)}
                         </span>
                       </div>
 
@@ -371,7 +399,7 @@ export default function AdminChatCRM() {
                       </div>
 
                       {/* Tin nhắn cuối */}
-                      <p className={`text-[11px] truncate ${hasUnread ? 'text-rose-700 font-bold' : 'text-slate-600 dark:text-[#71717A]'}`}>
+                      <p className={`text-[11px] truncate ${hasUnread ? 'text-rose-700 dark:text-rose-400 font-bold' : 'text-slate-600 dark:text-[#71717A]'}`}>
                         {conv.lastSender === 'admin' ? 'Bạn: ' : ''}
                         {conv.lastMessage || 'Đã tạo cuộc trò chuyện'}
                       </p>
@@ -390,27 +418,29 @@ export default function AdminChatCRM() {
           </div>
         </div>
 
-        {/* CỘT PHẢI (8 CỘT): KHUNG TRÒ CHUYỆN CHI TIẾT */}
-        <div className="lg:col-span-8 flex flex-col h-full bg-white dark:bg-[#0A0A0F]">
+        {/* CỘT PHẢI: KHUNG TRÒ CHUYỆN CHI TIẾT */}
+        <div className="flex-1 flex flex-col h-full min-w-0 bg-white dark:bg-[#0A0A0F]">
           {selectedConv ? (
             <>
               {/* HEADER CONVERSATION CHI TIẾT */}
-              <div className="p-3.5 bg-slate-50 dark:bg-[#14141E] border-b border-slate-200 dark:border-[#222230] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shadow">
-                    {selectedConv.userName ? selectedConv.userName[0].toUpperCase() : 'U'}
+              <div className="p-3.5 bg-slate-50 dark:bg-[#14141E] border-b border-slate-200 dark:border-[#222230] flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white font-bold text-xs flex items-center justify-center shadow flex-shrink-0">
+                    {selectedConv.userName ? selectedConv.userName.trim()[0]?.toUpperCase() || 'U' : 'U'}
                   </div>
 
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-900 dark:text-white">{selectedConv.userName}</span>
+                      <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                        {selectedConv.userName || 'Độc giả'}
+                      </span>
                       {selectedConv.isVip ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30 flex items-center gap-1">
-                          <Crown className="w-3 h-3 text-amber-600" /> Hội Viên VIP
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30 flex items-center gap-1 flex-shrink-0">
+                          <Crown className="w-3 h-3 text-amber-600" /> VIP
                         </span>
                       ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/25 font-medium">
-                          Tài khoản thường
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/25 font-medium flex-shrink-0">
+                          Thường
                         </span>
                       )}
                     </div>
@@ -420,12 +450,12 @@ export default function AdminChatCRM() {
                         <Coins className="w-3 h-3 text-amber-500" /> Ví: <strong className="text-slate-900 dark:text-white font-mono font-bold">{selectedConv.balance || 0} Điểm</strong>
                       </span>
                       <span>•</span>
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-[#71717A] flex items-center gap-1">
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-[#71717A] flex items-center gap-1 truncate">
                         ID: {selectedConv.userId}
                         <button
                           type="button"
                           onClick={() => handleCopy(selectedConv.userId)}
-                          className="hover:text-slate-900 dark:hover:text-white"
+                          className="hover:text-slate-900 dark:hover:text-white cursor-pointer"
                           title="Sao chép ID"
                         >
                           {copiedText === selectedConv.userId ? <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -436,15 +466,15 @@ export default function AdminChatCRM() {
                 </div>
 
                 {/* Nút hành động nhanh với khách */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                   {selectedConv.userContact && (
                     <a
-                      href={`https://zalo.me/${selectedConv.userContact.replace(/[^0-9]/g, '')}`}
+                      href={`https://zalo.me/${String(selectedConv.userContact).replace(/[^0-9]/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="py-1.5 px-3 bg-[#0068FF]/10 hover:bg-[#0068FF]/20 border border-[#0068FF]/30 text-[#0068FF] text-xs font-semibold rounded-lg transition flex items-center gap-1"
                     >
-                      <span>Mở Zalo Khách</span>
+                      <span>Mở Zalo</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   )}
@@ -456,7 +486,7 @@ export default function AdminChatCRM() {
                     title="Xóa cuộc trò chuyện này"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Xóa đoạn chat</span>
+                    <span className="hidden sm:inline">Xóa chat</span>
                   </button>
                 </div>
               </div>
@@ -475,6 +505,7 @@ export default function AdminChatCRM() {
                 ) : (
                   messages.map(msg => {
                     const isAdmin = msg.sender === 'admin';
+                    const initial = selectedConv.userName ? selectedConv.userName.trim()[0]?.toUpperCase() || 'U' : 'U';
 
                     return (
                       <div
@@ -483,7 +514,7 @@ export default function AdminChatCRM() {
                       >
                         {!isAdmin && (
                           <div className="w-7 h-7 rounded-full bg-slate-200 border border-slate-300 text-slate-700 dark:bg-[#181824] dark:border-[#2D2D3D] text-[10px] dark:text-white font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
-                            {selectedConv.userName ? selectedConv.userName[0].toUpperCase() : 'U'}
+                            {initial}
                           </div>
                         )}
 
@@ -510,10 +541,7 @@ export default function AdminChatCRM() {
                           </div>
 
                           <div className={`text-[9px] text-slate-500 dark:text-[#71717A] px-1 ${isAdmin ? 'text-right' : 'text-left'}`}>
-                            {new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })} • {new Date(msg.createdAt).toLocaleDateString('vi-VN')}
+                            {formatSafeDateTime(msg.createdAt)}
                           </div>
                         </div>
 
@@ -530,7 +558,7 @@ export default function AdminChatCRM() {
               </div>
 
               {/* MẪU CÂU TRẢ LỜI NHANH */}
-              <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#101018] border-t border-slate-200 dark:border-[#1C1C28] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px]">
+              <div className="px-3 py-1.5 bg-slate-50 dark:bg-[#101018] border-t border-slate-200 dark:border-[#1C1C28] flex items-center gap-1.5 overflow-x-auto no-scrollbar text-[11px] flex-shrink-0">
                 <span className="text-[10px] text-slate-500 dark:text-[#71717A] flex-shrink-0 font-medium">💬 Mẫu nhanh:</span>
                 {quickReplies.map((qr, idx) => (
                   <button
@@ -546,7 +574,7 @@ export default function AdminChatCRM() {
 
               {/* PREVIEW ẢNH NẾU ADMIN CHỌN GỬI ẢNH */}
               {replyImagePreview && (
-                <div className="px-4 py-2 bg-slate-50 dark:bg-[#12121A] border-t border-slate-200 dark:border-[#20202F] flex items-center justify-between">
+                <div className="px-4 py-2 bg-slate-50 dark:bg-[#12121A] border-t border-slate-200 dark:border-[#20202F] flex items-center justify-between flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <div className="w-12 h-12 rounded-lg overflow-hidden border border-indigo-500 dark:border-[#7C5CFC]">
                       <img src={replyImagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -556,7 +584,7 @@ export default function AdminChatCRM() {
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="p-1 rounded-full bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white transition"
+                    className="p-1 rounded-full bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500 dark:hover:text-white transition cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -564,7 +592,7 @@ export default function AdminChatCRM() {
               )}
 
               {/* FORM TRẢ LỜI CỦA ADMIN */}
-              <form onSubmit={handleSendReply} className="p-3 bg-white dark:bg-[#12121A] border-t border-slate-200 dark:border-[#222230] flex items-center gap-2">
+              <form onSubmit={handleSendReply} className="p-3 bg-white dark:bg-[#12121A] border-t border-slate-200 dark:border-[#222230] flex items-center gap-2 flex-shrink-0">
                 <label className="p-2.5 text-slate-500 hover:text-indigo-600 rounded-xl hover:bg-slate-100 dark:text-[#71717A] dark:hover:text-[#7C5CFC] dark:hover:bg-[#1A1A26] transition cursor-pointer flex-shrink-0" title="Đính kèm ảnh">
                   <ImagePlus className="w-5 h-5" />
                   <input
@@ -580,7 +608,7 @@ export default function AdminChatCRM() {
                   type="text"
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
-                  placeholder={`Nhắn tin trả lời độc giả ${selectedConv.userName}...`}
+                  placeholder={`Nhắn tin trả lời độc giả ${selectedConv.userName || 'Độc giả'}...`}
                   className="flex-1 bg-slate-50 dark:bg-[#0A0A0F] border border-slate-300 dark:border-[#242436] focus:border-indigo-500 dark:focus:border-[#7C5CFC] rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#52525B] outline-none transition"
                   disabled={sending}
                 />
@@ -588,7 +616,7 @@ export default function AdminChatCRM() {
                 <button
                   type="submit"
                   disabled={sending || (!replyText.trim() && !replyImage)}
-                  className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#7C5CFC] dark:hover:bg-[#6D4CF0] disabled:opacity-40 text-white font-semibold rounded-xl text-xs transition flex items-center gap-1.5 flex-shrink-0 shadow active:scale-95"
+                  className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-[#7C5CFC] dark:hover:bg-[#6D4CF0] disabled:opacity-40 text-white font-semibold rounded-xl text-xs transition flex items-center gap-1.5 flex-shrink-0 shadow active:scale-95 cursor-pointer"
                 >
                   {sending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -602,10 +630,10 @@ export default function AdminChatCRM() {
               </form>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-[#71717A] space-y-3">
-              <MessageCircle className="w-12 h-12 text-[#2B2B3E]" />
-              <div className="text-sm font-semibold text-white">Chọn một cuộc trò chuyện để bắt đầu</div>
-              <p className="text-xs text-[#71717A] max-w-sm">
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 dark:text-[#71717A] space-y-3">
+              <MessageCircle className="w-12 h-12 text-slate-300 dark:text-[#2B2B3E]" />
+              <div className="text-sm font-semibold text-slate-800 dark:text-white">Chọn một cuộc trò chuyện để bắt đầu</div>
+              <p className="text-xs text-slate-500 dark:text-[#71717A] max-w-sm">
                 Bạn có thể trao đổi 1-1, kiểm tra tình trạng riêng và hỗ trợ từng độc giả ngay tại đây.
               </p>
             </div>

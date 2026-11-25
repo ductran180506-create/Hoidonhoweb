@@ -59,6 +59,16 @@ export default function LiveChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const formatSafeTime = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
+  };
+
   // Tải tin nhắn
   const fetchMessages = async (isBackground = false) => {
     const effectiveId = getEffectiveUserId();
@@ -182,10 +192,10 @@ export default function LiveChatWidget() {
   return (
     <>
       {/* 1. NÚT BONG BÓNG NỔI GÓC PHẢI MÀN HÌNH */}
-      <div className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-40">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="relative group p-3.5 sm:p-4 bg-gradient-to-r from-[#7C5CFC] to-[#6344E7] hover:from-[#6D4CF0] hover:to-[#5536D8] text-white rounded-full shadow-2xl transition-all duration-200 active:scale-95 flex items-center justify-center border border-white/20"
+          className="relative group p-3.5 sm:p-4 bg-gradient-to-r from-[#7C5CFC] to-[#6344E7] hover:from-[#6D4CF0] hover:to-[#5536D8] text-white rounded-full shadow-2xl transition-all duration-200 active:scale-95 flex items-center justify-center border border-white/20 cursor-pointer"
           title="Nhắn tin trò chuyện 1-1 với Tác Giả"
         >
           {isOpen ? (
@@ -213,7 +223,7 @@ export default function LiveChatWidget() {
 
       {/* 2. CỬA SỔ HỘP CHAT 1-1 */}
       {isOpen && (
-        <div className="fixed bottom-16 right-3 sm:bottom-24 sm:right-6 z-50 w-[calc(100vw-24px)] sm:w-[380px] h-[520px] max-h-[82vh] bg-white dark:bg-[#101017] border border-slate-200 dark:border-[#262638] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-slate-800 dark:text-white">
+        <div className="fixed bottom-20 right-3 sm:bottom-24 sm:right-6 z-[60] w-[calc(100vw-24px)] sm:w-[380px] h-[520px] max-h-[82vh] bg-white dark:bg-[#101017] border border-slate-200 dark:border-[#262638] rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn text-slate-800 dark:text-white">
           
           {/* HEADER CHAT */}
           <div className="bg-slate-50 dark:bg-[#161624] border-b border-slate-200 dark:border-[#242436] p-3.5 flex items-center justify-between">
@@ -336,10 +346,7 @@ export default function LiveChatWidget() {
                         isUser ? 'text-right' : 'text-left'
                       }`}
                     >
-                      {new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatSafeTime(msg.createdAt)}
                     </div>
                   </div>
                 </div>
