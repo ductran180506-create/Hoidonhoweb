@@ -16,6 +16,7 @@ import ChapterTipBox from '@/components/ChapterTipBox';
 import { saveReadingProgress } from '@/lib/reading-history';
 import { trackPageView } from '@/lib/analytics';
 import { toCdnUrl } from '@/lib/supabase';
+import { getClientStories } from '@/lib/stories-client';
 
 function ContinuousReaderContent() {
   const params = useParams();
@@ -70,11 +71,9 @@ function ContinuousReaderContent() {
       setLoading(true);
     }
     try {
-      const sRes = await fetch('/api/stories');
-      const sData = await sRes.json();
+      const storiesList: Story[] = await getClientStories();
       
       const cleanSlug = (slug || '').replace('#', '').trim().toLowerCase();
-      const storiesList: Story[] = Array.isArray(sData?.stories) ? sData.stories : [];
       const currentStory = storiesList.find(
         (s: Story) => s.slug === cleanSlug || (s.code && s.code.toLowerCase() === cleanSlug)
       );

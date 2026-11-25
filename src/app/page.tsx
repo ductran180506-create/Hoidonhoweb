@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Story } from '@/lib/types';
+import { getClientStories } from '@/lib/stories-client';
 import StoryCard from '@/components/StoryCard';
 import ResumeReadingBanner from '@/components/ResumeReadingBanner';
 import { trackPageView } from '@/lib/analytics';
@@ -30,11 +31,8 @@ function HomeContent() {
 
   const fetchStories = async () => {
     try {
-      const res = await fetch('/api/stories');
-      const data = await res.json();
-      if (data.success) {
-        setStories(data.stories);
-      }
+      const list = await getClientStories();
+      setStories(list);
     } catch (e) {
       console.error(e);
     }

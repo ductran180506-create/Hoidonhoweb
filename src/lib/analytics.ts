@@ -71,12 +71,20 @@ export function trackPageView(params: { path: string; storyId?: string; storyTit
     const cleanPath = params.path || '/';
     const deviceId = getOrCreateDeviceId();
 
-    // Giảm tải mạng: Tránh gửi 2 request liên tiếp trong 3 giây nếu bấm click liên thanh
+    // Giảm tải mạng: Tránh gửi liên tiếp trong 30 giây nếu cùng duyệt hoặc cuộn trang
     const now = Date.now();
     const lastSendKey = 'hdn_last_track_ping';
+    const lastPathKey = 'hdn_last_track_path';
     const lastSend = parseInt(sessionStorage.getItem(lastSendKey) || '0', 10);
-    if (now - lastSend < 3000) return;
+    const lastPath = sessionStorage.getItem(lastPathKey) || '';
+
+    // Nếu cùng đường dẫn và chưa qua 30 giây thì bỏ qua
+    if (cleanPath === lastPath && now - lastSend < 30000) return;
+    // Kể cả khác đường dẫn, giãn cách tối thiểu 10 giây
+    if (now - lastSend < 10000) return;
+
     sessionStorage.setItem(lastSendKey, now.toString());
+    sessionStorage.setItem(lastPathKey, cleanPath);
 
     const payload = {
       path: cleanPath,

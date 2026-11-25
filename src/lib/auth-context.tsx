@@ -231,37 +231,99 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const fetchCheckInStatus = async (userId?: string) => {
+  const fetchCheckInStatus = async (userId?: string, force = false) => {
+    if (!userId) {
+      // Khách vãng lai: Cung cấp ngay dữ liệu mặc định tức thì (0ms, 0 tốn request)
+      setCheckInState({
+        canCheckIn: true,
+        streak: 0,
+        nextReward: 1,
+        timeLeftMs: 0,
+        rewards: [1, 1, 2, 2, 2, 2, 5],
+      });
+      return;
+    }
+
+    // Với tài khoản đã đăng nhập: Lưu cache trong sessionStorage 5 phút
+    const cacheKey = `hdn_checkin_${userId}`;
+    const cacheTimeKey = `hdn_checkin_time_${userId}`;
+    if (!force && typeof window !== 'undefined') {
+      try {
+        const last = parseInt(sessionStorage.getItem(cacheTimeKey) || '0', 10);
+        if (Date.now() - last < 5 * 60 * 1000) {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            setCheckInState(JSON.parse(cached));
+            return;
+          }
+        }
+      } catch (e) {}
+    }
+
     try {
-      const url = userId ? `/api/checkin?userId=${userId}` : '/api/checkin';
-      const res = await fetch(url);
+      const res = await fetch(`/api/checkin?userId=${encodeURIComponent(userId)}`);
       const data = await res.json();
       if (data.success) {
-        setCheckInState({
+        const state = {
           canCheckIn: data.canCheckIn,
           streak: data.streak,
           nextReward: data.nextReward,
           timeLeftMs: data.timeLeftMs,
           rewards: data.rewards || [1, 1, 2, 2, 2, 2, 5],
           todayStr: data.todayStr,
-        });
+        };
+        setCheckInState(state);
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(state));
+          sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Lỗi kiểm tra điểm danh:', err);
     }
   };
 
-  const fetchLuckyWheelStatus = async (userId?: string) => {
+  const fetchLuckyWheelStatus = async (userId?: string, force = false) => {
+    if (!userId) {
+      // Khách vãng lai: Cung cấp ngay dữ liệu mặc định tức thì (0ms, 0 tốn request)
+      setLuckyWheelState({
+        canFreeSpin: true,
+        timeLeftMs: 0,
+        costCoins: 3,
+      });
+      return;
+    }
+
+    // Với tài khoản đã đăng nhập: Lưu cache trong sessionStorage 5 phút
+    const cacheKey = `hdn_lucky_${userId}`;
+    const cacheTimeKey = `hdn_lucky_time_${userId}`;
+    if (!force && typeof window !== 'undefined') {
+      try {
+        const last = parseInt(sessionStorage.getItem(cacheTimeKey) || '0', 10);
+        if (Date.now() - last < 5 * 60 * 1000) {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            setLuckyWheelState(JSON.parse(cached));
+            return;
+          }
+        }
+      } catch (e) {}
+    }
+
     try {
-      const url = userId ? `/api/lucky-wheel?userId=${userId}` : '/api/lucky-wheel';
-      const res = await fetch(url);
+      const res = await fetch(`/api/lucky-wheel?userId=${encodeURIComponent(userId)}`);
       const data = await res.json();
       if (data.success) {
-        setLuckyWheelState({
+        const state = {
           canFreeSpin: data.canFreeSpin,
           timeLeftMs: data.timeLeftMs,
           costCoins: data.costCoins || 3,
-        });
+        };
+        setLuckyWheelState(state);
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(state));
+          sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Lỗi kiểm tra vòng quay may mắn:', err);
@@ -269,9 +331,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    fetchCheckInStatus(user?.id);
-    fetchLuckyWheelStatus(user?.id);
+    if (user?.id) {
+      fetchCheckInStatus(user.id);
+      fetchLuckyWheelStatus(user.id);
+    } else {
+      fetchCheckInStatus();
+      fetchLuckyWheelStatus();
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (isCheckInOpen && user?.id) {
+      fetchCheckInStatus(user.id, true);
+    }
+  }, [isCheckInOpen, user?.id]);
+
+  useEffect(() => {
+    if (isLuckyWheelOpen && user?.id) {
+      fetchLuckyWheelStatus(user.id, true);
+    }
+  }, [isLuckyWheelOpen, user?.id]);
 
   const loginWithGoogle = async () => {
     try {
@@ -351,14 +430,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshCheckIn = async () => {
-    await fetchCheckInStatus(user?.id);
+    await fetchCheckInStatus(user?.id, true);
     if (user?.id) {
       await fetchBalance(user.id);
     }
   };
 
   const refreshLuckyWheel = async () => {
-    await fetchLuckyWheelStatus(user?.id);
+    await fetchLuckyWheelStatus(user?.id, true);
     if (user?.id) {
       await fetchBalance(user.id);
     }

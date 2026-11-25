@@ -3,12 +3,12 @@ import { db } from '@/lib/db';
 import { supabase, supabaseAdmin, toCdnUrls } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
-const noCacheHeaders = {
-  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-  'Pragma': 'no-cache',
-  'Expires': '0',
+const chapterCacheHeaders = {
+  'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+  'CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+  'Vercel-CDN-Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
 };
 
 export async function GET(req: NextRequest) {
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const storyId = searchParams.get('storyId');
 
   if (!storyId) {
-    return NextResponse.json({ success: false, message: 'Thiếu storyId' }, { status: 400, headers: noCacheHeaders });
+    return NextResponse.json({ success: false, message: 'Thiếu storyId' }, { status: 400, headers: chapterCacheHeaders });
   }
 
   // 1. Lấy trực tiếp danh sách tập truyện từ Supabase
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
           images: toCdnUrls(c.images),
           createdAt: c.created_at,
         })),
-      }, { headers: noCacheHeaders });
+      }, { headers: chapterCacheHeaders });
     }
   } catch (err) {
     console.warn('Lỗi đọc Supabase chapters:', err);
@@ -72,5 +72,5 @@ export async function GET(req: NextRequest) {
       images: toCdnUrls(c.images),
       createdAt: c.createdAt,
     })),
-  }, { headers: noCacheHeaders });
+  }, { headers: chapterCacheHeaders });
 }
