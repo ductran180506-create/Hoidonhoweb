@@ -141,21 +141,27 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Kiểm tra nếu đã mở khóa trước đó (Supabase hoặc local)
-    // Độc giả chỉ cần mở khóa 1 lần (5 Điểm) là mở khóa đọc FULL BỘ TRUYỆN
+    // Độc giả chỉ cần mở khóa 1 lần là mở khóa đọc FULL BỘ TRUYỆN - TUYỆT ĐỐI KHÔNG KHÓA LẠI
     try {
+      const localStory = db.getStoryById(storyId) || db.getStories().find(s => s.slug === storyId || `story-${s.slug}` === storyId);
+      const possibleStoryIds = [storyId];
+      if (localStory) {
+        if (localStory.id && !possibleStoryIds.includes(localStory.id)) possibleStoryIds.push(localStory.id);
+        if (localStory.slug && !possibleStoryIds.includes(`story-${localStory.slug}`)) possibleStoryIds.push(`story-${localStory.slug}`);
+      }
+
       const { data: sbUnlocked } = await supabaseAdmin
         .from('unlocked_chapters')
-        .select('id')
+        .select('id, chapter_id')
         .eq('user_id', effectiveUserId)
-        .eq('story_id', storyId)
-        .maybeSingle();
+        .in('story_id', possibleStoryIds);
 
-      if (sbUnlocked) {
+      if (sbUnlocked && sbUnlocked.length > 0) {
         return NextResponse.json({
           success: true,
           unlocked: true,
           content: chapter.content,
-          images: chapter.images || [],
+          images: toCdnUrls(chapter.images),
         });
       }
     } catch (e) {}

@@ -505,7 +505,22 @@ export const db = {
 
   hasUnlockedStory: (userId: string, storyId: string): boolean => {
     const data = ensureDataFile();
-    return (data.unlockedChapters || []).some(u => u.userId === userId && u.storyId === storyId);
+    const story = (data.stories || []).find(s => s.id === storyId || s.slug === storyId || s.code === storyId || `story-${s.slug}` === storyId);
+    const validStoryIds = new Set([storyId]);
+    if (story) {
+      if (story.id) validStoryIds.add(story.id);
+      if (story.slug) {
+        validStoryIds.add(story.slug);
+        validStoryIds.add(`story-${story.slug}`);
+      }
+      if (story.code) validStoryIds.add(story.code);
+    }
+    return (data.unlockedChapters || []).some(u => {
+      if (u.userId !== userId) return false;
+      if (validStoryIds.has(u.storyId)) return true;
+      if (story && (u.chapterId?.includes(story.id) || (story.slug && u.chapterId?.includes(story.slug)))) return true;
+      return false;
+    });
   },
 
   unlockChapter: (userId: string, chapterId: string, storyId: string): void => {
