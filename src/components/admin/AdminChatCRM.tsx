@@ -57,7 +57,7 @@ export default function AdminChatCRM() {
 
   const getAdminToken = () => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('hoidonho_admin_token') || 'hdn_sec_token_99a8b7c6d5e4f3a2b1';
+      return sessionStorage.getItem('hoidonho_admin_token') || '';
     }
     return '';
   };

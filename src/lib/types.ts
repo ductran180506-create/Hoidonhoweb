@@ -4,6 +4,8 @@ export interface User {
   pin: string;
   vipUntil: string | null; // ISO string
   createdAt: string;
+  name?: string;
+  email?: string;
 }
 
 export interface Wallet {
@@ -65,6 +67,10 @@ export interface Order {
   };
   createdAt: string;
   completedAt?: string;
+  userName?: string;
+  userEmail?: string;
+  userPhone?: string;
+  bankDescription?: string;
 }
 
 export interface AnalyticsEvent {

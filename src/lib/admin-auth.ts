@@ -1,8 +1,13 @@
 import { NextRequest } from 'next/server';
 import crypto from 'crypto';
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hoidonho@2026';
-const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || 'hdn_sec_token_99a8b7c6d5e4f3a2b1';
+// Tạo secret ngẫu nhiên lúc khởi động nếu không có biến môi trường (chống hardcode lộ secret)
+const RUNTIME_FALLBACK_SECRET = crypto.randomBytes(32).toString('hex');
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'CarrotHDN@2026!Admin';
+const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || RUNTIME_FALLBACK_SECRET;
+
+// Thời hạn phiên đăng nhập tối đa (12 giờ)
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 // Tạo token phiên đăng nhập mã hóa băm HMAC SHA-256
 export function generateAdminSessionToken(): string {
@@ -20,10 +25,10 @@ export function verifyAdminSessionToken(token: string): boolean {
     const [timestamp, signature] = token.split('.');
     if (!timestamp || !signature) return false;
 
-    // Token hết hạn sau 7 ngày
+    // Token bảo mật hết hạn sau 12 giờ
     const tokenTime = parseInt(timestamp, 10);
     const now = Date.now();
-    if (isNaN(tokenTime) || now - tokenTime > 7 * 24 * 60 * 60 * 1000) {
+    if (isNaN(tokenTime) || now - tokenTime > SESSION_TTL_MS || tokenTime > now + 60000) {
       return false;
     }
 
@@ -32,7 +37,11 @@ export function verifyAdminSessionToken(token: string): boolean {
       .update(`admin:${timestamp}`)
       .digest('hex');
 
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
+    const a = Buffer.from(signature, 'hex');
+    const b = Buffer.from(expectedSignature, 'hex');
+    if (a.length !== b.length) return false;
+
+    return crypto.timingSafeEqual(a, b);
   } catch (err) {
     return false;
   }
@@ -40,21 +49,39 @@ export function verifyAdminSessionToken(token: string): boolean {
 
 // Kiểm tra quyền Admin từ request (hỗ trợ cả Cookie HttpOnly và Header bí mật)
 export function isAuthorizedAdmin(req: NextRequest): boolean {
-  // 1. Kiểm tra header bí mật hoặc token gửi từ Client
-  const headerToken = req.headers.get('x-admin-token') || req.headers.get('authorization')?.replace('Bearer ', '');
-  if (headerToken && (headerToken === ADMIN_SECRET || verifyAdminSessionToken(headerToken))) {
-    return true;
-  }
-
-  // 2. Kiểm tra Cookie phiên HttpOnly bảo mật từ trình duyệt
+  // 1. Kiểm tra Cookie phiên HttpOnly bảo mật từ trình duyệt (Ưu tiên số 1)
   const sessionCookie = req.cookies.get('admin_session')?.value;
   if (sessionCookie && verifyAdminSessionToken(sessionCookie)) {
     return true;
+  }
+
+  // 2. Kiểm tra header bí mật hoặc token gửi từ Client
+  const headerToken = req.headers.get('x-admin-token') || req.headers.get('authorization')?.replace('Bearer ', '');
+  if (headerToken) {
+    if (verifyAdminSessionToken(headerToken)) {
+      return true;
+    }
+    // So sánh thời gian an toàn nếu dùng master key từ server-to-server
+    if (process.env.ADMIN_SECRET_KEY && headerToken.length === process.env.ADMIN_SECRET_KEY.length) {
+      try {
+        if (crypto.timingSafeEqual(Buffer.from(headerToken), Buffer.from(process.env.ADMIN_SECRET_KEY))) {
+          return true;
+        }
+      } catch {}
+    }
   }
 
   return false;
 }
 
 export function checkAdminPassword(password: string): boolean {
-  return password === ADMIN_PASSWORD;
+  if (!password || typeof password !== 'string') return false;
+  try {
+    const a = Buffer.from(password);
+    const b = Buffer.from(ADMIN_PASSWORD);
+    if (a.length !== b.length) return false;
+    return crypto.timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }

@@ -17,6 +17,7 @@ export interface SacombankEmailTx {
 let lastImapScanTime = 0;
 let cachedRecentTxs: SacombankEmailTx[] = [];
 let isScanning = false;
+const processedEmailUids = new Set<string>();
 
 /**
  * Kết nối trực tiếp vào Gmail qua giao thức IMAP TLS (cổng 993)
@@ -262,14 +263,19 @@ export async function syncGmailSacombankPayments(targetOrderCode?: string, force
       continue;
     }
 
+    // Đơn phải có số tiền > 0, cấm tuyệt đối đơn 0đ
+    if (!ord.amountVnd || ord.amountVnd <= 0) continue;
+
     const codeUpper = ord.orderCode.toUpperCase();
     const matchedEmail = incomingEmails.find(
       (mail) =>
+        !processedEmailUids.has(mail.uid) &&
         mail.description.toUpperCase().includes(codeUpper) &&
         mail.amountVnd >= ord.amountVnd
     );
 
     if (matchedEmail) {
+      processedEmailUids.add(matchedEmail.uid);
       await creditCompletedOrder(ord);
       matchedOrders.push(ord.orderCode);
     }

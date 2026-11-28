@@ -4,13 +4,41 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+// Chống flood request analytics làm quá tải Supabase (tối đa 1 ping / 15 giây / IP)
+const ipTrackTimers = new Map<string, number>();
+
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               req.headers.get('x-real-ip') || 
+               'anon';
+
+    const now = Date.now();
+    const lastPing = ipTrackTimers.get(ip) || 0;
+    if (now - lastPing < 15000) {
+      // Giảm tải: Bỏ qua ping quá dày đặc trong vòng 15 giây
+      return NextResponse.json({ success: true, throttled: true });
+    }
+    ipTrackTimers.set(ip, now);
+
+    // Dọn bớt bộ nhớ map nếu quá 2000 IP
+    if (ipTrackTimers.size > 2000) {
+      ipTrackTimers.forEach((v, k) => {
+        if (now - v > 60000) ipTrackTimers.delete(k);
+      });
+    }
+
     const body = await req.json();
     const { path, storyId, storyTitle, referrer, device, userId, deviceId } = body;
 
-    // Định danh thiết bị duy nhất của máy
-    const cleanDeviceId = deviceId || (userId && userId.startsWith('dev_') ? userId : `dev_${Date.now()}`);
+    // Định danh thiết bị: chỉ chấp nhận deviceId hợp lệ
+    const cleanDeviceId = deviceId && typeof deviceId === 'string' && deviceId.length >= 8
+      ? deviceId.slice(0, 60)
+      : (userId && typeof userId === 'string' && userId.length >= 8 ? userId.slice(0, 60) : null);
+
+    if (!cleanDeviceId) {
+      return NextResponse.json({ success: true, skipped: true });
+    }
 
     // Phân tích nguồn truy cập (Referrer)
     let cleanReferrer = referrer || 'direct';

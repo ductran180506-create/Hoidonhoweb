@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // BẬT / TẮT CHẾ ĐỘ BẢO TRÌ (true = đang bảo trì khóa web, false = mở lại bình thường)
-const IS_MAINTENANCE_MODE = true;
-const ADMIN_MAINTENANCE_KEY = process.env.ADMIN_PASSWORD || 'hoidonho@2026';
+const IS_MAINTENANCE_MODE = false;
+const ADMIN_MAINTENANCE_KEY = process.env.ADMIN_PASSWORD || 'CarrotHDN@2026!Admin';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

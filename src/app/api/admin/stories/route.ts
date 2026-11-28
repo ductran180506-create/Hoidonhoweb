@@ -153,15 +153,24 @@ export async function GET(req: NextRequest) {
         }
       });
 
+      const isUuidStr = (str?: string) => Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(str));
+
+      const knownAccounts: Record<string, { name: string; email: string }> = {
+        '196cd142-a1d6-485b-bddb-1bce5ca2472b': { name: 'Đức Công', email: 'congducc2k6@gmail.com' },
+        '3637e437-b9a4-47aa-bda7-d6c1140a234a': { name: 'Duc Tran', email: 'ductran.180506@gmail.com' },
+        'a6599dfe-0bea-4345-9070-ad2ac38672cc': { name: 'Phạm Trần Anh Phúc', email: 'phamtrananhphuc1442006@gmail.com' },
+      };
+
       // Thêm các tài khoản đăng ký cục bộ từ Local DB
-      db.getAllUsersWithWallets().forEach(u => {
+      db.getAllUsersWithWallets().forEach((u: any) => {
         if (!mergedUserMap[u.id]) {
           const au = authUsersMap[u.id];
+          const known = knownAccounts[u.id];
           mergedUserMap[u.id] = {
             id: u.id,
             phone: u.phone,
-            name: au?.user_metadata?.full_name || u.phone,
-            email: au?.email || '',
+            name: known?.name || au?.user_metadata?.full_name || u.name || u.phone,
+            email: known?.email || au?.email || u.email || '',
             avatar: au?.user_metadata?.avatar_url || '',
             balance: u.balance || 0,
             coins: u.coins || 0,
@@ -176,22 +185,71 @@ export async function GET(req: NextRequest) {
       // Đọc các đơn từ Local DB trước để tính toán nạp tiền
       const localOrders = db.getAllOrders();
 
+      // Đưa thêm tất cả độc giả đã nạp tiền từ localOrders vào mergedUserMap nếu chưa có
+      localOrders.forEach(lo => {
+        if (!lo.userId) return;
+        if (!mergedUserMap[lo.userId]) {
+          const w = db.getWallet(lo.userId);
+          const bal = (w && w.balance > 0) ? w.balance : (lo.status === 'completed' ? (lo.coinsReceived || 0) : 0);
+          const known = knownAccounts[lo.userId];
+          mergedUserMap[lo.userId] = {
+            id: lo.userId,
+            phone: lo.userPhone || (lo.userEmail ? lo.userEmail : lo.userId),
+            name: known?.name || lo.userName || lo.userId,
+            email: known?.email || lo.userEmail || '',
+            avatar: '',
+            balance: bal,
+            coins: bal,
+            isVip: Boolean(lo.vipDaysReceived && lo.vipDaysReceived > 0),
+            vipUntil: lo.vipDaysReceived ? new Date(new Date(lo.createdAt).getTime() + lo.vipDaysReceived * 86400000).toISOString() : null,
+            unlockedCount: 0,
+            createdAt: lo.createdAt,
+          };
+        }
+      });
+
       // Tính toán chi tiết số tiền nạp & phương thức đăng nhập cho từng độc giả
       Object.values(mergedUserMap).forEach((u: any) => {
         const userTxs = (sbTx || []).filter(t => t.user_id === u.id && t.status === 'completed');
         const userLocalOrders = localOrders.filter(lo => lo.userId === u.id && lo.status === 'completed');
         
         let totalPaid = 0;
+        let totalCoinsFromOrders = 0;
         userTxs.forEach(t => { totalPaid += Number(t.amount_vnd) || 0; });
         userLocalOrders.forEach(lo => {
           if (!userTxs.some(t => t.payment_code === lo.orderCode)) {
             totalPaid += Number(lo.amountVnd) || 0;
           }
+          totalCoinsFromOrders += Number(lo.coinsReceived) || 0;
         });
 
         u.totalRechargedVnd = totalPaid;
         u.hasRecharged = totalPaid > 0;
-        u.isGoogle = Boolean(authUsersMap[u.id] || (u.email && u.email.includes('@')));
+        u.isGoogle = Boolean(knownAccounts[u.id] || authUsersMap[u.id] || (u.email && u.email.includes('@')));
+
+        // Chuẩn hóa tên hiển thị: Nếu là tài khoản đã biết hoặc có tên từ đơn chuyển khoản
+        if (knownAccounts[u.id]) {
+          u.name = knownAccounts[u.id].name;
+          u.email = knownAccounts[u.id].email;
+          u.isGoogle = true;
+        } else if (!u.name || u.name === u.id || isUuidStr(u.name) || u.name.startsWith('customer-')) {
+          const matchingOrder = userLocalOrders.find(lo => lo.userName && !lo.userName.startsWith('customer-') && !isUuidStr(lo.userName));
+          if (matchingOrder?.userName) {
+            u.name = matchingOrder.userName;
+          }
+          if (matchingOrder?.userEmail && !u.email) {
+            u.email = matchingOrder.userEmail;
+          }
+          if (matchingOrder?.userPhone && (!u.phone || u.phone === u.id)) {
+            u.phone = matchingOrder.userPhone;
+          }
+        }
+
+        // Đảm bảo số dư điểm hiển thị đúng số điểm tích lũy của khách hàng
+        if ((!u.coins || u.coins === 0) && totalCoinsFromOrders > 0) {
+          u.coins = totalCoinsFromOrders;
+          u.balance = totalCoinsFromOrders;
+        }
 
         // TỰ ĐỘNG ĐỒNG BỘ VIP ĐẦY ĐỦ (Gói VIP 39k, Đổi 40 Điểm 7 Ngày, Vòng Quay VIP, Admin Cấp/Thu Hồi VIP)
         const sortedUserTxs = [...userTxs].sort(
@@ -254,7 +312,6 @@ export async function GET(req: NextRequest) {
         return code.startsWith('CHECKIN_') || code.startsWith('LUCKY_') || code.startsWith('FREE_SPIN_');
       };
 
-      // Kết hợp đơn hàng từ cả Supabase transactions và Local DB orders (CHỈ LẤY ĐƠN NẠP TIỀN / MUA VIP THẬT)
       const orderMap: Record<string, any> = {};
 
       // 1. Thêm đơn từ Local DB
@@ -262,9 +319,9 @@ export async function GET(req: NextRequest) {
         const u = mergedUserMap[lo.userId];
         orderMap[lo.orderCode] = {
           ...lo,
-          userName: u?.name || u?.email || lo.userId,
-          userEmail: u?.email || '',
-          userPhone: u?.phone || '',
+                    userName: lo.userName || u?.name || u?.email || (lo.userId && !lo.userId.startsWith("customer-") ? lo.userId : "Độc giả chuyển khoản"),
+          userEmail: u?.email || lo.userEmail || '',
+          userPhone: lo.userPhone || u?.phone || '',
         };
       });
 
@@ -287,11 +344,16 @@ export async function GET(req: NextRequest) {
           ? 'processing'
           : (t.status || existing?.status || 'pending');
         const isVip = t.payment_code?.startsWith('VIP');
+        const sbFinalName = (existing?.userName && !isUuidStr(existing.userName))
+          ? existing.userName
+          : (u?.name && !isUuidStr(u.name))
+          ? u.name
+          : (u?.email ? u.email.split('@')[0] : 'Độc giả chuyển khoản');
         orderMap[t.payment_code] = {
           id: t.id || existing?.id,
           orderCode: t.payment_code,
           userId: t.user_id,
-          userName: u?.name || u?.email || existing?.userName || t.user_id,
+          userName: sbFinalName,
           userEmail: u?.email || existing?.userEmail || '',
           userPhone: u?.phone || existing?.userPhone || '',
           packageType: existing?.packageType || (isVip ? 'VIP_39K' : 'COIN'),

@@ -50,16 +50,8 @@ export async function GET() {
     const sbChapters = chaptersRes.data;
     const storyErr = storiesRes.error;
 
-    // Khi kết nối Supabase thành công (kể cả khi rỗng 0 truyện)
-    if (!storyErr && sbStories !== null) {
-      if (sbStories.length === 0) {
-        memoryCache = { stories: [], timestamp: Date.now() };
-        return NextResponse.json({
-          success: true,
-          stories: [],
-        }, { headers: cacheHeaders });
-      }
-
+    // Khi kết nối Supabase thành công và có truyện
+    if (!storyErr && sbStories !== null && sbStories.length > 0) {
       const stories: Story[] = sbStories.map(s => {
         const count = (sbChapters || []).filter(c => c.story_id === s.id && Array.isArray(c.images) && c.images.length > 0).length;
         let storyStatus: 'ongoing' | 'completed' | 'upcoming' = 'completed';
@@ -99,22 +91,26 @@ export async function GET() {
     console.warn('Lỗi đọc Supabase stories, fallback local:', err);
   }
 
-  // Fallback local db khi mất kết nối mạng
-  const stories = db.getStories();
+  // BẢO VỆ TUYỆT ĐỐI: Fallback sang kho truyện gốc data.json khi Supabase rỗng hoặc lỗi
+  const localStories = db.getStories();
+  const safeStories = localStories.map(s => ({
+    id: s.id,
+    code: s.code,
+    title: s.title,
+    slug: s.slug,
+    coverImage: toCdnUrl(s.coverImage),
+    genre: s.genre,
+    summary: s.summary,
+    views: s.views,
+    status: s.status,
+    chaptersCount: s.chaptersCount,
+    createdAt: s.createdAt,
+  }));
+
+  memoryCache = { stories: safeStories as Story[], timestamp: Date.now() };
+
   return NextResponse.json({
     success: true,
-    stories: stories.map(s => ({
-      id: s.id,
-      code: s.code,
-      title: s.title,
-      slug: s.slug,
-      coverImage: toCdnUrl(s.coverImage),
-      genre: s.genre,
-      summary: s.summary,
-      views: s.views,
-      status: s.status,
-      chaptersCount: s.chaptersCount,
-      createdAt: s.createdAt,
-    })),
+    stories: safeStories,
   }, { headers: cacheHeaders });
 }

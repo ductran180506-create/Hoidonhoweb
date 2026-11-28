@@ -150,11 +150,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 6. Kiểm tra số tiền chuyển có đủ không
-    if (amount > 0 && amount < orderToComplete.amountVnd) {
+    // 6. Kiểm tra số tiền chuyển có đủ không (Chống duyệt đơn 0đ hoặc thiếu tiền tuyệt đối)
+    if (!amount || amount <= 0 || amount < orderToComplete.amountVnd) {
       return NextResponse.json({
         success: false,
-        message: `Số tiền chuyển không đủ (${amount} < ${orderToComplete.amountVnd})`,
+        message: `Số tiền chuyển không hợp lệ hoặc không đủ (${amount} < ${orderToComplete.amountVnd})`,
       }, { status: 400 });
     }
 
@@ -242,7 +242,7 @@ export async function GET(req: NextRequest) {
   const host = req.headers.get('host') || '';
   const isLocalhost = host.includes('localhost') || host.includes('127.0.0.1');
   const isAdmin = await isAuthorizedAdmin(req);
-  const isMasterKey = Boolean(secretKey && secretKey === (process.env.ADMIN_SECRET_KEY || 'hdn_sec_token_99a8b7c6d5e4f3a2b1'));
+  const isMasterKey = Boolean(secretKey && process.env.ADMIN_SECRET_KEY && secretKey === process.env.ADMIN_SECRET_KEY);
   const isDev = process.env.NODE_ENV !== 'production';
 
   if (!isLocalhost && !isAdmin && !isMasterKey && !isDev) {

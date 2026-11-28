@@ -59,11 +59,11 @@ export const DEFAULT_LUCKY_WHEEL_SETTINGS: LuckyWheelSettings = {
   prizes: [
     { id: 0, label: '+2 Điểm', sublabel: 'Thưởng xu', icon: '🎁', color: '#4F46E5', textColor: '#FFFFFF', type: 'coins', value: 2, weight: 28 },
     { id: 1, label: '+5 Điểm', sublabel: 'Mở 1 tập', icon: '💎', color: '#2563EB', textColor: '#FFFFFF', type: 'coins', value: 5, weight: 20 },
-    { id: 2, label: '1 Ngày VIP', sublabel: 'Đọc Full', icon: '👑', color: '#D97706', textColor: '#FFFFFF', type: 'vip', value: 1, weight: 8 },
+    { id: 2, label: '+4 Điểm', sublabel: 'Thưởng lớn', icon: '⭐', color: '#D97706', textColor: '#FFFFFF', type: 'coins', value: 4, weight: 8 },
     { id: 3, label: '+10 Điểm', sublabel: 'Gấp đôi vui', icon: '🔥', color: '#059669', textColor: '#FFFFFF', type: 'coins', value: 10, weight: 10 },
     { id: 4, label: 'May Mắn Lần Sau', sublabel: 'Cố lên nhé', icon: '🍀', color: '#374151', textColor: '#D1D5DB', type: 'none', value: 0, weight: 18 },
     { id: 5, label: '+3 Điểm', sublabel: 'Thưởng xu', icon: '⭐', color: '#DB2777', textColor: '#FFFFFF', type: 'coins', value: 3, weight: 11 },
-    { id: 6, label: '3 Ngày VIP', sublabel: 'Siêu giải', icon: '🏆', color: '#EA580C', textColor: '#FFFFFF', type: 'vip', value: 3, weight: 3 },
+    { id: 6, label: '+8 Điểm', sublabel: 'Siêu giải', icon: '🏆', color: '#EA580C', textColor: '#FFFFFF', type: 'coins', value: 8, weight: 3 },
     { id: 7, label: '+1 Điểm', sublabel: 'Thưởng nhẹ', icon: '🪙', color: '#7C3AED', textColor: '#FFFFFF', type: 'coins', value: 1, weight: 2 },
   ],
 };
@@ -641,6 +641,8 @@ export const db = {
       return {
         id: u.id,
         phone: u.phone,
+        name: u.name || u.phone || u.id,
+        email: u.email || '',
         balance: wallet?.balance || 0,
         coins: wallet?.balance || 0,
         isVip,
