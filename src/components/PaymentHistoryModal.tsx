@@ -223,8 +223,8 @@ export default function PaymentHistoryModal() {
                 }}
                 className="py-1.5 px-3 bg-[#7C5CFC] hover:bg-[#6D4CF0] text-white text-[11px] font-bold rounded-lg transition shadow flex items-center gap-1 active:scale-95 cursor-pointer"
               >
-                <Coins className="w-3 h-3 text-amber-300" />
-                <span>Nạp Điểm</span>
+                <Coffee className="w-3.5 h-3.5 text-amber-300" />
+                <span>Mời Cà Phê</span>
               </button>
             </div>
           </div>

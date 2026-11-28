@@ -409,7 +409,7 @@ export default function RechargeModal() {
 
             <div className="flex items-center gap-2 pt-1">
               <div className="h-px flex-1 bg-[#22222B]" />
-              <span className="text-[10px] font-mono text-[#71717A] uppercase">Hoặc Nạp Điểm Qua VietQR</span>
+              <span className="text-[10px] font-mono text-[#71717A] uppercase">Hoặc Mời Cà Phê Qua VietQR</span>
               <div className="h-px flex-1 bg-[#22222B]" />
             </div>
 
