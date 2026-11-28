@@ -67,14 +67,18 @@ export async function getUserBalanceAndVip(userId: string): Promise<{
   try {
     const { data: vipTxs } = await supabaseAdmin
       .from('transactions')
-      .select('payment_code, amount_vnd, created_at')
+      .select('payment_code, amount_vnd, coins, created_at')
       .eq('user_id', userId)
       .eq('status', 'completed')
       .order('created_at', { ascending: true });
 
     if (vipTxs && vipTxs.length > 0) {
       let calcExpireMs = 0;
+      let txCoinsTotal = 0;
       for (const tx of vipTxs) {
+        if (typeof tx.coins === 'number') {
+          txCoinsTotal += Number(tx.coins);
+        }
         const code = (tx.payment_code || '').toUpperCase();
         const txTime = new Date(tx.created_at).getTime();
 
@@ -101,6 +105,10 @@ export async function getUserBalanceAndVip(userId: string): Promise<{
           const baseTime = calcExpireMs > txTime ? calcExpireMs : txTime;
           calcExpireMs = baseTime + daysToAdd * 24 * 60 * 60 * 1000;
         }
+      }
+
+      if (txCoinsTotal > balance) {
+        balance = txCoinsTotal;
       }
 
       if (calcExpireMs > Date.now()) {
