@@ -289,6 +289,8 @@ export async function GET(req: NextRequest) {
           if (!u.vipUntil || new Date(u.vipUntil) < new Date(calcIso)) {
             u.vipUntil = calcIso;
           }
+        } else if (u.vipUntil && new Date(u.vipUntil) > new Date() && revokedAfterMs === 0) {
+          u.isVip = true;
         } else if (revokedAfterMs > 0) {
           u.isVip = false;
           u.vipUntil = null;

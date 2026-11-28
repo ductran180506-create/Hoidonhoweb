@@ -12,7 +12,7 @@
       "id": "196cd142-a1d6-485b-bddb-1bce5ca2472b",
       "phone": "congducc2k6@gmail.com",
       "pin": "0000",
-      "vipUntil": null,
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-16T14:25:10.620Z",
       "name": "Đức Công",
       "email": "congducc2k6@gmail.com"
@@ -22,7 +22,7 @@
       "name": "Duc Tran",
       "phone": "ductran.180506@gmail.com",
       "email": "ductran.180506@gmail.com",
-      "vipUntil": null,
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-28T07:03:07.469Z"
     },
     {
@@ -222,7 +222,7 @@
       "name": "Nguyen Huu Hai Giang",
       "phone": "customer-VIP73CDG1",
       "email": "",
-      "vipUntil": "2026-12-27T15:40:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T15:40:00.000Z"
     },
     {
@@ -278,7 +278,7 @@
       "name": "Pham Minh Hieu",
       "phone": "0261127100",
       "email": "",
-      "vipUntil": "2026-12-27T15:04:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T15:04:00.000Z"
     },
     {
@@ -294,7 +294,7 @@
       "name": "Độc giả chuyển khoản",
       "phone": "customer-VIP65443J",
       "email": "",
-      "vipUntil": "2026-12-27T15:00:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T15:00:00.000Z"
     },
     {
@@ -326,7 +326,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP52F4PM",
       "email": "",
-      "vipUntil": "2026-12-27T14:24:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T14:24:00.000Z"
     },
     {
@@ -366,7 +366,7 @@
       "name": "Nguyen Quang Huy",
       "phone": "customer-VIP86BDBA",
       "email": "",
-      "vipUntil": "2026-12-27T13:10:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T13:10:00.000Z"
     },
     {
@@ -414,7 +414,7 @@
       "name": "Cao Thai Thong",
       "phone": "customer-VIP56J1NY",
       "email": "",
-      "vipUntil": "2026-12-27T11:28:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T11:28:00.000Z"
     },
     {
@@ -510,7 +510,7 @@
       "name": "Hoang Thi Nhung Hoa",
       "phone": "customer-VIP87B3CP",
       "email": "",
-      "vipUntil": "2026-12-27T08:13:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T08:13:00.000Z"
     },
     {
@@ -606,7 +606,7 @@
       "name": "Le Trong Nghia",
       "phone": "customer-VIP47VFPW",
       "email": "",
-      "vipUntil": "2026-12-27T04:54:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-27T04:54:00.000Z"
     },
     {
@@ -750,7 +750,7 @@
       "name": "Dang Quang Khai",
       "phone": "customer-VIP19M1YY",
       "email": "",
-      "vipUntil": "2026-12-26T19:25:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T19:25:00.000Z"
     },
     {
@@ -814,7 +814,7 @@
       "name": "Nguyen Nhat Tan",
       "phone": "customer-VIP62FG23",
       "email": "",
-      "vipUntil": "2026-12-26T18:11:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T18:11:00.000Z"
     },
     {
@@ -862,7 +862,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP70YI4R",
       "email": "",
-      "vipUntil": "2026-12-26T17:04:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T17:04:00.000Z"
     },
     {
@@ -894,7 +894,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP338O1L",
       "email": "",
-      "vipUntil": "2026-12-26T16:27:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T16:27:00.000Z"
     },
     {
@@ -934,7 +934,7 @@
       "name": "Cao Nguyen Thanh Thao",
       "phone": "customer-VIP12WMCC",
       "email": "",
-      "vipUntil": "2026-12-26T16:11:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T16:11:00.000Z"
     },
     {
@@ -1222,7 +1222,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP12SHHC",
       "email": "",
-      "vipUntil": "2026-12-26T13:44:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T13:44:00.000Z"
     },
     {
@@ -1398,7 +1398,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP19LWJ8",
       "email": "",
-      "vipUntil": "2026-12-26T09:29:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T09:29:00.000Z"
     },
     {
@@ -1438,7 +1438,7 @@
       "name": "Ct Cp Dich Vu Di Dong Truc Tuyen",
       "phone": "0918898565",
       "email": "",
-      "vipUntil": "2026-12-26T07:44:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T07:44:00.000Z"
     },
     {
@@ -1550,7 +1550,7 @@
       "name": "Ngo Tran Thanh Van",
       "phone": "customer-VIP87H0C0",
       "email": "",
-      "vipUntil": "2026-12-26T02:01:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-26T02:01:00.000Z"
     },
     {
@@ -1686,7 +1686,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP9741W0",
       "email": "",
-      "vipUntil": "2026-12-25T17:45:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T17:45:00.000Z"
     },
     {
@@ -1750,7 +1750,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP331CZG",
       "email": "",
-      "vipUntil": "2026-12-25T16:15:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T16:15:00.000Z"
     },
     {
@@ -1822,7 +1822,7 @@
       "name": "Khách 0913338122",
       "phone": "0913338122",
       "email": "",
-      "vipUntil": "2026-12-25T15:16:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T15:16:00.000Z"
     },
     {
@@ -1878,7 +1878,7 @@
       "name": "Khách 0837087909",
       "phone": "0837087909",
       "email": "",
-      "vipUntil": "2026-12-25T14:02:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T14:02:00.000Z"
     },
     {
@@ -1894,7 +1894,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP875XCZ",
       "email": "",
-      "vipUntil": "2026-12-25T13:59:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T13:59:00.000Z"
     },
     {
@@ -1902,7 +1902,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP48OOQ9",
       "email": "",
-      "vipUntil": "2026-12-25T13:52:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T13:52:00.000Z"
     },
     {
@@ -1934,7 +1934,7 @@
       "name": "Tran Thi Truc Quynh",
       "phone": "customer-VIP36QVL8",
       "email": "",
-      "vipUntil": "2026-12-25T12:56:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T12:56:00.000Z"
     },
     {
@@ -1966,7 +1966,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP91WHUU",
       "email": "",
-      "vipUntil": "2026-12-25T11:56:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T11:56:00.000Z"
     },
     {
@@ -1982,7 +1982,7 @@
       "name": "To Tuan Linh",
       "phone": "0261125065",
       "email": "",
-      "vipUntil": "2026-12-25T11:54:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-25T11:54:00.000Z"
     },
     {
@@ -2062,7 +2062,7 @@
       "name": "Nguyen Duc Huy",
       "phone": "customer-VIP556VVY",
       "email": "",
-      "vipUntil": "2026-12-24T16:14:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-24T16:14:00.000Z"
     },
     {
@@ -2086,7 +2086,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP20C8BM",
       "email": "",
-      "vipUntil": "2026-12-24T15:25:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-24T15:25:00.000Z"
     },
     {
@@ -2118,7 +2118,7 @@
       "name": "Doan Phat Dat",
       "phone": "customer-VIP10AJUC",
       "email": "",
-      "vipUntil": "2026-12-24T14:50:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-24T14:50:00.000Z"
     },
     {
@@ -2366,7 +2366,7 @@
       "name": "Khách MBBank",
       "phone": "customer-VIP91CV0Q",
       "email": "",
-      "vipUntil": "2026-12-24T06:11:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-24T06:11:00.000Z"
     },
     {
@@ -2390,7 +2390,7 @@
       "name": "Hoang Thi Hai Linh",
       "phone": "customer-VIP66T9FN",
       "email": "",
-      "vipUntil": "2026-12-24T05:48:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-24T05:48:00.000Z"
     },
     {
@@ -2462,7 +2462,7 @@
       "name": "Ha Xuan Vinh",
       "phone": "customer-VIP370F39",
       "email": "",
-      "vipUntil": "2026-12-23T23:55:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-23T23:55:00.000Z"
     },
     {
@@ -2494,7 +2494,7 @@
       "name": "Nguyen Thi Hong Lam",
       "phone": "0161001758",
       "email": "",
-      "vipUntil": "2026-12-23T16:52:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-23T16:52:00.000Z"
     },
     {
@@ -2574,7 +2574,7 @@
       "name": "Tran Khoi Minh",
       "phone": "customer-VIP274DUX",
       "email": "",
-      "vipUntil": "2026-12-23T15:46:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-23T15:46:00.000Z"
     },
     {
@@ -2606,7 +2606,7 @@
       "name": "Vu Hoang Quan",
       "phone": "customer-VIP430V9Y",
       "email": "",
-      "vipUntil": "2026-12-23T14:44:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-23T14:44:00.000Z"
     },
     {
@@ -2806,7 +2806,7 @@
       "name": "Luong Nguyen Thuong Thuong",
       "phone": "customer-VIP57B569",
       "email": "",
-      "vipUntil": "2026-12-21T14:59:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-21T14:59:00.000Z"
     },
     {
@@ -2910,7 +2910,7 @@
       "name": "Tang Chi Luan",
       "phone": "customer-VIP70TBKC",
       "email": "",
-      "vipUntil": "2026-12-20T15:34:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-20T15:34:00.000Z"
     },
     {
@@ -2998,7 +2998,7 @@
       "name": "Mai Quoc Thang",
       "phone": "customer-VIP615M6Q",
       "email": "",
-      "vipUntil": "2026-12-20T06:27:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-20T06:27:00.000Z"
     },
     {
@@ -3062,7 +3062,7 @@
       "name": "Dang Duc Toan",
       "phone": "customer-VIP71028T",
       "email": "",
-      "vipUntil": "2026-12-19T21:30:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-19T21:30:00.000Z"
     },
     {
@@ -3134,7 +3134,7 @@
       "name": "Hoang Truong Giang",
       "phone": "customer-VIP68RKYX",
       "email": "",
-      "vipUntil": "2026-12-19T15:00:00.000Z",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
       "createdAt": "2026-11-19T15:00:00.000Z"
     },
     {
@@ -3175,6 +3175,14 @@
       "pin": "congduc",
       "vipUntil": null,
       "createdAt": "2026-11-28T08:16:40.273Z"
+    },
+    {
+      "id": "19e07745-9f33-493e-b499-6918674f5c59",
+      "phone": "19e07745-9f33-493e-b499-6918674f5c59",
+      "pin": "0000",
+      "vipUntil": "2026-12-28T08:32:29.589Z",
+      "createdAt": "2026-11-28T08:24:01.960Z",
+      "name": "Hội viên VIP"
     }
   ],
   "wallets": [
@@ -10270,8 +10278,23 @@
     },
     {
       "userId": "congduc",
+      "balance": 3,
+      "updatedAt": "2026-11-28T08:20:04.216Z"
+    },
+    {
+      "userId": "e9eb4b89-c769-4504-b78d-012bbbd2d838",
       "balance": 0,
-      "updatedAt": "2026-11-28T08:16:40.273Z"
+      "updatedAt": "2026-11-28T08:20:09.598Z"
+    },
+    {
+      "userId": "47099f12-b3f3-4fb3-ab75-7308009be26b",
+      "balance": 0,
+      "updatedAt": "2026-11-28T08:22:39.697Z"
+    },
+    {
+      "userId": "1cc780d7-4f46-43c2-93d5-4bf123f9aed0",
+      "balance": 0,
+      "updatedAt": "2026-11-28T08:30:38.216Z"
     }
   ],
   "stories": [
@@ -10504,7 +10527,7 @@
       "coverImage": "https://hoidonho.ductran-180506.workers.dev/official-thumb-tap_61_chia_doi-thumbnail-chia-doi.png",
       "genre": "Tình Cảm",
       "summary": "Bộ truyện tranh AI Chia Đôi (Tap_61_Chia_Doi) trên kênh @carrot.tia, thuộc thể loại Tình Cảm.",
-      "views": 11,
+      "views": 12,
       "status": "ongoing",
       "chaptersCount": 25,
       "createdAt": "2026-11-28T06:41:58.684Z"
@@ -25352,10 +25375,11 @@
       "amountVnd": 39000,
       "coinsReceived": 50,
       "vipDaysReceived": 30,
-      "status": "pending",
+      "status": "completed",
       "createdAt": "2026-11-17T08:37:05.228Z",
       "userName": "Duc Tran",
-      "userEmail": "ductran.180506@gmail.com"
+      "userEmail": "ductran.180506@gmail.com",
+      "completedAt": "2026-11-28T08:32:48.282Z"
     },
     {
       "id": "ord-1794825691263-4on9",
@@ -25365,10 +25389,11 @@
       "amountVnd": 39000,
       "coinsReceived": 50,
       "vipDaysReceived": 30,
-      "status": "pending",
+      "status": "completed",
       "createdAt": "2026-11-16T10:41:31.263Z",
       "userName": "Đức Công",
-      "userEmail": "congducc2k6@gmail.com"
+      "userEmail": "congducc2k6@gmail.com",
+      "completedAt": "2026-11-28T08:32:48.966Z"
     },
     {
       "id": "ord-1794820037868-xuuy",
@@ -25552,8 +25577,9 @@
       "amountVnd": 39000,
       "coinsReceived": 30,
       "vipDaysReceived": 30,
-      "status": "pending",
-      "createdAt": "2026-11-28T07:48:48.081Z"
+      "status": "completed",
+      "createdAt": "2026-11-28T07:48:48.081Z",
+      "completedAt": "2026-11-28T08:32:48.282Z"
     }
   ],
   "comments": [
@@ -25591,20 +25617,36 @@
       "createdAt": "2026-11-18T11:17:43.872Z"
     }
   ],
-  "luckyWheelHistory": [],
+  "luckyWheelHistory": [
+    {
+      "id": "spin-log-1795854005104-aiwb",
+      "userId": "congduc",
+      "userName": "congduc",
+      "userPhone": "congduc",
+      "userEmail": "",
+      "userAvatar": "",
+      "spinType": "free",
+      "costCoins": 0,
+      "prizeId": 0,
+      "prizeLabel": "+2 Điểm",
+      "prizeSublabel": "Thưởng xu",
+      "prizeIcon": "🎁",
+      "prizeType": "coins",
+      "prizeValue": 2,
+      "createdAt": "2026-11-28T08:20:05.104Z"
+    }
+  ],
   "chapterTips": [],
   "supportConversations": [],
   "supportMessages": [],
   "analytics": [
     {
       "id": "dev_c3bf8swmwrqi2iu",
-      "path": "/truyen/tam-anh-chup-ngay-mai",
+      "path": "/",
       "referrer": "Truy cập trực tiếp",
       "device": "Windows PC",
       "userId": "dev_c3bf8swmwrqi2iu",
-      "createdAt": "2026-11-28T08:16:47.111Z",
-      "storyId": "story-tam-anh-chup-ngay-mai",
-      "storyTitle": "Tấm Ảnh Chụp Ngày Mai"
+      "createdAt": "2026-11-28T08:26:36.112Z"
     }
   ]
 }
